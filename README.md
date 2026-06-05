@@ -19,6 +19,8 @@ The team should focus on what GIS/analyst work controls: validate the assignment
 - `docs/meeting-notes/2026-06-05-land-care-assurance.md` — cleaned notes, separating confirmed / rough-note / assumption / next action.
 - `docs/project-scope.md` — scope centered on confirmed-feasible GIS/analyst work.
 - `docs/modular-work-plan.md` — modules referencing the actual scripts, tables, dashboard pages, and metrics.
+- `docs/north-star-vision.md` — forward-looking vision: from "completion %" to a parcel-state assurance system.
+- `plan/Kickoff-rizaldy-assignment.md` — 2-week intern kickoff plan.
 
 ## Source Links
 
