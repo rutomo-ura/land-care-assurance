@@ -20,6 +20,7 @@ The team should focus on what GIS/analyst work controls: validate the assignment
 - `docs/project-scope.md` — scope centered on confirmed-feasible GIS/analyst work.
 - `docs/modular-work-plan.md` — modules referencing the actual scripts, tables, dashboard pages, and metrics.
 - `docs/north-star-vision.md` — forward-looking vision: from "completion %" to a parcel-state assurance system.
+- `docs/concept-prioritization-model.md` — completion-propensity prioritization concept (assign by likelihood-to-complete; suggest what's next).
 - `plan/Kickoff-rizaldy-assignment.md` — 2-week intern kickoff plan.
 
 ## Source Links
