@@ -1,7 +1,7 @@
 # Meeting Notes: Land Care Assurance
 
 Date: June 5, 2026
-Source: `20260605-oscar-brief.md` (rough note), reconciled against the live artifacts.
+Source: `raw_notes/20260605-oscar-brief.md` (rough note), reconciled against the live artifacts.
 
 This version separates four kinds of statement:
 
