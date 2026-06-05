@@ -2,6 +2,9 @@
 
 **Owner:** Rizaldy (GIS/Analyst intern) · **Scope:** GIS/analyst-controllable work only · Repo is inspection-only until changes are approved.
 
+## Vision (one paragraph)
+This is bigger than a completion percentage. The end state is a **parcel-state assurance system**: one trustworthy record per parcel (owned → assigned → surveyed → verified), reconciled continuously against county ownership, feeding feasibility-aware route bundling and an end-to-end funnel the dashboard can show as a map — with a dollar tied to each recommendation against the ~$775k/yr budget. The two weeks below earn trust on the baseline; every win ladders up to that north star. (Full write-up: `docs/north-star-vision.md`; the prioritization concept: `docs/concept-prioritization-model.md`.)
+
 ## Goal
 Prove the *real* survey-completion number and show how much of the assignment universe is invalid — before any dashboard or model work. The current "~10%" is real (1,214 assigned / 142 returned this quarter) but blends Active parcels (visited every period) with Request-Only parcels (visited only on request), which understates true completion.
 
