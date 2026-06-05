@@ -20,5 +20,3 @@ lets focus on things that gis and analyst thing can control
 2) improve the dashboard and metric module, check is the bundel assigment universe is correct and metrics 10% ish is correct,improve metrics visibility
 3) rizaldy have idea to make classification model to make assignment bundle to surveyor is based on model pe rmonth, it would improve survey completion rate based on similar parcel/bundle surveyed that it feasible to be done by field worker
 
-let's make modular and scoping of this vague project (rizaldy)
-
