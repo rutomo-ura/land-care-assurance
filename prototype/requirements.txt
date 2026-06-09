@@ -1,2 +1,8 @@
-# Optional for converting shapefile geometry in the data-prep script.
+# Lightweight fallback used by the current script for shapefile reads.
 pyshp>=2.3
+
+# Recommended geospatial prep stack for the next data-pipeline iteration.
+# Install in a GIS-ready environment where GDAL wheels are available.
+geopandas>=0.14
+pyogrio>=0.7
+shapely>=2.0

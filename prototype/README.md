@@ -2,10 +2,13 @@
 
 Static Week 1 prototype for reviewing monthly LandCare bundle assignment and survey completion.
 
+Status handoff: [Week 1 Prototype Status](../docs/week-1-prototype-status-2026-06-09.md)
+
 ## Current Build
 
-- Runs on GitHub Pages with no backend.
+- Uses PostGIS/PostgreSQL as the source of truth.
 - Uses `prototype/data/` files generated from a read-only PostgreSQL export.
+- Uses Leaflet with a CARTO Positron basemap for the Week 1 viewer.
 - Uses real parcel geometry from GIS tables where a parcel key joins cleanly.
 - Classifies ownership as URA, Pittsburgh Land Bank, City of Pittsburgh, or Other/unknown using normalized owner-name matching.
 - Shows completion through April 2026, the latest month with survey submissions in `gis.regrid_survey_submissions`.
@@ -43,6 +46,17 @@ python prototype/scripts/build_prototype_data.py --validate-only
 ```
 
 Generated files land in `prototype/data/` for GitHub Pages.
+
+## Map Stack Direction
+
+Recommended stack:
+
+- Database: PostGIS on PostgreSQL.
+- Data processing: GeoPandas, GDAL/pyogrio, and Shapely.
+- Frontend: Leaflet for the current parcel viewer.
+- Scale path: Mapbox GL JS or MapLibre GL with vector tiles when parcel volume or styling needs outgrow GeoJSON.
+
+Current Week 1 implementation keeps Leaflet because the data volume is still manageable and the UI needs fast iteration. The app-ready schema stays compatible with a later vector-tile service.
 
 ## Data Sources
 

@@ -75,9 +75,9 @@ function initMap() {
     zoomControl: true,
     zoomSnap: 0.25
   }).setView([40.443, -79.995], 12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
   }).addTo(state.map);
 }
 
@@ -135,9 +135,9 @@ function layerStyle(feature) {
   return {
     color: status === "returned" ? "#003b6f" : "#1f2937",
     fillColor: statusColors[status] || statusColors.missing,
-    fillOpacity: status === "request_only" ? 0.7 : 0.95,
+    fillOpacity: status === "request_only" ? 0.68 : 0.92,
     opacity: 1,
-    weight: status === "returned" ? 2.2 : 1.8
+    weight: status === "returned" ? 1.8 : 1.45
   };
 }
 
