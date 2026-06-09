@@ -1,6 +1,6 @@
 const statusColors = {
-  returned: "#1155cc",
-  missing: "#c69214",
+  returned: "#0094d3",
+  missing: "#ffd603",
   request_only: "#9aa4b2",
   ownership_risk: "#c2410c"
 };
@@ -38,6 +38,24 @@ function parseCsv(text) {
   });
 }
 
+function selectedFeatures() {
+  const filters = currentFilters();
+  return state.geojson.features.filter((feature) => featureMatches(feature, filters));
+}
+
+function monthFeatures(month) {
+  return state.geojson.features.filter((feature) => feature.properties.period_month === month);
+}
+
+function uniqueCount(features, predicate = () => true) {
+  return new Set(
+    features
+      .filter(predicate)
+      .map((feature) => feature.properties.parcel_key)
+      .filter(Boolean)
+  ).size;
+}
+
 async function loadData() {
   const [geojson, monthlyMetrics, contractorText, summary] = await Promise.all([
     fetch("data/parcels_monthly.geojson").then((response) => response.json()),
@@ -53,7 +71,10 @@ async function loadData() {
 }
 
 function initMap() {
-  state.map = L.map("map", { zoomControl: true }).setView([40.443, -79.995], 12);
+  state.map = L.map("map", {
+    zoomControl: true,
+    zoomSnap: 0.25
+  }).setView([40.443, -79.995], 12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
@@ -63,6 +84,7 @@ function initMap() {
 function populateFilters() {
   const monthSelect = document.getElementById("month-select");
   const contractorSelect = document.getElementById("contractor-select");
+  const ownerSelect = document.getElementById("owner-select");
 
   const months = [...new Set(state.monthlyMetrics.map((row) => row.period_month))].sort();
   monthSelect.innerHTML = months
@@ -75,13 +97,27 @@ function populateFilters() {
     '<option value="all">All contractors</option>',
     ...contractors.map((name) => `<option value="${name}">${name}</option>`)
   ].join("");
+
+  const owners = [
+    ...new Set(
+      state.geojson.features
+        .map((feature) => feature.properties.ownership_type || "Other or unknown")
+        .filter(Boolean)
+    )
+  ].sort();
+  ownerSelect.innerHTML = [
+    '<option value="all">All ownership</option>',
+    ...owners.map((name) => `<option value="${name}">${name}</option>`)
+  ].join("");
+  ownerSelect.value = "all";
 }
 
 function currentFilters() {
   return {
     month: document.getElementById("month-select").value,
     contractor: document.getElementById("contractor-select").value,
-    status: document.getElementById("status-select").value
+    status: document.getElementById("status-select").value,
+    owner: document.getElementById("owner-select").value
   };
 }
 
@@ -90,17 +126,18 @@ function featureMatches(feature, filters) {
   if (props.period_month !== filters.month) return false;
   if (filters.contractor !== "all" && props.organization !== filters.contractor) return false;
   if (filters.status !== "all" && props.completion_status !== filters.status) return false;
+  if (filters.owner !== "all" && (props.ownership_type || "Other or unknown") !== filters.owner) return false;
   return true;
 }
 
 function layerStyle(feature) {
   const status = cleanStatus(feature.properties.completion_status);
   return {
-    color: "#ffffff",
+    color: status === "returned" ? "#003b6f" : "#1f2937",
     fillColor: statusColors[status] || statusColors.missing,
-    fillOpacity: status === "request_only" ? 0.58 : 0.76,
+    fillOpacity: status === "request_only" ? 0.7 : 0.95,
     opacity: 1,
-    weight: 1
+    weight: status === "returned" ? 2.2 : 1.8
   };
 }
 
@@ -109,7 +146,8 @@ function popupHtml(props) {
     <strong>${props.parcel_key}</strong><br>
     ${props.organization}<br>
     ${props.period_month}<br>
-    ${props.maintenance_level} | ${statusLabel(props.completion_status)}
+    ${props.maintenance_level} | ${statusLabel(props.completion_status)}<br>
+    ${props.ownership_type || "Other or unknown"}
   `;
 }
 
@@ -120,16 +158,17 @@ function detailHtml(props) {
     Contractor: ${props.organization}<br>
     Month: ${props.period_month}<br>
     Level: ${props.maintenance_level}<br>
+    Ownership: ${props.ownership_type || "Other or unknown"}<br>
+    Owner: ${props.owner_name || "Unknown"}<br>
     Status: ${statusLabel(props.completion_status)}<br>
     Geometry: ${geometryLabel}
   `;
 }
 
 function renderMap() {
-  const filters = currentFilters();
   const filtered = {
     type: "FeatureCollection",
-    features: state.geojson.features.filter((feature) => featureMatches(feature, filters))
+    features: selectedFeatures()
   };
 
   if (state.layer) {
@@ -143,11 +182,28 @@ function renderMap() {
       layer.on("click", () => {
         document.getElementById("parcel-detail").innerHTML = detailHtml(feature.properties);
       });
+      layer.on("mouseover", () => {
+        layer.setStyle({
+          color: "#000000",
+          fillOpacity: 1,
+          weight: 3
+        });
+        layer.bringToFront();
+      });
+      layer.on("mouseout", () => {
+        state.layer.resetStyle(layer);
+      });
     }
   }).addTo(state.map);
+  state.layer.bringToFront();
 
-  if (filtered.features.length > 0) {
-    state.map.fitBounds(state.layer.getBounds(), { padding: [18, 18] });
+  if (filtered.features.length > 0 && state.layer.getBounds().isValid()) {
+    const fitLayer = () => {
+      state.map.invalidateSize();
+      state.map.fitBounds(state.layer.getBounds(), { padding: [24, 24], maxZoom: 16 });
+    };
+    requestAnimationFrame(fitLayer);
+    setTimeout(fitLayer, 250);
   }
 }
 
@@ -156,16 +212,27 @@ function renderKpis() {
   const metrics = state.monthlyMetrics.find((row) => row.period_month === filters.month);
   if (!metrics) return;
 
-  document.getElementById("kpi-assigned").textContent = formatNumber.format(metrics.assigned_total);
-  document.getElementById("kpi-returned").textContent = formatNumber.format(metrics.returned_assigned);
-  document.getElementById("kpi-active-rate").textContent = `${metrics.active_completion_rate_pct.toFixed(1)}%`;
-  document.getElementById("kpi-current-month").textContent = formatNumber.format(metrics.returned_assigned);
-  document.getElementById("kpi-current-note").textContent = `${filters.month} returned assignment keys`;
+  const features = selectedFeatures();
+  const assigned = uniqueCount(features);
+  const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
+  const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
+  const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
+  const ura = uniqueCount(features, (feature) => feature.properties.ownership_type === "URA");
+  const plb = uniqueCount(features, (feature) => feature.properties.ownership_type === "Pittsburgh Land Bank");
+  const rate = active ? (100 * returned) / active : 0;
+
+  document.getElementById("kpi-assigned").textContent = formatNumber.format(assigned);
+  document.getElementById("kpi-returned").textContent = formatNumber.format(returned);
+  document.getElementById("kpi-active-rate").textContent = `${rate.toFixed(1)}%`;
+  document.getElementById("kpi-open").textContent = formatNumber.format(open);
+  document.getElementById("kpi-open-note").textContent = `${filters.month} map filter`;
+  document.getElementById("kpi-ownership").textContent = `${formatNumber.format(ura)} / ${formatNumber.format(plb)}`;
 
   const comparison = state.summary.powerbi_comparison;
-  document.getElementById("kpi-powerbi").textContent = `${comparison.dashboard_returned_count}`;
-  document.getElementById("kpi-powerbi-note").textContent = `Power BI returned, diff ${comparison.returned_difference}`;
-  document.getElementById("kpi-assigned-note").textContent = `Power BI assigned diff ${comparison.assigned_difference}`;
+  document.getElementById("kpi-powerbi").textContent = formatNumber.format(comparison.dashboard_returned_count);
+  document.getElementById("kpi-powerbi-note").textContent =
+    `${formatNumber.format(comparison.dashboard_assigned_count)} assigned in current report`;
+  document.getElementById("kpi-assigned-note").textContent = `${filters.month} selected parcels`;
   document.getElementById("source-note").textContent = state.summary.source_note;
 }
 
@@ -193,6 +260,53 @@ function renderRanking() {
   }).join("");
 }
 
+function renderActionFocus() {
+  const filters = currentFilters();
+  const features = monthFeatures(filters.month);
+  const byContractor = new Map();
+
+  for (const feature of features) {
+    const props = feature.properties;
+    if (props.maintenance_level !== "Active") continue;
+    const name = props.organization || "Unassigned";
+    if (!byContractor.has(name)) {
+      byContractor.set(name, { assigned: new Set(), returned: new Set(), open: new Set() });
+    }
+    const bucket = byContractor.get(name);
+    bucket.assigned.add(props.parcel_key);
+    if (props.returned_flag) {
+      bucket.returned.add(props.parcel_key);
+    }
+    if (props.completion_status === "missing") {
+      bucket.open.add(props.parcel_key);
+    }
+  }
+
+  const ranked = [...byContractor.entries()]
+    .map(([name, values]) => ({
+      name,
+      assigned: values.assigned.size,
+      returned: values.returned.size,
+      open: values.open.size,
+      rate: values.assigned.size ? (100 * values.returned.size) / values.assigned.size : 0
+    }))
+    .sort((a, b) => b.open - a.open)
+    .slice(0, 3);
+
+  const ownerFeatures = selectedFeatures();
+  const city = uniqueCount(ownerFeatures, (feature) => feature.properties.ownership_type === "City of Pittsburgh");
+  const other = uniqueCount(ownerFeatures, (feature) => feature.properties.ownership_type === "Other or unknown");
+
+  document.getElementById("action-focus").innerHTML = [
+    `<div><strong>${formatNumber.format(city)}</strong><span>City-owned parcels in current map filter</span></div>`,
+    `<div><strong>${formatNumber.format(other)}</strong><span>Other or unknown owner labels to verify</span></div>`,
+    ...ranked.map(
+      (row) =>
+        `<div><strong>${formatNumber.format(row.open)}</strong><span>${row.name} open assignments</span></div>`
+    )
+  ].join("");
+}
+
 function renderTrend() {
   const months = state.monthlyMetrics.map((row) => row.period_month);
   const assigned = state.monthlyMetrics.map((row) => row.assigned_total);
@@ -205,7 +319,7 @@ function renderTrend() {
       y: assigned,
       name: "Assigned",
       type: "bar",
-      marker: { color: "#c69214" },
+      marker: { color: "#ffd603" },
       hovertemplate: "%{x}<br>Assigned: %{y:,}<extra></extra>"
     },
     {
@@ -214,7 +328,7 @@ function renderTrend() {
       name: "Returned",
       type: "scatter",
       mode: "lines+markers",
-      line: { color: "#1155cc", width: 3 },
+      line: { color: "#0094d3", width: 3 },
       marker: { size: 8 },
       hovertemplate: "%{x}<br>Returned: %{y:,}<extra></extra>"
     },
@@ -225,7 +339,7 @@ function renderTrend() {
       type: "scatter",
       yaxis: "y2",
       mode: "lines",
-      line: { color: "#0b377a", width: 2, dash: "dot" },
+      line: { color: "#111827", width: 2, dash: "dot" },
       hovertemplate: "%{x}<br>Active rate: %{y:.1f}%<extra></extra>"
     }
   ];
@@ -235,7 +349,7 @@ function renderTrend() {
     margin: { l: 52, r: 52, t: 10, b: 48 },
     paper_bgcolor: "#ffffff",
     plot_bgcolor: "#ffffff",
-    font: { family: 'Inter, "Segoe UI", Arial, sans-serif', color: "#182233" },
+    font: { family: '"Helvetica Neue", Helvetica, Arial, sans-serif', color: "#182233" },
     legend: { orientation: "h", y: 1.12 },
     xaxis: { tickangle: -35, showgrid: false },
     yaxis: { title: "Parcel keys", gridcolor: "#d9e2ec" },
@@ -255,6 +369,7 @@ function renderAll() {
   renderKpis();
   renderMap();
   renderRanking();
+  renderActionFocus();
   renderTrend();
 }
 
@@ -262,8 +377,11 @@ async function main() {
   await loadData();
   initMap();
   populateFilters();
-  ["month-select", "contractor-select", "status-select"].forEach((id) => {
+  ["month-select", "contractor-select", "status-select", "owner-select"].forEach((id) => {
     document.getElementById(id).addEventListener("change", renderAll);
+  });
+  window.addEventListener("resize", () => {
+    state.map.invalidateSize();
   });
   renderAll();
 }

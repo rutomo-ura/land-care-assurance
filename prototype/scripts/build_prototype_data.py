@@ -20,6 +20,11 @@ CURRENT_ACTIVE_RETURNED = 142
 CURRENT_SURVEY_ROWS = 149
 POWERBI_ASSIGNED = 1214
 POWERBI_RETURNED = 142
+POWERBI_URA_OWNED = 1120
+POWERBI_PLB_OWNED = 28
+POWERBI_YEARLY_LIMIT = 775000.00
+POWERBI_TOTAL_SPENT = 343523.44
+POWERBI_QUARTER_SPENT = 154944.44
 PITTSBURGH_CENTER = (40.4434, -79.9959)
 
 
@@ -620,11 +625,16 @@ def build_summary(
         "powerbi_comparison": {
             "dashboard_assigned_count": POWERBI_ASSIGNED,
             "dashboard_returned_count": POWERBI_RETURNED,
+            "dashboard_ura_owned_count": POWERBI_URA_OWNED,
+            "dashboard_plb_owned_count": POWERBI_PLB_OWNED,
+            "projected_yearly_limit": POWERBI_YEARLY_LIMIT,
+            "total_amount_spent": POWERBI_TOTAL_SPENT,
+            "quarterly_amount_spent": POWERBI_QUARTER_SPENT,
             "sql_export_assigned_count": totals["assigned_total"],
             "sql_export_returned_count": latest["returned_assigned"],
             "assigned_difference": assigned_difference,
             "returned_difference": returned_difference,
-            "filter_note": "Current quarter dashboard reference; Active-only denominator shown separately.",
+            "filter_note": "Current Power BI landing page values captured June 9, 2026.",
         },
     }
 

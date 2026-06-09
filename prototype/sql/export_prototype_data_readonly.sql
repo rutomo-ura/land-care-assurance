@@ -15,6 +15,7 @@
 --   - Uses survey submissions as completed/returned evidence.
 --   - Uses the latest comparable month where survey submissions exist.
 --   - Fills blank historical maintain_level values from current EPP tags.
+--   - Classifies ownership with normalized wildcard-style matching.
 --   - Does not modify source tables.
 
 begin read only;
@@ -123,6 +124,47 @@ parcel_geometry as (
     full outer join epp_geometry e
         on e.parcel_key = p.parcel_key
 ),
+city_owner as (
+    select distinct on (parcel_key)
+        parcel_key,
+        owner as owner_name
+    from (
+        select
+            regexp_replace(pin::text, '[^0-9]', '', 'g') as parcel_key,
+            owner,
+            last_updated
+        from analysis.city_epp_properties
+        where pin is not null
+    ) o
+    where parcel_key <> ''
+    order by parcel_key, last_updated desc nulls last
+),
+assessment_owner as (
+    select distinct on (parcel_key)
+        parcel_key,
+        propertyowner as owner_name
+    from (
+        select
+            regexp_replace(parid::text, '[^0-9]', '', 'g') as parcel_key,
+            propertyowner,
+            asofdate
+        from analysis.assessment_snapshot
+        where parid is not null
+    ) o
+    where parcel_key <> ''
+    order by parcel_key, asofdate desc nulls last
+),
+owner_lookup as (
+    select
+        a.parcel_key,
+        coalesce(c.owner_name, ass.owner_name, '') as owner_name,
+        regexp_replace(lower(coalesce(c.owner_name, ass.owner_name, '')), '[^a-z0-9]+', '', 'g') as owner_norm
+    from (select distinct parcel_key from assignments) a
+    left join city_owner c
+        on c.parcel_key = a.parcel_key
+    left join assessment_owner ass
+        on ass.parcel_key = a.parcel_key
+),
 parcel_month as (
     select
         a.period_month,
@@ -130,6 +172,13 @@ parcel_month as (
         a.parcel_number,
         a.organization,
         a.maintenance_level,
+        coalesce(nullif(o.owner_name, ''), 'Unknown') as owner_name,
+        case
+            when o.owner_norm ~ '(pittsburghlandbank|^plb|landbank)' then 'Pittsburgh Land Bank'
+            when o.owner_norm ~ '(urbanredevelopmentauthority|redevelopmentauthorityofpittsburgh|pittsburghurbanredevelopmentauthority|^ura)' then 'URA'
+            when o.owner_norm ~ '(cityofpittsburgh)' then 'City of Pittsburgh'
+            else 'Other or unknown'
+        end as ownership_type,
         true as assigned_flag,
         (r.parcel_key is not null and a.maintenance_level = 'Active') as returned_flag,
         case
@@ -144,6 +193,8 @@ parcel_month as (
        and r.parcel_key = a.parcel_key
     left join parcel_geometry g
         on g.parcel_key = a.parcel_key
+    left join owner_lookup o
+        on o.parcel_key = a.parcel_key
 ),
 feature_rows as (
     select
@@ -154,6 +205,8 @@ feature_rows as (
                 'period_month', to_char(period_month, 'YYYY-MM'),
                 'organization', organization,
                 'maintenance_level', maintenance_level,
+                'ownership_type', ownership_type,
+                'owner_name', owner_name,
                 'assigned_flag', assigned_flag,
                 'returned_flag', returned_flag,
                 'completion_status', completion_status,
@@ -169,14 +222,17 @@ select jsonb_build_object(
     'metadata', jsonb_build_object(
         'geometry_mode', 'postgres_readonly_export',
         'generated_on', current_date,
-        'source_note', 'Read-only PostgreSQL export from monthly Regrid bundle assignments, survey submissions, and parcel geometry. Completion uses the latest month with survey submissions.',
+        'source_note', 'PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.',
         'source_tables', jsonb_build_array(
             'gis.regrid_bundle_assignments',
             'gis.regrid_survey_submissions',
             'gis.pgh_parcels',
             'gis.epp_parcels_full',
-            'gis.epp_snapshot'
+            'gis.epp_snapshot',
+            'analysis.city_epp_properties',
+            'analysis.assessment_snapshot'
         ),
+        'owner_match_note', 'Owner names are normalized before matching URA and Pittsburgh Land Bank variants.',
         'latest_assignment_period', (select latest_assignment_period from latest_dates),
         'latest_survey_period', (select latest_survey_period from latest_dates),
         'latest_comparable_month', (select latest_comparable_month from latest_dates),

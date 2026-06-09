@@ -7,6 +7,7 @@ Static Week 1 prototype for reviewing monthly LandCare bundle assignment and sur
 - Runs on GitHub Pages with no backend.
 - Uses `prototype/data/` files generated from a read-only PostgreSQL export.
 - Uses real parcel geometry from GIS tables where a parcel key joins cleanly.
+- Classifies ownership as URA, Pittsburgh Land Bank, City of Pittsburgh, or Other/unknown using normalized owner-name matching.
 - Shows completion through April 2026, the latest month with survey submissions in `gis.regrid_survey_submissions`.
 - Keeps May 2026 assignment freshness in `kpi_summary.json` because assignments are newer than survey submissions.
 
@@ -50,8 +51,12 @@ Generated files land in `prototype/data/` for GitHub Pages.
 - `gis.pgh_parcels`
 - `gis.epp_parcels_full`
 - `gis.epp_snapshot`
+- `analysis.city_epp_properties`
+- `analysis.assessment_snapshot`
 
 The SQL is read-only and starts with `begin read only`.
+
+Owner names are normalized before matching. This handles common variants such as missing punctuation, inconsistent spacing, `URA`, `Urban Redevelopment Authority`, `Pittsburgh Land Bank`, and `PLB`.
 
 ## Dashboard Fields
 
@@ -61,10 +66,22 @@ The browser app expects these parcel-month fields:
 - `period_month`
 - `organization`
 - `maintenance_level`
+- `ownership_type`
+- `owner_name`
 - `assigned_flag`
 - `returned_flag`
 - `completion_status`
 - `geometry`
+
+## Power BI Reference
+
+The dashboard uses these current Power BI landing page values as reference metrics:
+
+- Assigned parcels: `1,214`
+- Returned surveys: `142`
+- URA owned parcels: `1,120`
+- Pittsburgh Land Bank parcels: `28`
+- Data updated: `June 9, 2026`
 
 ## ArcGIS Online Path
 

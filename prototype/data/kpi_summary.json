@@ -1,17 +1,22 @@
 {
   "latest_month": "2026-04",
   "generated_on": "2026-06-09",
-  "source_note": "Read-only PostgreSQL export from monthly Regrid bundle assignments, survey submissions, and parcel geometry. Completion uses the latest month with survey submissions.",
+  "source_note": "PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.",
   "geometry_mode": "postgres_readonly_export",
   "latest_assignment_period": "2026-05-15",
   "latest_survey_period": "2026-04-15",
   "powerbi_comparison": {
     "dashboard_assigned_count": 1214,
     "dashboard_returned_count": 142,
+    "dashboard_ura_owned_count": 1120,
+    "dashboard_plb_owned_count": 28,
+    "projected_yearly_limit": 775000.0,
+    "total_amount_spent": 343523.44,
+    "quarterly_amount_spent": 154944.44,
     "sql_export_assigned_count": 1076,
     "sql_export_returned_count": 142,
     "assigned_difference": -138,
     "returned_difference": 0,
-    "filter_note": "Current quarter dashboard reference; Active-only denominator shown separately."
+    "filter_note": "Current Power BI landing page values captured June 9, 2026."
   }
 }

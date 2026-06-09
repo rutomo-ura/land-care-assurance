@@ -17,7 +17,7 @@
     <header class="app-header">
       <div>
         <p class="eyebrow">URA LandCare Assurance</p>
-        <h1>Month-to-month bundle and survey completion</h1>
+        <h1>LandCare completion, ownership, and contractor performance</h1>
       </div>
       <div class="source-note" id="source-note">Loading source note...</div>
     </header>
@@ -27,7 +27,7 @@
         <article class="kpi-card">
           <span>Assigned parcels</span>
           <strong id="kpi-assigned">--</strong>
-          <small id="kpi-assigned-note">SQL export</small>
+          <small id="kpi-assigned-note">map layer</small>
         </article>
         <article class="kpi-card">
           <span>Returned surveys</span>
@@ -40,14 +40,19 @@
           <small>Active denominator only</small>
         </article>
         <article class="kpi-card">
-          <span>Current month</span>
-          <strong id="kpi-current-month">--</strong>
-          <small id="kpi-current-note">returned surveys</small>
+          <span>Open assignments</span>
+          <strong id="kpi-open">--</strong>
+          <small id="kpi-open-note">assigned, not returned</small>
         </article>
         <article class="kpi-card">
-          <span>Power BI check</span>
+          <span>Ownership focus</span>
+          <strong id="kpi-ownership">--</strong>
+          <small id="kpi-ownership-note">URA / PLB in map layer</small>
+        </article>
+        <article class="kpi-card">
+          <span>Power BI reference</span>
           <strong id="kpi-powerbi">--</strong>
-          <small id="kpi-powerbi-note">dashboard comparison</small>
+          <small id="kpi-powerbi-note">current report returned</small>
         </article>
       </section>
 
@@ -70,6 +75,10 @@
             <option value="ownership_risk">Ownership risk</option>
           </select>
         </label>
+        <label>
+          Ownership
+          <select id="owner-select"></select>
+        </label>
       </section>
 
       <section class="main-grid">
@@ -89,6 +98,10 @@
             <div id="contractor-ranking" class="ranking-list"></div>
           </section>
           <section class="panel-section">
+            <h2>Action focus</h2>
+            <div id="action-focus" class="focus-list"></div>
+          </section>
+          <section class="panel-section">
             <h2>Selected parcel</h2>
             <div id="parcel-detail" class="detail-box">
               Select a parcel on the map.
@@ -100,7 +113,7 @@
       <section class="trend-panel">
         <div>
           <h2>Monthly assignment and returned surveys</h2>
-          <p>Active completion uses normalized parcel keys. Blended rate is shown only as a dashboard comparison.</p>
+          <p>Active completion uses normalized parcel keys. The map keeps ownership and contractor filters in the same view.</p>
         </div>
         <div id="trend-chart" class="trend-chart" aria-label="Monthly trend chart"></div>
       </section>
