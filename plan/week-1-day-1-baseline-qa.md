@@ -20,6 +20,7 @@ Day 1 should answer:
 
 - [ ] Confirm access to the PostgreSQL VM and the `gis` and `analysis` schemas.
 - [ ] Confirm access to the Power BI report and current-quarter filters.
+- [ ] Create local CSV exports in `outputs/week-1-day-1/`.
 - [ ] Inspect the relevant table columns before running count queries.
 - [ ] Reproduce the assignment universe from `gis.epp_snapshot`.
 - [ ] Split assignment counts into Active and Request Only.
@@ -29,7 +30,24 @@ Day 1 should answer:
 - [ ] Split completion into Active-only and Request-Only.
 - [ ] Break completion out by maintenance organization.
 - [ ] Record any count differences with the exact filter, date, and query used.
-- [ ] Save the final counts in a short Day 1 findings note.
+- [ ] Save the final counts in a short Day 1 findings note using `docs/day-1-findings-template.md`.
+
+## Output Files
+
+Save query exports to `outputs/week-1-day-1/` using these names:
+
+- `assignment_universe_counts.csv`
+- `parcel_number_validity.csv`
+- `parcel_digit_length_counts.csv`
+- `assignment_by_organization.csv`
+- `survey_periods.csv`
+- `returned_surveys_by_status.csv`
+- `survey_parcel_digit_length_counts.csv`
+- `completion_by_level.csv`
+- `completion_by_organization.csv`
+- `reconciliation_summary.csv`
+
+CSV files are ignored by Git. Commit the findings note, not parcel-level extracts.
 
 ## Manual Query Sequence
 
@@ -59,7 +77,7 @@ order by table_schema, table_name, ordinal_position;
 ```sql
 with assignment_universe as (
     select
-        parcelnumb,
+        parcel_number,
         property_maint_mgr_name,
         tags,
         case
@@ -74,7 +92,7 @@ with assignment_universe as (
 select
     maintenance_level,
     count(*) as rows,
-    count(distinct parcelnumb) as distinct_parcels
+    count(distinct parcel_number) as distinct_parcels
 from assignment_universe
 group by maintenance_level
 order by maintenance_level;
@@ -87,7 +105,7 @@ Expected check: total distinct parcels should reconcile to the Power BI assigned
 ```sql
 with assignment_universe as (
     select
-        parcelnumb,
+        parcel_number,
         tags
     from gis.epp_snapshot
     where tags ilike '%LandCare - Active%'
@@ -95,12 +113,12 @@ with assignment_universe as (
 )
 select
     case
-        when length(regexp_replace(parcelnumb::text, '[^0-9]', '', 'g')) = 16
+        when length(regexp_replace(parcel_number::text, '[^0-9]', '', 'g')) = 16
             then 'valid_16_digit'
         else 'invalid_or_missing'
     end as parcel_number_status,
     count(*) as rows,
-    count(distinct parcelnumb) as distinct_parcels
+    count(distinct parcel_number) as distinct_parcels
 from assignment_universe
 group by parcel_number_status
 order by parcel_number_status;
@@ -111,7 +129,7 @@ order by parcel_number_status;
 ```sql
 with assignment_universe as (
     select
-        parcelnumb,
+        parcel_number,
         property_maint_mgr_name,
         case
             when tags ilike '%LandCare - Active%' then 'Active'
@@ -125,7 +143,7 @@ with assignment_universe as (
 select
     coalesce(property_maint_mgr_name, 'Unassigned') as organization,
     maintenance_level,
-    count(distinct parcelnumb) as assigned_parcels
+    count(distinct parcel_number) as assigned_parcels
 from assignment_universe
 group by organization, maintenance_level
 order by organization, maintenance_level;
@@ -167,7 +185,8 @@ Replace the dates with the same current-quarter period range used above.
 ```sql
 with assignment_universe as (
     select distinct
-        parcelnumb,
+        parcel_number,
+        regexp_replace(parcel_number::text, '[^0-9]', '', 'g') as assignment_digits,
         property_maint_mgr_name,
         case
             when tags ilike '%LandCare - Active%' then 'Active'
@@ -180,23 +199,23 @@ with assignment_universe as (
 ),
 returned as (
     select distinct
-        parcelnumb
+        regexp_replace(parcelnumb::text, '[^0-9]', '', 'g') as survey_digits
     from gis.regrid_survey_submissions
     where period >= date '2026-04-01'
       and period < date '2026-07-01'
 )
 select
     a.maintenance_level,
-    count(distinct a.parcelnumb) as assigned_parcels,
-    count(distinct r.parcelnumb) as returned_parcels,
+    count(distinct a.assignment_digits) as assigned_parcel_keys,
+    count(distinct r.survey_digits) as returned_assigned_parcel_keys,
     round(
-        100.0 * count(distinct r.parcelnumb)
-        / nullif(count(distinct a.parcelnumb), 0),
+        100.0 * count(distinct r.survey_digits)
+        / nullif(count(distinct a.assignment_digits), 0),
         1
     ) as completion_rate_pct
 from assignment_universe a
 left join returned r
-    on r.parcelnumb = a.parcelnumb
+    on r.survey_digits = a.assignment_digits
 group by a.maintenance_level
 order by a.maintenance_level;
 ```
@@ -206,7 +225,8 @@ order by a.maintenance_level;
 ```sql
 with assignment_universe as (
     select distinct
-        parcelnumb,
+        parcel_number,
+        regexp_replace(parcel_number::text, '[^0-9]', '', 'g') as assignment_digits,
         property_maint_mgr_name,
         case
             when tags ilike '%LandCare - Active%' then 'Active'
@@ -219,7 +239,7 @@ with assignment_universe as (
 ),
 returned as (
     select distinct
-        parcelnumb
+        regexp_replace(parcelnumb::text, '[^0-9]', '', 'g') as survey_digits
     from gis.regrid_survey_submissions
     where period >= date '2026-04-01'
       and period < date '2026-07-01'
@@ -227,16 +247,16 @@ returned as (
 select
     coalesce(a.property_maint_mgr_name, 'Unassigned') as organization,
     a.maintenance_level,
-    count(distinct a.parcelnumb) as assigned_parcels,
-    count(distinct r.parcelnumb) as returned_parcels,
+    count(distinct a.assignment_digits) as assigned_parcel_keys,
+    count(distinct r.survey_digits) as returned_assigned_parcel_keys,
     round(
-        100.0 * count(distinct r.parcelnumb)
-        / nullif(count(distinct a.parcelnumb), 0),
+        100.0 * count(distinct r.survey_digits)
+        / nullif(count(distinct a.assignment_digits), 0),
         1
     ) as completion_rate_pct
 from assignment_universe a
 left join returned r
-    on r.parcelnumb = a.parcelnumb
+    on r.survey_digits = a.assignment_digits
 group by organization, a.maintenance_level
 order by organization, a.maintenance_level;
 ```
