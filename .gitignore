@@ -17,6 +17,8 @@ outputs/*
 !outputs/**/
 !outputs/**/.gitkeep
 !outputs/**/README.md
+prototype/source/
 *.csv
 *.xlsx
 *.parquet
+!prototype/data/*.csv

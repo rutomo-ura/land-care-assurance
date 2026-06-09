@@ -1,0 +1,17 @@
+{
+  "latest_month": "2026-04",
+  "generated_on": "2026-06-09",
+  "source_note": "Read-only PostgreSQL export from monthly Regrid bundle assignments, survey submissions, and parcel geometry. Completion uses the latest month with survey submissions.",
+  "geometry_mode": "postgres_readonly_export",
+  "latest_assignment_period": "2026-05-15",
+  "latest_survey_period": "2026-04-15",
+  "powerbi_comparison": {
+    "dashboard_assigned_count": 1214,
+    "dashboard_returned_count": 142,
+    "sql_export_assigned_count": 1076,
+    "sql_export_returned_count": 142,
+    "assigned_difference": -138,
+    "returned_difference": 0,
+    "filter_note": "Current quarter dashboard reference; Active-only denominator shown separately."
+  }
+}

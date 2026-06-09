@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LandCare Assurance Prototype</title>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQK0kfwV+f4G7aPM2pG4xyNK0H8QwQ="
+      crossorigin=""
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">URA LandCare Assurance</p>
+        <h1>Month-to-month bundle and survey completion</h1>
+      </div>
+      <div class="source-note" id="source-note">Loading source note...</div>
+    </header>
+
+    <main class="dashboard-shell">
+      <section class="kpi-strip" aria-label="Key metrics">
+        <article class="kpi-card">
+          <span>Assigned parcels</span>
+          <strong id="kpi-assigned">--</strong>
+          <small id="kpi-assigned-note">SQL export</small>
+        </article>
+        <article class="kpi-card">
+          <span>Returned surveys</span>
+          <strong id="kpi-returned">--</strong>
+          <small>matched to assignment keys</small>
+        </article>
+        <article class="kpi-card">
+          <span>Active completion</span>
+          <strong id="kpi-active-rate">--</strong>
+          <small>Active denominator only</small>
+        </article>
+        <article class="kpi-card">
+          <span>Current month</span>
+          <strong id="kpi-current-month">--</strong>
+          <small id="kpi-current-note">returned surveys</small>
+        </article>
+        <article class="kpi-card">
+          <span>Power BI check</span>
+          <strong id="kpi-powerbi">--</strong>
+          <small id="kpi-powerbi-note">dashboard comparison</small>
+        </article>
+      </section>
+
+      <section class="control-band" aria-label="Dashboard filters">
+        <label>
+          Month
+          <select id="month-select"></select>
+        </label>
+        <label>
+          Contractor
+          <select id="contractor-select"></select>
+        </label>
+        <label>
+          Status
+          <select id="status-select">
+            <option value="all">All statuses</option>
+            <option value="returned">Returned</option>
+            <option value="missing">Assigned, not returned</option>
+            <option value="request_only">Request Only</option>
+            <option value="ownership_risk">Ownership risk</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="main-grid">
+        <div class="map-panel">
+          <div id="map" aria-label="LandCare parcel map"></div>
+          <div class="legend" aria-label="Map legend">
+            <span><i class="legend-dot returned"></i>Returned</span>
+            <span><i class="legend-dot missing"></i>Assigned, not returned</span>
+            <span><i class="legend-dot request-only"></i>Request Only</span>
+            <span><i class="legend-dot risk"></i>Ownership risk</span>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section">
+            <h2>Contractor completion</h2>
+            <div id="contractor-ranking" class="ranking-list"></div>
+          </section>
+          <section class="panel-section">
+            <h2>Selected parcel</h2>
+            <div id="parcel-detail" class="detail-box">
+              Select a parcel on the map.
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="trend-panel">
+        <div>
+          <h2>Monthly assignment and returned surveys</h2>
+          <p>Active completion uses normalized parcel keys. Blended rate is shown only as a dashboard comparison.</p>
+        </div>
+        <div id="trend-chart" class="trend-chart" aria-label="Monthly trend chart"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

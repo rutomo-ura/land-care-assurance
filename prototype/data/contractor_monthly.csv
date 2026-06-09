@@ -1,0 +1,98 @@
+period_month,organization,assigned_parcel_keys,returned_assigned_parcel_keys,completion_rate_pct
+2025-05,Amani Christian CDC,28,27,96.4
+2025-05,Center That CARES,41,2,4.9
+2025-05,Chatman Properties,142,114,80.3
+2025-05,Concrete Rose Construction,39,36,92.3
+2025-05,Ervin Home Beautification,47,31,66.0
+2025-05,Hilltop Rising,217,29,13.4
+2025-05,KRJ Enterprises,452,234,51.8
+2025-05,One Call Handles It All,64,64,100.0
+2025-06,Amani Christian CDC,28,25,89.3
+2025-06,Center That CARES,41,0,0.0
+2025-06,Chatman Properties,142,83,58.5
+2025-06,Concrete Rose Construction,39,35,89.7
+2025-06,Ervin Home Beautification,47,25,53.2
+2025-06,Hilltop Rising,217,2,0.9
+2025-06,KRJ Enterprises,453,214,47.2
+2025-06,One Call Handles It All,64,64,100.0
+2025-07,Amani Christian CDC,28,22,78.6
+2025-07,Center That CARES,41,1,2.4
+2025-07,Chatman Properties,142,85,59.9
+2025-07,Concrete Rose Construction,39,36,92.3
+2025-07,Ervin Home Beautification,47,22,46.8
+2025-07,Hilltop Rising,227,4,1.8
+2025-07,KRJ Enterprises,451,302,67.0
+2025-07,One Call Handles It All,64,64,100.0
+2025-09,Amani Christian CDC,28,28,100.0
+2025-09,Center That CARES,33,1,3.0
+2025-09,Chatman Properties,136,112,82.4
+2025-09,Ervin Home Beautification,57,33,57.9
+2025-09,Ervin Home Beautification Primary Contact,17,16,94.1
+2025-09,Hilltop Rising,189,73,38.6
+2025-09,Hilltop Rising Primary Contact,2,1,50.0
+2025-09,KRJ Enterprises,422,255,60.4
+2025-09,One Call Handles It All,59,59,100.0
+2025-10,Amani Christian CDC,28,28,100.0
+2025-10,Center That CARES,33,1,3.0
+2025-10,Chatman Properties,136,112,82.4
+2025-10,Ervin Home Beautification,57,33,57.9
+2025-10,Ervin Home Beautification Primary Contact,17,16,94.1
+2025-10,Hilltop Rising,189,73,38.6
+2025-10,Hilltop Rising Primary Contact,2,1,50.0
+2025-10,KRJ Enterprises,422,255,60.4
+2025-10,One Call Handles It All,59,59,100.0
+2025-11,Amani Christian CDC,37,37,100.0
+2025-11,Center That CARES,26,3,11.5
+2025-11,Chatman Properties,201,59,29.4
+2025-11,Ervin Home Beautification,115,78,67.8
+2025-11,FHCV Contracting LLC & LawnCare,20,0,0.0
+2025-11,Hilltop Rising,248,0,0.0
+2025-11,KRJ Enterprises,338,189,55.9
+2025-11,One Call Handles It All,19,19,100.0
+2025-11,Operation Better Block,14,1,7.1
+2025-12,Amani Christian CDC,37,37,100.0
+2025-12,Center That CARES,26,3,11.5
+2025-12,Chatman Properties,197,70,35.5
+2025-12,Ervin Home Beautification,115,87,75.7
+2025-12,FHCV Contracting LLC & LawnCare,20,0,0.0
+2025-12,Hilltop Rising,248,0,0.0
+2025-12,KRJ Enterprises,337,254,75.4
+2025-12,One Call Handles It All,19,19,100.0
+2025-12,Operation Better Block,14,1,7.1
+2026-01,Amani Christian CDC,37,2,5.4
+2026-01,Center That CARES,26,0,0.0
+2026-01,Chatman Properties,191,49,25.7
+2026-01,Ervin Home Beautification,115,82,71.3
+2026-01,FHCV Contracting LLC & LawnCare,20,20,100.0
+2026-01,Hilltop Rising,235,11,4.7
+2026-01,KRJ Enterprises,334,144,43.1
+2026-01,One Call Handles It All,19,19,100.0
+2026-01,Operation Better Block,14,0,0.0
+2026-02,Amani Christian CDC,37,0,0.0
+2026-02,Center That CARES,26,0,0.0
+2026-02,Chatman Properties,199,24,12.1
+2026-02,Ervin Home Beautification,115,79,68.7
+2026-02,FHCV Contracting LLC & LawnCare,20,0,0.0
+2026-02,Hilltop Rising,236,0,0.0
+2026-02,KRJ Enterprises,334,0,0.0
+2026-02,One Call Handles It All,19,19,100.0
+2026-02,Operation Better Block,14,0,0.0
+2026-03,Amani Christian CDC Primary Contact,37,24,64.9
+2026-03,Center That CARES Primary Contact,23,3,13.0
+2026-03,Chatman Properties Primary Contact,192,83,43.2
+2026-03,Ervin Home Beautification Primary Contact,115,66,57.4
+2026-03,FHCV Contracting LLC & LawnCare Primary Contact,20,0,0.0
+2026-03,Hilltop Rising Primary Contact,208,0,0.0
+2026-03,KRJ Enterprises Primary Contact,318,269,84.6
+2026-03,One Call Handles It All Primary Contact,19,19,100.0
+2026-03,Operation Better Block Primary Contact,14,0,0.0
+2026-03,Unassigned,1,0,0.0
+2026-04,Amani Christian CDC,37,0,0.0
+2026-04,Center That CARES,26,0,0.0
+2026-04,Chatman Properties,199,3,1.5
+2026-04,Ervin Home Beautification,112,73,65.2
+2026-04,FHCV Contracting LLC & LawnCare,20,12,60.0
+2026-04,Hilltop Rising,235,33,14.0
+2026-04,KRJ Enterprises,330,4,1.2
+2026-04,One Call Handles It All,17,17,100.0
+2026-04,Operation Better Block,14,0,0.0
