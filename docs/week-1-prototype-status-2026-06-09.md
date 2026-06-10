@@ -40,6 +40,12 @@ Date: June 9, 2026
 - Confirm public-sharing rules for parcel-level data before publishing beyond internal review.
 - Add a repeatable refresh checklist for PostgreSQL export, validation, and deployment.
 
+## Future Product Notes
+
+- Add a map view where contractor is the primary parcel color legend. This should make it easier to compare contractor coverage alongside survey status and last surveyed period.
+- Keep survey status, contractor, and last surveyed period available as separate visual modes or coordinated filters. Avoid one map legend trying to encode too many meanings at once.
+- For reassignment planning, compare contractor workload by total parcel area, not only parcel count. Reassignment ranges should keep total maintained area reasonably balanced across contractors.
+
 ## Next Practical Step
 
 Use this prototype as the Week 1 demo surface. For Week 2, focus on data definition alignment, ownership logic, and a deployment path that can support future ArcGIS Online or vector-tile integration.

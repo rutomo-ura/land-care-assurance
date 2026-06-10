@@ -36,12 +36,27 @@ The first phase focuses on work the GIS and analyst team controls:
 
 - `raw_notes/20260605-oscar-brief.md`: original rough brief.
 - `docs/meeting-notes/2026-06-05-land-care-assurance.md`: cleaned meeting notes with confirmed items, assumptions, and next actions.
+- `docs/week-1-prototype-status-2026-06-09.md`: Week 1 prototype status, current stack, data notes, and next steps.
 - `docs/project-scope.md`: scoped project definition for GIS and analyst-controlled work.
 - `docs/modular-work-plan.md`: module-level work plan tied to scripts, tables, dashboard pages, and metrics.
 - `docs/north-star-vision.md`: longer-term vision for a parcel-state assurance system.
 - `docs/concept-prioritization-model.md`: completion-propensity prioritization concept for a later phase.
 - `plan/Kickoff-rizaldy-assignment.md`: 2-week kickoff plan.
 - `plan/week-1-day-1-baseline-qa.md`: Day 1 checklist and manual SQL query sequence.
+- `prototype/`: working LandCare map dashboard prototype with static app files, generated dashboard data, data-prep script, and read-only SQL export.
+
+## Prototype Progress
+
+Week 1 produced a working map dashboard prototype.
+
+- Pulled current LandCare assignment and survey data from PostgreSQL with read-only SQL.
+- Rendered real parcel geometry on a Leaflet map with a CARTO Positron basemap.
+- Added filters for month, contractor, survey status, and ownership.
+- Added KPIs for assigned parcels, returned surveys, Active completion, open assignments, and ownership focus.
+- Added contractor ranking and action-focus panels.
+- Added normalized owner matching for URA and Pittsburgh Land Bank variants.
+- Captured Power BI reference metrics for assigned parcels, returned surveys, and ownership counts.
+- Documented the current stack and the likely next stack path: PostGIS, GeoPandas/GDAL, Leaflet now, Mapbox GL or MapLibre vector tiles later.
 
 ## Source Links
 
@@ -51,6 +66,11 @@ The first phase focuses on work the GIS and analyst team controls:
 - LandCare data on the G drive: `G:\Public\LandCare\Y10-11 2025-2027 wPLB`
 - LandCare data UNC path: `\\ura-fs\share\Public\LandCare\Y10-11 2025-2027 wPLB`
 
-## Current Next Step
+## Current Next Steps
 
-Run the Week 1 Day 1 baseline QA checklist in `plan/week-1-day-1-baseline-qa.md`. The immediate deliverable is a short findings note with assignment count, returned survey count, Active-only completion rate, Request Only returned count, dashboard filter settings, and any reconciliation gaps.
+- Confirm the deployment path for the prototype.
+- Reconcile ownership definitions against Power BI and URA/PLB business rules.
+- Add a contractor-colored map mode for comparing coverage, survey status, and last surveyed period.
+- Use total parcel area, not only parcel count, when testing reassignment scenarios.
+- Move the data-prep path toward GeoPandas, GDAL/pyogrio, and Shapely when the export workflow is ready to mature.
+- Decide when the app should move from static GeoJSON to vector tiles or an API-backed map service.
