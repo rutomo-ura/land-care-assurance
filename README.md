@@ -35,6 +35,7 @@ The first phase focuses on work the GIS and analyst team controls:
 ## Repository Structure
 
 - `raw_notes/20260605-oscar-brief.md`: original rough brief.
+- `docs/agent-handoff-knowledge.md`: living handoff knowledge for future agent sessions.
 - `docs/meeting-notes/2026-06-05-land-care-assurance.md`: cleaned meeting notes with confirmed items, assumptions, and next actions.
 - `docs/week-1-prototype-status-2026-06-09.md`: Week 1 prototype status, current stack, data notes, and next steps.
 - `docs/project-scope.md`: scoped project definition for GIS and analyst-controlled work.
