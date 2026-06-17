@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LandCare Assurance Proposal</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <style>
+      :root {
+        --ink: #111820;
+        --muted: #586872;
+        --line: #d8e4ea;
+        --panel: #f4f8fa;
+        --panel-strong: #ffffff;
+        --accent: #0098d3;
+        --accent-dark: #006c9f;
+        --accent-deep: #00334f;
+        --accent-soft: #dff4fb;
+        --gold: #f0c24b;
+        --orange: #c2410c;
+        --teal: #008f9f;
+        --purple: #554a8f;
+        --gray-band: #c7d0d5;
+        --shadow: 0 16px 36px rgba(0, 47, 76, 0.16);
+        --header-height: 94px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+        font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .site-header {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 18px;
+        min-height: var(--header-height);
+        padding: 12px 22px;
+        color: #ffffff;
+        background: var(--accent);
+        border-bottom: 1px solid rgba(0, 74, 112, 0.35);
+      }
+
+      .brand-lockup {
+        display: inline-grid;
+        place-items: center;
+        width: 98px;
+        height: 42px;
+        color: var(--accent-deep);
+        background: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        font-size: 24px;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .site-title {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+      }
+
+      .site-kicker {
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: lowercase;
+      }
+
+      .site-title strong {
+        color: #ffffff;
+        font-size: clamp(21px, 2vw, 30px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .site-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .site-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 0 15px;
+        color: var(--accent-deep);
+        background: #ffffff;
+        border: 2px solid #ffffff;
+        border-radius: 0;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .site-links a:hover {
+        color: #ffffff;
+        background: transparent;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: minmax(660px, 1fr) minmax(440px, 500px);
+        height: calc(100vh - var(--header-height));
+        min-height: 720px;
+      }
+
+      .map-panel {
+        position: relative;
+        min-width: 0;
+        border-right: 1px solid var(--line);
+      }
+
+      #viewDiv {
+        height: 100%;
+      }
+
+      .map-legend,
+      .map-status,
+      .map-callout {
+        position: absolute;
+        z-index: 5;
+        max-width: min(390px, calc(100% - 32px));
+        color: #263338;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(0, 152, 211, 0.25);
+        border-radius: 0;
+        box-shadow: var(--shadow);
+      }
+
+      .map-legend {
+        right: 18px;
+        bottom: 18px;
+        width: 330px;
+        padding: 13px;
+      }
+
+      .map-callout {
+        left: 18px;
+        bottom: 18px;
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+        border-left: 5px solid var(--accent);
+      }
+
+      .map-callout strong {
+        font-size: 15px;
+      }
+
+      .map-callout span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .map-status {
+        left: 18px;
+        top: 18px;
+        padding: 9px 12px;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .legend-heading,
+      .eyebrow,
+      .detail-label {
+        color: var(--accent-dark);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .legend-heading {
+        margin-bottom: 8px;
+      }
+
+      .legend-items {
+        display: grid;
+        gap: 7px;
+      }
+
+      .legend-item {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-height: 25px;
+      }
+
+      .swatch {
+        width: 18px;
+        height: 18px;
+        border: 1px solid rgba(24, 34, 38, 0.45);
+      }
+
+      .legend-label,
+      .legend-count {
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .legend-count {
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .insight-panel {
+        overflow: auto;
+        background: var(--panel);
+        padding: 24px 24px 30px;
+        border-left: 5px solid var(--accent);
+      }
+
+      .report-header {
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin: 8px 0 10px;
+        font-size: 33px;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 10px;
+        color: var(--ink);
+        font-size: 17px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 14.5px;
+        line-height: 1.58;
+      }
+
+      code {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      .module-tabs {
+        position: sticky;
+        top: 0;
+        z-index: 8;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin: 16px -2px 0;
+        padding: 10px 0 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+
+      button,
+      .button-like {
+        min-height: 36px;
+        border: 2px solid var(--accent);
+        border-radius: 0;
+        color: var(--ink);
+        background: #ffffff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      button:hover,
+      .button-like:hover {
+        color: #ffffff;
+        background: var(--accent);
+      }
+
+      .module-tab.is-active,
+      .scenario-button.is-active {
+        color: #ffffff;
+        background: var(--accent-dark);
+        border-color: var(--accent-dark);
+      }
+
+      .module-panel {
+        display: none;
+      }
+
+      .module-panel.is-active {
+        display: block;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+      }
+
+      .kpi,
+      .status-card,
+      .module-brief,
+      .chart-card,
+      .scenario-card,
+      .flow-step,
+      .table-wrap {
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+        border-radius: 0;
+      }
+
+      .kpi {
+        min-height: 86px;
+        padding: 14px;
+        border-top: 4px solid var(--accent);
+      }
+
+      .kpi-value {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--accent);
+        font-size: 29px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .kpi-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .section {
+        padding: 18px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .status-grid,
+      .flow-grid,
+      .scenario-grid,
+      .chart-section {
+        display: grid;
+        gap: 10px;
+      }
+
+      .status-card,
+      .module-brief,
+      .chart-card,
+      .scenario-card,
+      .flow-step {
+        padding: 13px;
+      }
+
+      .status-card {
+        border-left: 5px solid #8b979d;
+      }
+
+      .status-card.is-live,
+      .flow-step.is-active {
+        border-left-color: var(--accent);
+      }
+
+      .status-card span,
+      .module-status,
+      .flow-step span {
+        display: inline-flex;
+        width: fit-content;
+        min-height: 22px;
+        align-items: center;
+        padding: 0 7px;
+        color: #ffffff;
+        background: #687579;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .status-card.is-live span,
+      .module-status.is-live-status,
+      .flow-step.is-active span {
+        background: var(--accent-dark);
+      }
+
+      .status-card strong,
+      .flow-step strong {
+        display: block;
+        margin: 9px 0 5px;
+        font-size: 16px;
+      }
+
+      .module-brief {
+        display: grid;
+        gap: 9px;
+        margin: 18px 0 12px;
+        border-top: 4px solid var(--accent);
+      }
+
+      .scenario-controls {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .scenario-card {
+        border-top: 4px solid var(--accent);
+      }
+
+      .scenario-card.is-warning {
+        border-top-color: var(--gold);
+      }
+
+      .scenario-card.is-risk {
+        border-top-color: var(--orange);
+      }
+
+      .native-chart {
+        display: grid;
+        gap: 9px;
+        padding-top: 2px;
+      }
+
+      .chart-row {
+        display: grid;
+        grid-template-columns: minmax(130px, 0.9fr) minmax(90px, 1fr) minmax(52px, auto);
+        align-items: center;
+        gap: 10px;
+        min-height: 26px;
+      }
+
+      .chart-label,
+      .chart-value {
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .chart-track {
+        height: 12px;
+        background: #d9edf4;
+        overflow: hidden;
+      }
+
+      .chart-bar {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+      }
+
+      .chart-value {
+        color: var(--accent-dark);
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .table-wrap {
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 10px 11px;
+        border-bottom: 1px solid #e7ecea;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #ffffff;
+        background: var(--accent-dark);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .download-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 12px;
+        color: #ffffff;
+        background: var(--accent-dark);
+        border: 2px solid var(--accent-dark);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .download-link:hover {
+        color: var(--accent-deep);
+        background: #ffffff;
+      }
+
+      @media (max-width: 1040px) {
+        :root {
+          --header-height: auto;
+        }
+
+        .site-header {
+          grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        .site-links {
+          grid-column: 1 / -1;
+          justify-content: flex-start;
+        }
+
+        .app-shell {
+          grid-template-columns: 1fr;
+          grid-template-rows: 58vh auto;
+          height: auto;
+          min-height: 0;
+        }
+
+        .map-panel {
+          min-height: 430px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .insight-panel {
+          overflow: visible;
+        }
+
+        .module-tabs {
+          position: static;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .site-header {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 12px 16px;
+        }
+
+        .site-links,
+        .module-tabs,
+        .scenario-controls,
+        .kpi-grid {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        h1 {
+          font-size: 25px;
+        }
+
+        .insight-panel {
+          padding: 18px 15px 24px;
+          border-left: 0;
+          border-top: 5px solid var(--accent);
+        }
+
+        .map-legend,
+        .map-callout {
+          display: none;
+        }
+
+        .chart-row {
+          grid-template-columns: 1fr auto;
+        }
+
+        .chart-track {
+          grid-column: 1 / -1;
+          grid-row: 2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header" aria-label="URA proposal header">
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">URA</a>
+      <div class="site-title">
+        <span class="site-kicker">land care assurance proposal</span>
+        <strong>Monitoring, map view, bundle QA, and survey workflow modernization</strong>
+      </div>
+      <nav class="site-links" aria-label="Proposal links">
+        <a href="../landcare-two-month-scope-proposal.md">Plan</a>
+        <a href="../landcare-proposal-deck-brief.md">Deck Brief</a>
+      </nav>
+    </header>
+
+    <main class="app-shell">
+      <section class="map-panel" aria-label="Pittsburgh LandCare proposal map">
+        <div id="viewDiv"></div>
+        <div class="map-status" id="mapStatus">Loading Pittsburgh assurance map...</div>
+        <div class="map-callout" id="mapCallout">
+          <strong>Citywide LandCare operating view</strong>
+          <span>Use the right panel to toggle assurance, bundle, and survey workflow views.</span>
+        </div>
+        <div class="map-legend" id="mapLegend" aria-label="LandCare map legend"></div>
+      </section>
+
+      <aside class="insight-panel" aria-label="LandCare assurance proposal dashboard">
+        <header class="report-header">
+          <span class="eyebrow">Two-month scope</span>
+          <h1>Turn LandCare from a monthly export into an assurance system.</h1>
+          <p>
+            This proposal demo uses the same ArcGIS-style Pittsburgh map pattern as the vacant-land triage work.
+            It shows how the two-month scope can monitor assignments, validate the denominator, create pseudo survey bundles,
+            and prepare an ArcGIS or web-form path beyond fragile Regrid handoffs.
+          </p>
+        </header>
+
+        <nav class="module-tabs" aria-label="Proposal modules">
+          <button class="module-tab is-active" type="button" data-module="overview">Overview</button>
+          <button class="module-tab" type="button" data-module="monitoring">Monitoring</button>
+          <button class="module-tab" type="button" data-module="bundle">Bundle QA</button>
+          <button class="module-tab" type="button" data-module="workflow">Survey Flow</button>
+          <button class="module-tab" type="button" data-module="roadmap">Roadmap</button>
+          <button class="module-tab" type="button" data-module="deck">Deck</button>
+        </nav>
+
+        <section class="module-panel is-active" data-panel="overview">
+          <section class="kpi-grid" aria-label="Proposal KPIs">
+            <article class="kpi">
+              <span class="kpi-value">1,214</span>
+              <span class="kpi-label">current assigned parcels reference</span>
+            </article>
+            <article class="kpi">
+              <span class="kpi-value">142</span>
+              <span class="kpi-label">returned survey reference</span>
+            </article>
+            <article class="kpi">
+              <span class="kpi-value">14.0%</span>
+              <span class="kpi-label">active-only completion from QA note</span>
+            </article>
+            <article class="kpi">
+              <span class="kpi-value">2 mo</span>
+              <span class="kpi-label">proposal delivery window</span>
+            </article>
+          </section>
+
+          <section class="status-grid section">
+            <article class="status-card is-live">
+              <span>Phase 1</span>
+              <strong>Monitor and validate</strong>
+              <p>Make assigned, returned, open, stale, and excluded parcels visible on a Pittsburgh map.</p>
+            </article>
+            <article class="status-card">
+              <span>Phase 2</span>
+              <strong>Optimize bundles</strong>
+              <p>Use geography, acreage, capacity, and historical returns to compare current vs proposed assignments.</p>
+            </article>
+            <article class="status-card">
+              <span>Phase 3</span>
+              <strong>Modernize survey intake</strong>
+              <p>Wrap Regrid behind a shared survey contract while piloting ArcGIS Field Maps, Survey123, or a web form.</p>
+            </article>
+          </section>
+        </section>
+
+        <section class="module-panel" data-panel="monitoring">
+          <section class="module-brief">
+            <span class="module-status is-live-status">Operating view</span>
+            <h2>Monitoring should explain the low completion number.</h2>
+            <p>
+              The map distinguishes valid open assignments from returned surveys and data-integrity exceptions.
+              It also keeps Active and Request Only out of one blended compliance denominator.
+            </p>
+          </section>
+          <section class="chart-section">
+            <div class="chart-card">
+              <h2>Metric Funnel</h2>
+              <div class="native-chart" id="funnelChart"></div>
+            </div>
+            <div class="chart-card">
+              <h2>Contractor Compliance Lens</h2>
+              <div class="native-chart" id="contractorChart"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="module-panel" data-panel="bundle">
+          <section class="module-brief">
+            <span class="module-status is-live-status">Pseudo demo</span>
+            <h2>Bundle creation should become an assurance gate, not just a CSV export.</h2>
+            <p>
+              Today, assignment creation is a tag-filtered export from `gis.epp_snapshot`. This demo shows
+              how a future monthly bundle step can validate ownership, balance workload, and create survey-ready groups.
+            </p>
+          </section>
+
+          <div class="scenario-controls" aria-label="Bundle scenario controls">
+            <button class="scenario-button is-active" type="button" data-scenario="current">Current Export</button>
+            <button class="scenario-button" type="button" data-scenario="qa">QA Holdout</button>
+            <button class="scenario-button" type="button" data-scenario="optimized">Optimized Bundle</button>
+          </div>
+
+          <section class="scenario-grid" id="scenarioCards"></section>
+
+          <section class="section">
+            <h2>Pseudo Bundle-To-Survey Creation</h2>
+            <div class="flow-grid">
+              <article class="flow-step is-active">
+                <span>1</span>
+                <strong>Candidate universe</strong>
+                <p>Read LandCare Active and Request Only tags from the assignment source.</p>
+              </article>
+              <article class="flow-step is-active">
+                <span>2</span>
+                <strong>Ownership and parcel-key QA</strong>
+                <p>Hold sold, transferred, duplicate, stale, or unmatched parcels before the Regrid/ArcGIS handoff.</p>
+              </article>
+              <article class="flow-step">
+                <span>3</span>
+                <strong>Bundle optimization</strong>
+                <p>Group parcels by geography, acreage, contractor capacity, and historical completion patterns.</p>
+              </article>
+              <article class="flow-step">
+                <span>4</span>
+                <strong>Survey package</strong>
+                <p>Emit assignment CSV, ArcGIS hosted layer, or web-form task list using the same survey contract.</p>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <section class="module-panel" data-panel="workflow">
+          <section class="module-brief">
+            <span class="module-status is-live-status">Regrid context</span>
+            <h2>Observed Regrid project context should shape, not dominate, the workflow.</h2>
+            <p>
+              Chrome showed the URA Regrid profile with the LandCare Network project in Pittsburgh and attached
+              datasets labeled `Survey 727` and `CSV 1,191`. The proposal keeps that current path working while
+              creating a platform-neutral intake contract.
+            </p>
+          </section>
+          <section class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Current workflow piece</th>
+                  <th>Proposal treatment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LandCare Network project in Regrid</td>
+                  <td>Keep as current operating reference while the pilot proves an ArcGIS/web intake path.</td>
+                </tr>
+                <tr>
+                  <td>Survey dataset and CSV dataset</td>
+                  <td>Map both into one normalized survey submissions contract: parcel, period, contractor, status, photo, geotag.</td>
+                </tr>
+                <tr>
+                  <td>Per-period export URL and personal/shared login risk</td>
+                  <td>Track as a Phase 3 risk; reduce manual dependency before deciding full replacement.</td>
+                </tr>
+                <tr>
+                  <td>Surveyor field form</td>
+                  <td>Pilot Survey123, Field Maps, Experience Builder, or a lightweight web form against the same contract.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="module-panel" data-panel="roadmap">
+          <section class="module-brief">
+            <span class="module-status is-live-status">Two months</span>
+            <h2>Roadmap from trusted baseline to pilot.</h2>
+            <p>Each two-week block creates a usable artifact for leadership and operations.</p>
+          </section>
+          <section class="status-grid">
+            <article class="status-card is-live"><span>Weeks 1-2</span><strong>Baseline and integrity</strong><p>Reconcile metrics, document monthly automation, and create exception logic.</p></article>
+            <article class="status-card"><span>Weeks 3-4</span><strong>Monitoring product</strong><p>Publish map-first assignment and compliance views.</p></article>
+            <article class="status-card"><span>Weeks 5-6</span><strong>Optimization prototype</strong><p>Compare current export to QA and optimized bundle scenarios.</p></article>
+            <article class="status-card"><span>Weeks 7-8</span><strong>Survey intake pilot</strong><p>Specify or pilot ArcGIS/web forms and recommend Regrid keep/wrap/reduce/replace.</p></article>
+          </section>
+        </section>
+
+        <section class="module-panel" data-panel="deck">
+          <section class="module-brief">
+            <span class="module-status is-live-status">Deck ready</span>
+            <h2>Use this demo as the deck's visual anchor.</h2>
+            <p>The deck should use this URA-blue map-first style: square panels, blue headers, white cards, Pittsburgh map views, and gold/orange only for status meaning.</p>
+          </section>
+          <a class="download-link" href="../landcare-proposal-deck-brief.md">Open Deck Brief</a>
+          <a class="download-link" href="../landcare-two-month-scope-proposal.md">Open Scope Plan</a>
+        </section>
+      </aside>
+    </main>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      const colors = {
+        returned: "#0098d3",
+        open: "#f0c24b",
+        flagged: "#c2410c",
+        optimized: "#554a8f",
+        current: "#586872",
+        teal: "#008f9f"
+      };
+
+      const scenarioData = {
+        current: {
+          title: "Current tag-filtered export",
+          cards: [
+            ["Assigned", "1,214", "LandCare tags exported to monthly assignment"],
+            ["Returned", "142", "Survey responses matched back to assignment keys"],
+            ["Risk", "No QA gate", "Ownership and sold-parcel checks happen after the fact"]
+          ],
+          mode: "current"
+        },
+        qa: {
+          title: "QA holdout before survey package",
+          cards: [
+            ["Valid assignments", "1,148", "Illustrative denominator after ownership review"],
+            ["Held for review", "66", "Gap consistent with stale or non-URA/PLB ownership risk"],
+            ["Action", "Exception log", "Every exclusion needs a reason code before assignment"]
+          ],
+          mode: "qa"
+        },
+        optimized: {
+          title: "Optimized monthly bundle",
+          cards: [
+            ["Bundle A", "North/East", "Compact group for one contractor"],
+            ["Bundle B", "Central", "Balanced by parcel count and acreage"],
+            ["Bundle C", "South/West", "Scenario based on history and geography"]
+          ],
+          mode: "optimized"
+        }
+      };
+
+      const layerModes = {
+        overview: "overview",
+        monitoring: "monitoring",
+        bundle: "bundle",
+        workflow: "workflow",
+        roadmap: "overview",
+        deck: "overview"
+      };
+
+      const pittsburghPoints = [
+        { name: "Homewood North", lon: -79.8958, lat: 40.4587, contractor: "KRJ Enterprises", status: "returned", bundle: "A", acres: 0.18 },
+        { name: "Larimer", lon: -79.9129, lat: 40.4665, contractor: "Operation Better Block", status: "open", bundle: "A", acres: 0.11 },
+        { name: "Lincoln-Lemington", lon: -79.8997, lat: 40.4764, contractor: "Amani Christian CDC", status: "flagged", bundle: "A", acres: 0.23 },
+        { name: "Middle Hill", lon: -79.9722, lat: 40.4497, contractor: "Center That CARES", status: "returned", bundle: "B", acres: 0.08 },
+        { name: "Hill District", lon: -79.9667, lat: 40.4451, contractor: "Hilltop Rising", status: "open", bundle: "B", acres: 0.2 },
+        { name: "Hazelwood", lon: -79.9415, lat: 40.4098, contractor: "FHCV Contracting", status: "returned", bundle: "B", acres: 0.31 },
+        { name: "Perry South", lon: -80.014, lat: 40.4682, contractor: "One Call Handles It All", status: "open", bundle: "C", acres: 0.16 },
+        { name: "Manchester", lon: -80.0249, lat: 40.4548, contractor: "Chatman Properties", status: "flagged", bundle: "C", acres: 0.09 },
+        { name: "South Side Slopes", lon: -79.9731, lat: 40.4235, contractor: "Ervin Home Beautification", status: "returned", bundle: "C", acres: 0.14 },
+        { name: "Knoxville", lon: -79.9913, lat: 40.4142, contractor: "Hilltop Rising", status: "optimized", bundle: "C", acres: 0.12 }
+      ];
+
+      const funnelData = [
+        { label: "Assignment candidates", value: 1214, color: colors.current },
+        { label: "Active expected", value: 1011, color: colors.open },
+        { label: "Returned matched", value: 142, color: colors.returned },
+        { label: "Potential ownership gap", value: 66, color: colors.flagged }
+      ];
+
+      const contractorData = [
+        { label: "KRJ Enterprises", value: 22, color: colors.returned },
+        { label: "Hilltop Rising", value: 18, color: colors.returned },
+        { label: "Center That CARES", value: 16, color: colors.returned },
+        { label: "FHCV Contracting", value: 13, color: colors.returned },
+        { label: "One Call Handles It All", value: 9, color: colors.returned }
+      ];
+
+      const mapState = {
+        graphicsLayer: null,
+        view: null,
+        mode: "overview",
+        scenario: "current"
+      };
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;"
+        }[char]));
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat("en-US").format(value);
+      }
+
+      function renderLegend(mode) {
+        const legend = document.getElementById("mapLegend");
+        const items = [
+          ["Returned", colors.returned, "matched survey"],
+          ["Open", colors.open, "valid but not returned"],
+          ["Exception", colors.flagged, "hold for review"],
+          ["Optimized", colors.optimized, "proposed bundle"]
+        ];
+        legend.innerHTML = `
+          <div class="legend-heading">${escapeHtml(mode === "bundle" ? "Bundle / Survey Scenario" : "Assignment Status")}</div>
+          <div class="legend-items">
+            ${items.map(([label, color, count]) => `
+              <div class="legend-item">
+                <span class="swatch" style="background:${color}"></span>
+                <span class="legend-label">${label}</span>
+                <span class="legend-count">${count}</span>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderBarChart(containerId, data) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const maxValue = Math.max(...data.map((item) => item.value));
+        container.innerHTML = data.map((item) => {
+          const width = Math.max((item.value / maxValue) * 100, 4);
+          return `
+            <div class="chart-row">
+              <div class="chart-label">${escapeHtml(item.label)}</div>
+              <div class="chart-track"><span class="chart-bar" style="width:${width}%;background:${item.color}"></span></div>
+              <div class="chart-value">${formatNumber(item.value)}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderScenarioCards(scenarioName) {
+        const scenario = scenarioData[scenarioName];
+        const container = document.getElementById("scenarioCards");
+        container.innerHTML = scenario.cards.map(([label, value, note], index) => `
+          <article class="scenario-card ${index === 2 && scenarioName !== "optimized" ? "is-risk" : ""}">
+            <span class="detail-label">${escapeHtml(label)}</span>
+            <h2>${escapeHtml(value)}</h2>
+            <p>${escapeHtml(note)}</p>
+          </article>
+        `).join("");
+      }
+
+      function activateModule(moduleName) {
+        document.querySelectorAll("[data-module]").forEach((tab) => {
+          tab.classList.toggle("is-active", tab.dataset.module === moduleName);
+        });
+        document.querySelectorAll("[data-panel]").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.dataset.panel === moduleName);
+        });
+        mapState.mode = layerModes[moduleName] || "overview";
+        window.updateMapGraphics();
+      }
+
+      function setScenario(scenarioName) {
+        mapState.scenario = scenarioName;
+        document.querySelectorAll("[data-scenario]").forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.scenario === scenarioName);
+        });
+        renderScenarioCards(scenarioName);
+        window.updateMapGraphics();
+      }
+
+      document.querySelectorAll("[data-module]").forEach((button) => {
+        button.addEventListener("click", () => activateModule(button.dataset.module));
+      });
+
+      document.querySelectorAll("[data-scenario]").forEach((button) => {
+        button.addEventListener("click", () => setScenario(button.dataset.scenario));
+      });
+
+      renderLegend("overview");
+      renderBarChart("funnelChart", funnelData);
+      renderBarChart("contractorChart", contractorData);
+      renderScenarioCards("current");
+
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/GraphicsLayer",
+        "esri/layers/FeatureLayer",
+        "esri/Graphic",
+        "esri/geometry/Point",
+        "esri/geometry/Polyline",
+        "esri/widgets/Home",
+        "esri/widgets/Search",
+        "esri/widgets/BasemapToggle",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend"
+      ], (Map, MapView, GraphicsLayer, FeatureLayer, Graphic, Point, Polyline, Home, Search, BasemapToggle, Expand, Legend) => {
+        const assignmentLayer = new GraphicsLayer({ title: "Pseudo LandCare assignments" });
+        mapState.graphicsLayer = assignmentLayer;
+
+        const neighborhoodLayer = new FeatureLayer({
+          url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
+          title: "City Neighborhoods",
+          opacity: 0.2,
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: [0, 152, 211, 0.04],
+              outline: { color: [0, 108, 159, 0.45], width: 0.7 }
+            }
+          },
+          popupEnabled: false
+        });
+
+        const councilLayer = new FeatureLayer({
+          url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0",
+          title: "Council Districts",
+          visible: false,
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: [240, 194, 75, 0.05],
+              outline: { color: [158, 116, 17, 0.75], width: 1.2 }
+            }
+          },
+          popupEnabled: false
+        });
+
+        const map = new Map({
+          basemap: "topo-vector",
+          layers: [neighborhoodLayer, councilLayer, assignmentLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map,
+          center: [-79.9959, 40.4406],
+          zoom: 12,
+          constraints: { minZoom: 10 },
+          popup: {
+            dockEnabled: true,
+            dockOptions: { buttonEnabled: false, breakpoint: false, position: "bottom-left" }
+          }
+        });
+
+        mapState.view = view;
+        view.ui.add(new Home({ view }), "top-left");
+        view.ui.add(new Search({ view, includeDefaultSources: true }), "top-right");
+        view.ui.add(new BasemapToggle({ view, nextBasemap: "satellite" }), "bottom-right");
+        view.ui.add(new Expand({
+          view,
+          content: new Legend({ view, layerInfos: [{ layer: neighborhoodLayer }, { layer: councilLayer }] }),
+          expanded: false
+        }), "top-left");
+
+        window.updateMapGraphics = function updateMapGraphics() {
+          if (!mapState.graphicsLayer) return;
+          assignmentLayer.removeAll();
+          councilLayer.visible = mapState.mode === "bundle";
+
+          const currentScenario = scenarioData[mapState.scenario] || scenarioData.current;
+          const showOptimized = mapState.mode === "bundle" && currentScenario.mode === "optimized";
+          const showQA = mapState.mode === "bundle" && currentScenario.mode === "qa";
+          const visiblePoints = pittsburghPoints.filter((point) => {
+            if (showOptimized) return true;
+            if (showQA) return point.status !== "flagged";
+            return mapState.mode !== "workflow" || point.status === "returned" || point.status === "open";
+          });
+
+          const symbolFor = (point) => {
+            const status = showOptimized ? (point.status === "flagged" ? "flagged" : "optimized") : point.status;
+            return {
+              type: "simple-marker",
+              style: status === "flagged" ? "triangle" : "square",
+              color: colors[status] || colors.current,
+              size: status === "flagged" ? 13 : 11,
+              outline: { color: "#ffffff", width: 1.4 }
+            };
+          };
+
+          visiblePoints.forEach((point) => {
+            assignmentLayer.add(new Graphic({
+              geometry: new Point({ longitude: point.lon, latitude: point.lat }),
+              symbol: symbolFor(point),
+              attributes: point,
+              popupTemplate: {
+                title: "{name}",
+                content: `
+                  <b>Contractor:</b> {contractor}<br>
+                  <b>Status:</b> {status}<br>
+                  <b>Bundle:</b> {bundle}<br>
+                  <b>Acres:</b> {acres}
+                `
+              }
+            }));
+          });
+
+          if (showOptimized) {
+            ["A", "B", "C"].forEach((bundle) => {
+              const bundlePoints = visiblePoints.filter((point) => point.bundle === bundle);
+              if (bundlePoints.length < 2) return;
+              assignmentLayer.add(new Graphic({
+                geometry: new Polyline({
+                  paths: [bundlePoints.map((point) => [point.lon, point.lat])]
+                }),
+                symbol: {
+                  type: "simple-line",
+                  color: bundle === "A" ? colors.returned : bundle === "B" ? colors.teal : colors.optimized,
+                  width: 2.4,
+                  style: "short-dash"
+                }
+              }));
+            });
+          }
+
+          const callout = document.getElementById("mapCallout");
+          const status = document.getElementById("mapStatus");
+          const modeLabels = {
+            overview: ["Citywide LandCare operating view", "Pseudo parcels are placed across Pittsburgh neighborhoods for proposal storytelling."],
+            monitoring: ["Monitoring view", "Blue returned, gold open, orange exceptions. Use this to separate data issues from contractor compliance."],
+            bundle: [currentScenario.title, "Scenario map changes with Current Export, QA Holdout, and Optimized Bundle controls."],
+            workflow: ["Survey intake workflow", "Returned and open points represent the minimum contract that Regrid, ArcGIS, or a web form should feed."]
+          };
+          const [title, text] = modeLabels[mapState.mode] || modeLabels.overview;
+          callout.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span>`;
+          status.textContent = "ArcGIS basemap, City neighborhoods, Council district reference, and pseudo LandCare assignments loaded.";
+          renderLegend(mapState.mode);
+        };
+
+        view.when(() => {
+          updateMapGraphics();
+          view.goTo({ center: [-79.9959, 40.4406], zoom: 12 }, { duration: 500 }).catch(() => {});
+        }).catch(() => {
+          document.getElementById("mapStatus").textContent = "Map could not load. Check ArcGIS CDN/network access.";
+        });
+      });
+
+      window.updateMapGraphics = window.updateMapGraphics || function noop() {};
+    </script>
+  </body>
+</html>

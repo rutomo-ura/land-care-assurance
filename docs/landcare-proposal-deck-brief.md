@@ -1,6 +1,6 @@
 # LandCare Assurance Proposal Deck Brief
 
-Use this as source material for a PowerPoint-building agent. The intended deck is 10-12 slides, executive-readable, and map-first. Keep the design operational and decision-oriented, not decorative.
+Use this as source material for a PowerPoint-building agent. The intended deck is 13 slides, executive-readable, and map-first. Keep the design operational and decision-oriented, not decorative.
 
 ## Deck Strategy
 
@@ -22,7 +22,11 @@ Visual language:
 
 - Use map views, contractor scorecards, funnel metrics, exception logs, and phase roadmap graphics.
 - Avoid generic technology imagery.
-- Use current prototype screenshots or simple mockups from the LandCare map dashboard where possible.
+- Use the interactive proposal page at `docs/proposal/index.html` as the primary visual reference. It is designed to publish at `/land-care-assurance/proposal/` through GitHub Pages.
+- Use current prototype screenshots or simple mockups from the LandCare map dashboard where useful, but lead with the ArcGIS-style Pittsburgh map demo.
+- Match the URA blue web theme used in the vacant-land triage map: primary blue `#0098d3`, dark blue `#006c9f`, deep navy `#00334f`, soft blue `#dff4fb`, muted blue-gray lines `#d8e4ea`, gold `#f0c24b` for open/warning states, and orange `#c2410c` for risk/exception states.
+- Use square-edged panels, tables, buttons, and callouts rather than rounded cards. The deck should feel like an operational civic dashboard: white panels, light blue-gray page bands, blue section headers, and map-first layouts.
+- Prefer Arial or Helvetica Neue, tight dashboard-scale headings, no negative letter spacing, and no decorative gradients.
 
 ## Slide Outline
 
@@ -125,7 +129,7 @@ Key points:
 
 Visual:
 
-- Dashboard wireframe with KPI strip, map, contractor panel, exception list.
+- Screenshot or recreation of the `/proposal/` monitoring map: returned, open, and exception parcels over Pittsburgh neighborhoods.
 
 Speaker note:
 
@@ -147,7 +151,7 @@ Key points:
 
 Visual:
 
-- Side-by-side "current assignment" and "optimized assignment" map or table.
+- Side-by-side "current assignment" and "optimized assignment" map/table using the pseudo bundle scenario from `/proposal/`.
 
 Speaker note:
 
@@ -329,3 +333,4 @@ Speaker note:
 - Keep every slide anchored to a business action: trust the data, adjust assignments, hold contractors accountable, or improve survey intake.
 - Do not over-index on model terminology. Use "optimization prototype" and "historical completion scoring" unless a specific model has been validated.
 - Use the two-month roadmap as the spine of the deck.
+- Style the deck in the same URA-blue system as the interactive web version and vacant-land triage web theme: blue header/accent bars, square white content panels, blue table headers, gold/orange only for status meaning, and minimal ornament.

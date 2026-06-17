@@ -2,6 +2,8 @@
 
 Prepared for a two-month delivery window. This proposal is written as a strategic scope, not a final technical specification. It assumes the team wants a practical path that improves LandCare success rate, contractor compliance visibility, and trust in the survey metrics without making a risky full-platform migration the first move.
 
+Interactive web demo: `docs/proposal/index.html`, publishable through GitHub Pages at `/land-care-assurance/proposal/` when the repo is served from the `docs` folder.
+
 ## Narrative Focus
 
 LandCare's low survey return rate is not a single dashboard problem. It is an operating-system problem: the assignment universe may include parcels that should not be surveyed, the headline completion metric can hide the difference between expected and request-only work, contractor performance is hard to compare fairly, and the survey workflow still depends on fragile handoffs around Regrid.
@@ -309,6 +311,15 @@ Integration:
 - Regrid submissions can continue temporarily if mapped into the same contract.
 - ArcGIS Survey123 or Field Maps should be evaluated first because they align with hosted layers and surveyor workflows.
 - The Regrid export URL step should be treated as a known operational risk until replaced by a managed integration or removed from the workflow.
+
+## Regrid Context To Preserve
+
+Read-only Chrome inspection of the URA Regrid profile showed the current `LandCare Network` project under Pittsburgh with attached datasets labeled `Survey 727` and `CSV 1,191`, last viewed on June 17, 2026. This supports the proposal's transition stance:
+
+- Treat Regrid as the current operating reference, not as the first thing to rip out.
+- Normalize Regrid survey and CSV outputs into one survey-submission contract.
+- Pilot ArcGIS or web-form intake against that same contract.
+- Decide whether to keep, wrap, reduce, or replace Regrid after the pilot proves field usability and data quality.
 
 ## Risks And Mitigations
 
