@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LandCare Assurance Two-Month Scope</title>
+  <style>
+    :root {
+      --ink: #1f2722;
+      --muted: #60706a;
+      --line: #d8ded8;
+      --surface: #f7f8f5;
+      --paper: #ffffff;
+      --green: #2e7d57;
+      --teal: #1f7a8c;
+      --gold: #b98119;
+      --red: #b24b3f;
+      --blue: #3e638f;
+      --shadow: 0 18px 44px rgba(31, 39, 34, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--surface);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--teal);
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 22px 60px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 30px;
+      align-items: center;
+      min-height: 84vh;
+      padding: 24px 0 32px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(2.4rem, 5vw, 5.3rem);
+      line-height: 0.97;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 690px;
+      margin: 24px 0 0;
+      color: #42524c;
+      font-size: 1.12rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 15px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .map-panel {
+      position: relative;
+      min-height: 470px;
+      overflow: hidden;
+      border: 1px solid #cfd8d0;
+      border-radius: 8px;
+      background: #e8ece6;
+      box-shadow: var(--shadow);
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.75;
+      background:
+        linear-gradient(110deg, transparent 0 10%, rgba(255,255,255,0.85) 10% 11%, transparent 11% 28%, rgba(255,255,255,0.8) 28% 29%, transparent 29%),
+        linear-gradient(18deg, transparent 0 18%, rgba(255,255,255,0.7) 18% 19%, transparent 19% 47%, rgba(255,255,255,0.75) 47% 48%, transparent 48%),
+        repeating-linear-gradient(90deg, rgba(53,72,64,0.12) 0 1px, transparent 1px 52px),
+        repeating-linear-gradient(0deg, rgba(53,72,64,0.10) 0 1px, transparent 1px 44px);
+    }
+
+    .parcel {
+      position: absolute;
+      width: 26px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.92);
+      border-radius: 3px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+    }
+
+    .parcel.returned { background: var(--green); }
+    .parcel.open { background: var(--gold); }
+    .parcel.flagged { background: var(--red); }
+    .parcel.optimized { background: var(--blue); }
+
+    .map-card {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(8px);
+    }
+
+    .map-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dot.open { background: var(--gold); }
+    .dot.flagged { background: var(--red); }
+    .dot.optimized { background: var(--blue); }
+
+    section {
+      padding: 42px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      max-width: 520px;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kpi,
+    .panel,
+    .phase,
+    .decision {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .kpi {
+      min-height: 132px;
+      padding: 14px;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.65rem;
+      line-height: 1;
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      min-height: 40px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab[aria-selected="true"] {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .phase {
+      padding: 18px;
+    }
+
+    .phase h3,
+    .panel h3,
+    .decision h3 {
+      margin: 0 0 10px;
+      font-size: 1.08rem;
+    }
+
+    .phase ul,
+    .panel ul,
+    .decision ul {
+      margin: 0;
+      padding-left: 19px;
+      color: #40504a;
+    }
+
+    .phase li,
+    .panel li,
+    .decision li {
+      margin: 8px 0;
+    }
+
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .roadmap .panel {
+      padding: 16px;
+      min-height: 210px;
+      border-top: 5px solid var(--green);
+    }
+
+    .roadmap .panel:nth-child(2) { border-top-color: var(--teal); }
+    .roadmap .panel:nth-child(3) { border-top-color: var(--gold); }
+    .roadmap .panel:nth-child(4) { border-top-color: var(--blue); }
+
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .decision {
+      padding: 18px;
+    }
+
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .compare th,
+    .compare td {
+      padding: 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .compare th {
+      background: #eef3ee;
+      color: #33433d;
+    }
+
+    .compare tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .deck {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .slide {
+      min-height: 132px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .slide b {
+      display: block;
+      color: var(--green);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .slide p {
+      margin: 0;
+      color: #40504a;
+    }
+
+    footer {
+      padding: 28px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 980px) {
+      header,
+      .split {
+        grid-template-columns: 1fr;
+      }
+
+      .kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .phase-grid,
+      .deck {
+        grid-template-columns: 1fr;
+      }
+
+      .roadmap {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        padding: 20px 14px 42px;
+      }
+
+      header {
+        min-height: auto;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .section-head p {
+        margin-top: 10px;
+      }
+
+      .kpis,
+      .roadmap {
+        grid-template-columns: 1fr;
+      }
+
+      .map-panel {
+        min-height: 410px;
+      }
+
+      .compare {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Two-month proposal</p>
+        <h1>LandCare Assurance scope for better survey success.</h1>
+        <p class="lede">A practical plan to stabilize monitoring, correct the metrics, make contractor compliance visible, optimize monthly bundles, and pilot a survey workflow that can reduce or replace legacy Regrid dependencies.</p>
+        <div class="actions">
+          <a class="button primary" href="#roadmap">View Roadmap</a>
+          <a class="button" href="landcare-two-month-scope-proposal.md">Open Markdown Plan</a>
+          <a class="button" href="landcare-proposal-deck-brief.md">Open Deck Brief</a>
+        </div>
+      </div>
+
+      <div class="map-panel" aria-label="Map-first operating view concept">
+        <div class="map-grid"></div>
+        <span class="parcel returned" style="left:13%;top:18%;transform:rotate(12deg)"></span>
+        <span class="parcel open" style="left:24%;top:28%;transform:rotate(-8deg)"></span>
+        <span class="parcel flagged" style="left:42%;top:22%;transform:rotate(5deg)"></span>
+        <span class="parcel optimized" style="left:68%;top:20%;transform:rotate(-14deg)"></span>
+        <span class="parcel returned" style="left:72%;top:36%;transform:rotate(10deg)"></span>
+        <span class="parcel open" style="left:55%;top:42%;transform:rotate(2deg)"></span>
+        <span class="parcel returned" style="left:31%;top:49%;transform:rotate(-16deg)"></span>
+        <span class="parcel flagged" style="left:16%;top:61%;transform:rotate(4deg)"></span>
+        <span class="parcel optimized" style="left:47%;top:63%;transform:rotate(-4deg)"></span>
+        <span class="parcel open" style="left:76%;top:62%;transform:rotate(8deg)"></span>
+        <div class="map-card">
+          <h2>Map-first operating layer</h2>
+          <p>Show assigned, returned, open, flagged, and optimized parcels by month and contractor.</p>
+          <div class="legend">
+            <span><i class="dot"></i> Returned</span>
+            <span><i class="dot open"></i> Open</span>
+            <span><i class="dot flagged"></i> Data issue</span>
+            <span><i class="dot optimized"></i> Optimized bundle</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="focus">
+      <div class="section-head">
+        <h2>Proposal Focus</h2>
+        <p>The work separates three things that are currently easy to blend together: invalid assignments, infeasible assignments, and contractor non-compliance.</p>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><strong>1</strong><span>Trusted monthly assignment denominator.</span></div>
+        <div class="kpi"><strong>2</strong><span>Correct Active and Request Only completion metrics.</span></div>
+        <div class="kpi"><strong>3</strong><span>Contractor compliance scorecard with fair context.</span></div>
+        <div class="kpi"><strong>4</strong><span>Map view by month, contractor, status, and exception.</span></div>
+        <div class="kpi"><strong>5</strong><span>Bundle optimization using geography, area, capacity, and history.</span></div>
+        <div class="kpi"><strong>6</strong><span>Survey form pilot path for ArcGIS or open-source web.</span></div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <div class="section-head">
+        <h2>Workflow Boundary</h2>
+        <p>The current monthly cycle is partly scheduled and partly manual. The proposal adds assurance gates around this cycle before attempting a full platform change.</p>
+      </div>
+      <table class="compare">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Status</th>
+            <th>Proposal Implication</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>15th, 3:00am: bundle assignment CSV</td>
+            <td>Scheduled through `bundle_assignment_creation.py`</td>
+            <td>Add pre-15th universe QA, ownership checks, and exclusion logging.</td>
+          </tr>
+          <tr>
+            <td>15th, 3:15am: assignments to SQL</td>
+            <td>Scheduled through `BundlesDriveToSQL.py`</td>
+            <td>Make assignment records carry valid denominator and exception fields.</td>
+          </tr>
+          <tr>
+            <td>15th, 3:30am: Regrid download</td>
+            <td>Scheduled, but dependent on Regrid export setup</td>
+            <td>Wrap Regrid behind a survey ingestion contract while piloting alternatives.</td>
+          </tr>
+          <tr>
+            <td>18th, 3:45am: survey upsert</td>
+            <td>Scheduled through `SurveysDriveToSQL.py`</td>
+            <td>Add post-18th compliance review and open-assignment monitoring.</td>
+          </tr>
+          <tr>
+            <td>Contracts, NetSuite, Regrid export URL</td>
+            <td>Manual or not fully automated</td>
+            <td>Track as operational risks and prioritize the Regrid URL in Phase 3.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="phases">
+      <div class="section-head">
+        <h2>Three Phases</h2>
+        <p>Click through the phase details. Each phase has a concrete output and a decision it supports.</p>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Phase details">
+        <button class="tab" id="tab-phase1" role="tab" aria-controls="phase1" aria-selected="true">Phase 1</button>
+        <button class="tab" id="tab-phase2" role="tab" aria-controls="phase2" aria-selected="false">Phase 2</button>
+        <button class="tab" id="tab-phase3" role="tab" aria-controls="phase3" aria-selected="false">Phase 3</button>
+      </div>
+
+      <div id="phase1" class="tab-panel active" role="tabpanel" aria-labelledby="tab-phase1">
+        <div class="phase-grid">
+          <article class="phase">
+            <h3>Monitoring</h3>
+            <ul>
+              <li>Reconcile source assignment count to dashboard count.</li>
+              <li>Add data freshness for assignments, surveys, and ownership.</li>
+              <li>Track open, overdue, returned, and exception counts.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>Map View</h3>
+            <ul>
+              <li>Filter by month, contractor, completion status, and ownership.</li>
+              <li>Show assigned vs returned parcels spatially.</li>
+              <li>Use the map to expose territory and workload patterns.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>Data Integrity</h3>
+            <ul>
+              <li>Flag sold, transferred, duplicate, stale, or non-URA/PLB parcels.</li>
+              <li>Log exclusion reasons before monthly assignment.</li>
+              <li>Document the denominator and ownership rules.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <div id="phase2" class="tab-panel" role="tabpanel" aria-labelledby="tab-phase2">
+        <div class="phase-grid">
+          <article class="phase">
+            <h3>Correct Metrics</h3>
+            <ul>
+              <li>Split Active and Request Only completion.</li>
+              <li>Report valid-assignment rate and exception rate beside completion.</li>
+              <li>Build contractor compliance metrics with fair denominators.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>Visual Product</h3>
+            <ul>
+              <li>Publish scorecards in the web app and/or ArcGIS Experience Builder.</li>
+              <li>Show contractor workload by parcel count and acreage.</li>
+              <li>Compare current and proposed assignment scenarios.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>Optimization</h3>
+            <ul>
+              <li>Bundle by geography, area, capacity, maintenance level, and history.</li>
+              <li>Use past completion patterns as a transparent score.</li>
+              <li>Pilot recommendations before automating assignments.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <div id="phase3" class="tab-panel" role="tabpanel" aria-labelledby="tab-phase3">
+        <div class="phase-grid">
+          <article class="phase">
+            <h3>Survey Form</h3>
+            <ul>
+              <li>Design land care provider form fields and validation.</li>
+              <li>Capture parcel, period, contractor, status, photo, location, and issue reason.</li>
+              <li>Prevent duplicate and unmatched submissions.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>ArcGIS Path</h3>
+            <ul>
+              <li>Evaluate Survey123, Field Maps, and Experience Builder.</li>
+              <li>Use hosted feature layers for operational adoption.</li>
+              <li>Align the survey form with the same metric data contract.</li>
+            </ul>
+          </article>
+          <article class="phase">
+            <h3>Regrid Decision</h3>
+            <ul>
+              <li>Keep Regrid only if it maps cleanly to the contract.</li>
+              <li>Wrap or reduce manual export steps where possible.</li>
+              <li>Recommend keep, wrap, reduce, or replace after pilot evidence.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="section-head">
+        <h2>Two-Month Roadmap</h2>
+        <p>The plan is designed to produce useful outputs every two weeks and still fit inside a realistic two-month delivery window.</p>
+      </div>
+      <div class="roadmap">
+        <article class="panel">
+          <h3>Weeks 1-2</h3>
+          <ul>
+            <li>Reconcile assignments and returns.</li>
+            <li>Define metric logic.</li>
+            <li>Create exclusion reasons.</li>
+            <li>Build first map data contract.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>Weeks 3-4</h3>
+          <ul>
+            <li>Build monitoring view.</li>
+            <li>Add contractor filters.</li>
+            <li>Show Active vs Request Only.</li>
+            <li>Publish scorecard draft.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>Weeks 5-6</h3>
+          <ul>
+            <li>Define bundle constraints.</li>
+            <li>Score historical completion.</li>
+            <li>Compare current vs optimized scenarios.</li>
+            <li>Recommend pilot rules.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>Weeks 7-8</h3>
+          <ul>
+            <li>Design survey form workflow.</li>
+            <li>Test ArcGIS and web intake options.</li>
+            <li>Write Regrid transition recommendation.</li>
+            <li>Package final implementation backlog.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="metrics">
+      <div class="section-head">
+        <h2>Metric Framework</h2>
+        <p>The proposal replaces one blended percentage with a diagnostic operating view.</p>
+      </div>
+      <table class="compare">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Definition</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>LandCare success rate</td>
+            <td>Valid returned surveys divided by valid expected assignments.</td>
+            <td>Measures the core improvement goal without invalid parcels inflating the denominator.</td>
+          </tr>
+          <tr>
+            <td>Contractor compliance rate</td>
+            <td>Valid returned surveys divided by valid assignments expected from each contractor.</td>
+            <td>Creates fair contractor comparison after exclusions and workload context.</td>
+          </tr>
+          <tr>
+            <td>Valid-assignment rate</td>
+            <td>Valid assignments divided by all candidates before exclusions.</td>
+            <td>Shows whether the pipeline is assigning the right parcels.</td>
+          </tr>
+          <tr>
+            <td>Exception rate</td>
+            <td>Assignments excluded or flagged due to ownership, stale tag, duplicate, or eligibility issue.</td>
+            <td>Prevents metric improvement from hiding data-quality problems.</td>
+          </tr>
+          <tr>
+            <td>Optimization score</td>
+            <td>Expected completion using geography, acreage, capacity, and historical patterns.</td>
+            <td>Helps assign bundles that are more likely to be completed.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="product">
+      <div class="section-head">
+        <h2>Product Path</h2>
+        <p>The safest architecture is one data contract with two possible surfaces: open-source web for analytic speed and ArcGIS for field adoption.</p>
+      </div>
+      <div class="split">
+        <article class="decision">
+          <h3>Open-Source Web App</h3>
+          <ul>
+            <li>Fast custom analytics and scenario comparison.</li>
+            <li>Useful for proposal demos and optimization views.</li>
+            <li>Can extend the current Leaflet prototype.</li>
+          </ul>
+        </article>
+        <article class="decision">
+          <h3>ArcGIS Experience Builder</h3>
+          <ul>
+            <li>Strong hosted-layer and staff adoption path.</li>
+            <li>Pairs naturally with Survey123 and Field Maps.</li>
+            <li>Best for operational field workflow rollout.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="deck">
+      <div class="section-head">
+        <h2>Deck Build Split</h2>
+        <p>The Markdown brief is already structured for a slide-building agent. This is the recommended strategic flow.</p>
+      </div>
+      <div class="deck">
+        <div class="slide"><b>Slide 1</b><p>Title and map-first promise.</p></div>
+        <div class="slide"><b>Slide 2</b><p>Current monthly workflow boundary.</p></div>
+        <div class="slide"><b>Slide 3</b><p>Problem: low completion is a symptom.</p></div>
+        <div class="slide"><b>Slide 4</b><p>Assurance narrative: truth, visibility, action, workflow.</p></div>
+        <div class="slide"><b>Slide 5</b><p>Phase 1 monitoring, map, integrity.</p></div>
+        <div class="slide"><b>Slide 6</b><p>Phase 2 metrics and optimization.</p></div>
+        <div class="slide"><b>Slide 7</b><p>Phase 3 survey form and Regrid path.</p></div>
+        <div class="slide"><b>Slide 8</b><p>Two-month roadmap.</p></div>
+        <div class="slide"><b>Slide 9</b><p>Metric framework and contractor compliance.</p></div>
+        <div class="slide"><b>Slide 10</b><p>Web app and ArcGIS product architecture.</p></div>
+        <div class="slide"><b>Slide 11</b><p>Decisions needed and definition of done.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Prepared as proposal source material for LandCare Assurance. Related files: <a href="landcare-two-month-scope-proposal.md">scope proposal</a> and <a href="landcare-proposal-deck-brief.md">deck brief</a>.</p>
+    </footer>
+  </main>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+        panels.forEach((panel) => panel.classList.toggle('active', panel.id === tab.getAttribute('aria-controls')));
+      });
+    });
+  </script>
+</body>
+</html>
