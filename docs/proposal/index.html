@@ -58,16 +58,29 @@
       }
 
       .brand-lockup {
-        display: inline-grid;
-        place-items: center;
-        width: 98px;
-        height: 42px;
-        color: var(--accent-deep);
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 78px;
+        height: 64px;
+        color: var(--accent);
         background: #ffffff;
         border: 1px solid rgba(255, 255, 255, 0.65);
-        font-size: 24px;
+        font-size: 34px;
         font-weight: 900;
+        line-height: 1;
         text-decoration: none;
+      }
+
+      .brand-lockup::after {
+        position: absolute;
+        right: 13px;
+        bottom: 14px;
+        left: 13px;
+        height: 5px;
+        background: linear-gradient(90deg, #7fba00 0 62%, var(--accent) 62% 100%);
+        content: "";
       }
 
       .site-title {
@@ -310,7 +323,8 @@
 
       .module-tab.is-active,
       .scenario-button.is-active,
-      .color-button.is-active {
+      .color-button.is-active,
+      .survey-status-button.is-active {
         color: #ffffff;
         background: var(--accent-dark);
         border-color: var(--accent-dark);
@@ -337,6 +351,7 @@
       .chart-card,
       .scenario-card,
       .flow-step,
+      .survey-worker-panel,
       .table-wrap {
         background: var(--panel-strong);
         border: 1px solid var(--line);
@@ -382,7 +397,8 @@
       .module-brief,
       .chart-card,
       .scenario-card,
-      .flow-step {
+      .flow-step,
+      .survey-worker-panel {
         padding: 13px;
       }
 
@@ -421,6 +437,129 @@
         display: block;
         margin: 9px 0 5px;
         font-size: 16px;
+      }
+
+      .survey-worker-panel {
+        display: grid;
+        gap: 12px;
+        margin: 14px 0;
+        border-top: 4px solid var(--accent);
+      }
+
+      .survey-task-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .task-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .task-meta div,
+      .survey-note {
+        padding: 10px;
+        background: #f6fbfd;
+        border: 1px solid var(--line);
+      }
+
+      .task-meta span,
+      .survey-note span {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--accent-dark);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .task-meta strong,
+      .survey-note strong {
+        display: block;
+        color: var(--ink);
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      .survey-actions,
+      .survey-status-group {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .survey-form {
+        display: none;
+        gap: 10px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .survey-form.is-open {
+        display: grid;
+      }
+
+      .survey-field {
+        display: grid;
+        gap: 5px;
+      }
+
+      .survey-field label {
+        color: var(--accent-dark);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .survey-field input,
+      .survey-field textarea {
+        width: 100%;
+        min-height: 38px;
+        padding: 9px 10px;
+        color: var(--ink);
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 0;
+        font: inherit;
+        font-size: 13px;
+      }
+
+      .survey-field textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+
+      .survey-proof {
+        display: grid;
+        grid-template-columns: 78px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        min-height: 78px;
+        padding: 10px;
+        background: var(--accent-soft);
+        border: 1px solid #b8dfed;
+      }
+
+      .survey-proof-mark {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 52px;
+        color: var(--accent-deep);
+        background: #ffffff;
+        border: 2px solid var(--accent);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .survey-result {
+        min-height: 22px;
+        color: var(--accent-dark);
+        font-size: 13px;
+        font-weight: 800;
       }
 
       .module-brief {
@@ -587,6 +726,9 @@
         .module-tabs,
         .scenario-controls,
         .view-controls,
+        .survey-actions,
+        .survey-status-group,
+        .task-meta,
         .kpi-grid {
           grid-template-columns: 1fr;
           display: grid;
@@ -620,7 +762,7 @@
   </head>
   <body>
     <header class="site-header" aria-label="URA proposal header">
-      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">URA</a>
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">ura</a>
       <div class="site-title">
         <span class="site-kicker">land care assurance proposal</span>
         <strong>Monitoring, map view, bundle QA, and survey workflow modernization</strong>
@@ -651,6 +793,7 @@
             It shows the latest real LandCare parcel-month layer, colored by contractor or survey status,
             and prepare an ArcGIS or web-form path beyond fragile Regrid handoffs.
           </p>
+          <button type="button" id="primaryTakeSurveyButton">Take Worker Survey</button>
         </header>
 
         <nav class="module-tabs" aria-label="Proposal modules">
@@ -780,6 +923,57 @@
               datasets labeled `Survey 727` and `CSV 1,191`. The proposal keeps that current path working while
               creating a platform-neutral intake contract.
             </p>
+          </section>
+          <section class="survey-worker-panel" aria-label="Field worker survey demo">
+            <div class="survey-task-header">
+              <div>
+                <span class="module-status is-live-status">Field task</span>
+                <h2>Survey worker parcel task</h2>
+                <p>
+                  This mirrors the practical Regrid-style field motion: open a parcel task, inspect the assignment,
+                  record status, attach evidence, and write the same normalized survey fields downstream.
+                </p>
+              </div>
+              <button type="button" id="takeSurveyButton">Take Survey</button>
+            </div>
+            <div class="task-meta" aria-label="Selected real parcel task">
+              <div><span>Parcel</span><strong id="surveyParcel">Loading task...</strong></div>
+              <div><span>Contractor</span><strong id="surveyContractor">Loading</strong></div>
+              <div><span>Period</span><strong id="surveyPeriod">Latest</strong></div>
+              <div><span>Current status</span><strong id="surveyCurrentStatus">Open</strong></div>
+            </div>
+            <div class="survey-note">
+              <span>Assignment source</span>
+              <strong id="surveySourceNote">Real latest-month parcel layer; local demo submission only.</strong>
+            </div>
+            <form class="survey-form" id="workerSurveyForm" aria-label="LandCare worker survey form">
+              <div class="survey-status-group" role="group" aria-label="Survey completion status">
+                <button class="survey-status-button is-active" type="button" data-survey-status="completed">Completed</button>
+                <button class="survey-status-button" type="button" data-survey-status="unable">Unable To Complete</button>
+                <button class="survey-status-button" type="button" data-survey-status="needs_review">Needs Review</button>
+              </div>
+              <div class="survey-field">
+                <label for="surveyCondition">Maintenance condition</label>
+                <input id="surveyCondition" name="condition" value="Cut complete; parcel clear from sidewalk" />
+              </div>
+              <div class="survey-field">
+                <label for="surveyNotes">Notes</label>
+                <textarea id="surveyNotes" name="notes">Photo captured. No blocked access observed.</textarea>
+              </div>
+              <div class="survey-proof">
+                <div class="survey-proof-mark">PHOTO</div>
+                <div>
+                  <span class="detail-label">Evidence placeholder</span>
+                  <p>In ArcGIS or Regrid this would be a required photo/geotag attachment; in this demo it is a local proof marker.</p>
+                </div>
+              </div>
+              <div class="survey-actions">
+                <button type="button" id="centerTaskButton">Center Parcel</button>
+                <button type="submit">Submit Demo Survey</button>
+                <button type="button" id="resetSurveyButton">Reset</button>
+              </div>
+              <div class="survey-result" id="surveyResult" aria-live="polite"></div>
+            </form>
           </section>
           <section class="table-wrap">
             <table>

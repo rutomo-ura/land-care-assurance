@@ -67,7 +67,9 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
         parcelLayer: null,
         view: null,
         colorMode: "status",
-        summary: null
+        summary: null,
+        surveyTask: null,
+        surveyStatus: "completed"
       };
 
       function escapeHtml(value) {
@@ -92,6 +94,15 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
           ownership_risk: "Ownership risk"
         };
         return labels[value] || value;
+      }
+
+      function humanStatus(value) {
+        const labels = {
+          completed: "Completed",
+          unable: "Unable To Complete",
+          needs_review: "Needs Review"
+        };
+        return labels[value] || titleCaseStatus(value);
       }
 
       function statusItems(summary) {
@@ -161,6 +172,76 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
         `).join("");
       }
 
+      function selectSurveyTask(featureCollection) {
+        const features = featureCollection?.features || [];
+        const chosen = features.find((feature) =>
+          feature?.properties?.completion_status === "missing" &&
+          feature?.properties?.maintenance_level === "Active"
+        ) || features.find((feature) => feature?.properties?.completion_status === "missing") || features[0];
+        const properties = chosen?.properties || {};
+        mapState.surveyTask = {
+          parcel_key: properties.parcel_key || "Unavailable",
+          organization: properties.organization || "Unassigned",
+          period_month: properties.period_month || mapState.summary?.latest_month || "Latest",
+          completion_status: properties.completion_status || "missing",
+          maintenance_level: properties.maintenance_level || "Active",
+          ownership_type: properties.ownership_type || "Unknown",
+          owner_name: properties.owner_name || "Unknown"
+        };
+        renderSurveyTask();
+      }
+
+      function renderSurveyTask() {
+        const task = mapState.surveyTask;
+        if (!task) return;
+        document.getElementById("surveyParcel").textContent = task.parcel_key;
+        document.getElementById("surveyContractor").textContent = task.organization;
+        document.getElementById("surveyPeriod").textContent = task.period_month;
+        document.getElementById("surveyCurrentStatus").textContent = titleCaseStatus(task.completion_status);
+        document.getElementById("surveySourceNote").textContent =
+          `${task.maintenance_level} assignment, ${task.ownership_type}; normalized fields match Regrid, ArcGIS, or web-form intake.`;
+      }
+
+      function openSurveyForm() {
+        activateModule("workflow");
+        const form = document.getElementById("workerSurveyForm");
+        form.classList.add("is-open");
+        document.getElementById("surveyResult").textContent = "Survey task opened from the real latest-month parcel layer.";
+        centerSurveyTask();
+      }
+
+      function resetSurveyForm() {
+        mapState.surveyStatus = "completed";
+        document.querySelectorAll("[data-survey-status]").forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.surveyStatus === "completed");
+        });
+        document.getElementById("surveyCondition").value = "Cut complete; parcel clear from sidewalk";
+        document.getElementById("surveyNotes").value = "Photo captured. No blocked access observed.";
+        document.getElementById("surveyResult").textContent = "Survey draft reset.";
+      }
+
+      async function centerSurveyTask() {
+        const task = mapState.surveyTask;
+        if (!task || !mapState.parcelLayer || !mapState.view) return;
+        const where = `parcel_key = '${String(task.parcel_key).replace(/'/g, "''")}'`;
+        try {
+          const result = await mapState.parcelLayer.queryFeatures({
+            where,
+            returnGeometry: true,
+            outFields: ["*"]
+          });
+          const feature = result.features?.[0];
+          if (!feature) return;
+          const target = feature.geometry?.extent ? feature.geometry.extent.expand(5) : feature.geometry;
+          await mapState.view.goTo(target, { duration: 600 }).catch(() => {});
+          if (mapState.view.openPopup && feature.geometry?.extent?.center) {
+            mapState.view.openPopup({ features: [feature], location: feature.geometry.extent.center });
+          }
+        } catch (error) {
+          console.warn("Could not center survey task", error);
+        }
+      }
+
       function activateModule(moduleName) {
         document.querySelectorAll("[data-module]").forEach((tab) => {
           tab.classList.toggle("is-active", tab.dataset.module === moduleName);
@@ -201,6 +282,30 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
 
       document.querySelectorAll("[data-color-mode]").forEach((button) => {
         button.addEventListener("click", () => setColorMode(button.dataset.colorMode));
+      });
+
+      document.querySelectorAll("#primaryTakeSurveyButton, #takeSurveyButton").forEach((button) => {
+        button.addEventListener("click", openSurveyForm);
+      });
+
+      document.querySelectorAll("[data-survey-status]").forEach((button) => {
+        button.addEventListener("click", () => {
+          mapState.surveyStatus = button.dataset.surveyStatus;
+          document.querySelectorAll("[data-survey-status]").forEach((option) => {
+            option.classList.toggle("is-active", option === button);
+          });
+        });
+      });
+
+      document.getElementById("centerTaskButton").addEventListener("click", centerSurveyTask);
+      document.getElementById("resetSurveyButton").addEventListener("click", resetSurveyForm);
+      document.getElementById("workerSurveyForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const task = mapState.surveyTask;
+        const status = humanStatus(mapState.surveyStatus);
+        const condition = document.getElementById("surveyCondition").value.trim() || "No condition entered";
+        document.getElementById("surveyResult").textContent =
+          `Demo survey captured for parcel ${task?.parcel_key || "task"}: ${status}. ${condition}.`;
       });
 
       try {
@@ -286,6 +391,7 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
       async function startArcgisMap() {
         window.__landcareProposal.arcgisStarted = true;
         let summary = null;
+        let featureCollection = null;
         try {
           const response = await fetch("data/landcare_latest_month_summary.json");
           summary = await response.json();
@@ -294,6 +400,14 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
           console.error(error);
           summary = { feature_count: 0, status_counts: {}, contractor_counts: {}, level_counts: {} };
           updateSummary(summary);
+        }
+        try {
+          const geojsonResponse = await fetch("data/landcare_latest_month.geojson");
+          featureCollection = await geojsonResponse.json();
+          selectSurveyTask(featureCollection);
+        } catch (error) {
+          console.error(error);
+          selectSurveyTask(null);
         }
 
         const parcelLayer = new GeoJSONLayer({

@@ -311,6 +311,7 @@ Integration:
 - Regrid submissions can continue temporarily if mapped into the same contract.
 - ArcGIS Survey123 or Field Maps should be evaluated first because they align with hosted layers and surveyor workflows.
 - The Regrid export URL step should be treated as a known operational risk until replaced by a managed integration or removed from the workflow.
+- The proposal web demo includes a `Take Worker Survey` interaction that loads a real latest-month parcel task, shows contractor/period/status fields, simulates a required evidence/photo step, and writes a local normalized survey confirmation without transmitting data.
 
 ## Regrid Context To Preserve
 
