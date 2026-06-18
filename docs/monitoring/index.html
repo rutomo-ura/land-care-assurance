@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LandCare Monitoring</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="../landcare/app.css" />
+  </head>
+  <body data-page="monitoring">
+    <header class="app-header">
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">
+        <img src="../landcare/assets/ura-logo.png" alt="URA" />
+      </a>
+      <div class="title-block">
+        <span>LandCare Assurance</span>
+        <strong>Monitoring Tool</strong>
+      </div>
+      <nav class="page-tabs" aria-label="LandCare pages">
+        <a class="is-active" href="../monitoring/">Map Monitor</a>
+        <a href="../kpi/">KPI Dashboard</a>
+      </nav>
+      <div class="freshness" id="freshnessNote">Loading export status...</div>
+    </header>
+
+    <main class="monitoring-shell">
+      <aside class="monitor-sidebar" aria-label="Monitoring controls">
+        <section class="sidebar-section compact">
+          <span class="eyebrow" id="latestMonthLabel">Latest survey month</span>
+          <div class="mini-kpis">
+            <article>
+              <strong id="assignedKpi">--</strong>
+              <span>Assigned</span>
+            </article>
+            <article>
+              <strong id="returnedKpi">--</strong>
+              <span>Returned</span>
+            </article>
+            <article>
+              <strong id="completionKpi">--</strong>
+              <span>Completion</span>
+            </article>
+            <article>
+              <strong id="openKpi">--</strong>
+              <span>Open</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <span class="eyebrow">Color Map By</span>
+          <div class="segmented" role="group" aria-label="Map color mode">
+            <button class="is-active" type="button" data-color-mode="status">Survey Status</button>
+            <button type="button" data-color-mode="contractor">Contractor</button>
+          </div>
+        </section>
+
+        <section class="sidebar-section contractor-section">
+          <div class="section-heading">
+            <span class="eyebrow">Contractor Filter</span>
+            <button class="text-button" type="button" id="clearContractorButton">Show All</button>
+          </div>
+          <div class="contractor-list" id="contractorList"></div>
+        </section>
+
+        <section class="sidebar-section">
+          <div class="section-heading">
+            <span class="eyebrow" id="legendHeading">Legend</span>
+          </div>
+          <div class="legend-list" id="legendList"></div>
+        </section>
+      </aside>
+
+      <section class="map-stage" aria-label="LandCare parcel map">
+        <div id="mapView"></div>
+        <div class="map-badge" id="mapBadge">Starting ArcGIS map...</div>
+        <div class="map-callout" id="mapCallout">
+          <strong>Real Pittsburgh parcel layer</strong>
+          <span>Latest-month LandCare assignments from the PostgreSQL export.</span>
+        </div>
+      </section>
+
+      <aside class="parcel-panel" aria-label="Selected parcel">
+        <section>
+          <span class="eyebrow">Selected Parcel</span>
+          <div class="parcel-detail" id="parcelDetail">
+            Select a parcel to review contractor, status, ownership, and survey period.
+          </div>
+        </section>
+        <section>
+          <span class="eyebrow">Action Focus</span>
+          <div class="focus-list" id="actionFocus"></div>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="../landcare/monitoring.js"></script>
+  </body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LandCare KPI Dashboard</title>
+    <link rel="stylesheet" href="../landcare/app.css" />
+  </head>
+  <body data-page="kpi">
+    <header class="app-header">
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">
+        <img src="../landcare/assets/ura-logo.png" alt="URA" />
+      </a>
+      <div class="title-block">
+        <span>LandCare Assurance</span>
+        <strong>KPI Dashboard</strong>
+      </div>
+      <nav class="page-tabs" aria-label="LandCare pages">
+        <a href="../monitoring/">Map Monitor</a>
+        <a class="is-active" href="../kpi/">KPI Dashboard</a>
+      </nav>
+      <div class="freshness" id="freshnessNote">Loading export status...</div>
+    </header>
+
+    <main class="kpi-shell">
+      <section class="kpi-grid" aria-label="Key performance indicators">
+        <article class="metric-card primary">
+          <span>Assigned active parcels</span>
+          <strong id="activeAssignedKpi">--</strong>
+          <small id="activeAssignedNote">Latest survey month</small>
+        </article>
+        <article class="metric-card primary">
+          <span>Returned surveys</span>
+          <strong id="returnedKpi">--</strong>
+          <small>Matched to assigned parcel keys</small>
+        </article>
+        <article class="metric-card warning">
+          <span>Active completion</span>
+          <strong id="completionKpi">--</strong>
+          <small id="completionDelta">Latest vs prior month</small>
+        </article>
+        <article class="metric-card">
+          <span>Open assignments</span>
+          <strong id="openKpi">--</strong>
+          <small>Active assigned, not returned</small>
+        </article>
+        <article class="metric-card">
+          <span>Mapped parcel layer</span>
+          <strong id="mappedKpi">--</strong>
+          <small>Active + request-only latest month</small>
+        </article>
+        <article class="metric-card">
+          <span>YTD spend reference</span>
+          <strong id="spendKpi">--</strong>
+          <small id="spendNote">Power BI captured reference</small>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel performance-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Performance</span>
+              <h1>Contractor Completion</h1>
+            </div>
+            <select id="contractorSelect" aria-label="Contractor filter">
+              <option value="all">All contractors</option>
+            </select>
+          </div>
+          <div class="bar-list" id="contractorBars"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Timeline</span>
+              <h1>Monthly Completion Rate</h1>
+            </div>
+          </div>
+          <div class="timeline-list" id="timelineBars"></div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid lower">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Metric Integrity</span>
+              <h1>Dashboard Reconciliation</h1>
+            </div>
+          </div>
+          <div class="reconcile-grid" id="reconcileGrid"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Automation</span>
+              <h1>Daily Survey Completion Ingestion</h1>
+            </div>
+          </div>
+          <div class="pipeline-list">
+            <div><strong>1</strong><span>Read latest survey completion output daily.</span></div>
+            <div><strong>2</strong><span>Normalize parcel, period, contractor, status, timestamp, and evidence fields.</span></div>
+            <div><strong>3</strong><span>Validate duplicate parcels, missing assignments, and stale survey periods.</span></div>
+            <div><strong>4</strong><span>Publish one reporting contract for this web app and Power BI refresh.</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel source-panel">
+        <span class="eyebrow">Source</span>
+        <p id="sourceText">Loading source metadata...</p>
+      </section>
+    </main>
+
+    <script type="module" src="../landcare/kpi.js"></script>
+  </body>
+</html>

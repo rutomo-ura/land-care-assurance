@@ -1,0 +1,101 @@
+[
+  {
+    "period_month": "2025-05",
+    "assigned_active": 1030,
+    "assigned_total": 1116,
+    "returned_assigned": 537,
+    "active_completion_rate_pct": 52.1,
+    "blended_completion_rate_pct": 48.1,
+    "survey_rows_raw": 537
+  },
+  {
+    "period_month": "2025-06",
+    "assigned_active": 1031,
+    "assigned_total": 1116,
+    "returned_assigned": 448,
+    "active_completion_rate_pct": 43.5,
+    "blended_completion_rate_pct": 40.1,
+    "survey_rows_raw": 448
+  },
+  {
+    "period_month": "2025-07",
+    "assigned_active": 1039,
+    "assigned_total": 1124,
+    "returned_assigned": 536,
+    "active_completion_rate_pct": 51.6,
+    "blended_completion_rate_pct": 47.7,
+    "survey_rows_raw": 536
+  },
+  {
+    "period_month": "2025-09",
+    "assigned_active": 943,
+    "assigned_total": 1118,
+    "returned_assigned": 578,
+    "active_completion_rate_pct": 61.3,
+    "blended_completion_rate_pct": 51.7,
+    "survey_rows_raw": 578
+  },
+  {
+    "period_month": "2025-10",
+    "assigned_active": 943,
+    "assigned_total": 1118,
+    "returned_assigned": 578,
+    "active_completion_rate_pct": 61.3,
+    "blended_completion_rate_pct": 51.7,
+    "survey_rows_raw": 578
+  },
+  {
+    "period_month": "2025-11",
+    "assigned_active": 1018,
+    "assigned_total": 1102,
+    "returned_assigned": 386,
+    "active_completion_rate_pct": 37.9,
+    "blended_completion_rate_pct": 35.0,
+    "survey_rows_raw": 386
+  },
+  {
+    "period_month": "2025-12",
+    "assigned_active": 1013,
+    "assigned_total": 1098,
+    "returned_assigned": 471,
+    "active_completion_rate_pct": 46.5,
+    "blended_completion_rate_pct": 42.9,
+    "survey_rows_raw": 471
+  },
+  {
+    "period_month": "2026-01",
+    "assigned_active": 991,
+    "assigned_total": 1076,
+    "returned_assigned": 327,
+    "active_completion_rate_pct": 33.0,
+    "blended_completion_rate_pct": 30.4,
+    "survey_rows_raw": 327
+  },
+  {
+    "period_month": "2026-02",
+    "assigned_active": 1000,
+    "assigned_total": 1084,
+    "returned_assigned": 122,
+    "active_completion_rate_pct": 12.2,
+    "blended_completion_rate_pct": 11.3,
+    "survey_rows_raw": 122
+  },
+  {
+    "period_month": "2026-03",
+    "assigned_active": 947,
+    "assigned_total": 1028,
+    "returned_assigned": 464,
+    "active_completion_rate_pct": 49.0,
+    "blended_completion_rate_pct": 45.1,
+    "survey_rows_raw": 464
+  },
+  {
+    "period_month": "2026-04",
+    "assigned_active": 990,
+    "assigned_total": 1076,
+    "returned_assigned": 142,
+    "active_completion_rate_pct": 14.3,
+    "blended_completion_rate_pct": 13.2,
+    "survey_rows_raw": 142
+  }
+]
