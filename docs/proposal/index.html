@@ -884,7 +884,7 @@
       </a>
       <div class="site-title">
         <span class="site-kicker">land care assurance proposal</span>
-        <strong>Monitoring, map view, bundle QA, and survey workflow modernization</strong>
+        <strong>Shared monitoring, map view, performance timeline, and daily ingestion</strong>
       </div>
       <div class="site-actions">
         <div class="mode-toggle" aria-label="View mode">
@@ -915,17 +915,17 @@
           <h1>Turn LandCare from a monthly export into an assurance system.</h1>
           <p>
             This proposal demo uses the same ArcGIS-style Pittsburgh map pattern as the vacant-land triage work.
-            It shows the latest real LandCare parcel-month layer, colored by contractor or survey status,
-            and prepare an ArcGIS or web-form path beyond fragile Regrid handoffs.
+            It shows the latest real LandCare parcel-month layer, contractor-facing status, performance metrics,
+            and the daily survey-completion ingestion path that can also feed Power BI.
           </p>
-          <button type="button" id="primaryTakeSurveyButton">Take Worker Survey</button>
+          <button type="button" id="primaryMonitoringButton">Review Monitoring Tool</button>
         </header>
 
         <nav class="module-tabs" aria-label="Proposal modules">
-          <button class="module-tab is-active" type="button" data-module="overview">Overview</button>
-          <button class="module-tab" type="button" data-module="monitoring">Monitoring</button>
-          <button class="module-tab" type="button" data-module="bundle">Bundle QA</button>
-          <button class="module-tab" type="button" data-module="workflow">Survey Flow</button>
+          <button class="module-tab is-active" type="button" data-module="overview">Map + KPIs</button>
+          <button class="module-tab" type="button" data-module="monitoring">Performance</button>
+          <button class="module-tab" type="button" data-module="bundle">Daily Pipeline</button>
+          <button class="module-tab" type="button" data-module="workflow">Backlog</button>
           <button class="module-tab" type="button" data-module="roadmap">Roadmap</button>
           <button class="module-tab" type="button" data-module="deck">Deck</button>
         </nav>
@@ -953,18 +953,18 @@
           <section class="status-grid section">
             <article class="status-card is-live">
               <span>Phase 1</span>
-              <strong>Monitor and validate</strong>
-              <p>Make assigned, returned, open, stale, and excluded parcels visible on a Pittsburgh map.</p>
+              <strong>Shared monitoring dashboard</strong>
+              <p>Give URA and contractors a map-based page with assigned, returned, open, stale, and excluded parcels.</p>
             </article>
             <article class="status-card">
               <span>Phase 2</span>
-              <strong>Optimize bundles</strong>
-              <p>Use geography, acreage, capacity, and historical returns to compare current vs proposed assignments.</p>
+              <strong>Performance and timeline</strong>
+              <p>Add contractor detail, completion trends, open/overdue aging, and Power BI-ready metrics.</p>
             </article>
             <article class="status-card">
-              <span>Phase 3</span>
-              <strong>Modernize survey intake</strong>
-              <p>Wrap Regrid behind a shared survey contract while piloting ArcGIS Field Maps, Survey123, or a web form.</p>
+              <span>Backlog</span>
+              <strong>Optimization and survey interface</strong>
+              <p>Keep bundle optimization and survey-app redesign behind the monitoring and daily ingestion foundation.</p>
             </article>
           </section>
         </section>
@@ -972,10 +972,10 @@
         <section class="module-panel" data-panel="monitoring">
           <section class="module-brief">
             <span class="module-status is-live-status">Operating view</span>
-            <h2>Monitoring shows the real latest-month parcel map.</h2>
+            <h2>Page 2 tracks performance details and timeline movement.</h2>
             <p>
-              The map distinguishes valid open assignments from returned surveys and data-integrity exceptions.
-              Toggle between contractor coloring and survey-status coloring for the latest survey month only.
+              Contractors and URA need the same detailed view: valid assignments, returned surveys, open/overdue work,
+              trend movement, and the latest daily refresh status.
             </p>
           </section>
           <div class="view-controls" aria-label="Map color controls">
@@ -984,11 +984,11 @@
           </div>
           <section class="chart-section">
             <div class="chart-card">
-              <h2>Survey Status</h2>
+              <h2>Survey Status Detail</h2>
               <div class="native-chart" id="funnelChart"></div>
             </div>
             <div class="chart-card">
-              <h2>Contractor Assignments</h2>
+              <h2>Contractor Performance</h2>
               <div class="native-chart" id="contractorChart"></div>
             </div>
           </section>
@@ -996,44 +996,44 @@
 
         <section class="module-panel" data-panel="bundle">
           <section class="module-brief">
-            <span class="module-status is-live-status">Real map input</span>
-            <h2>Bundle creation should become an assurance gate, not just a CSV export.</h2>
+            <span class="module-status is-live-status">Daily ingestion</span>
+            <h2>Survey completion should refresh daily into the monitoring layer and Power BI.</h2>
             <p>
-              Today, assignment creation is a tag-filtered export from `gis.epp_snapshot`. This page uses the
-              real latest-month parcel layer as the input that a future QA and bundle-creation step would review.
+              The monitoring tool should consume a normalized daily survey-completion table. That same data contract
+              should feed Power BI so dashboard, ArcGIS/web, and reporting numbers stay aligned.
             </p>
           </section>
 
-          <div class="scenario-controls" aria-label="Bundle scenario controls">
-            <button class="scenario-button is-active" type="button" data-scenario="current">Current Export</button>
-            <button class="scenario-button" type="button" data-scenario="qa">QA Holdout</button>
-            <button class="scenario-button" type="button" data-scenario="optimized">Optimized Bundle</button>
+          <div class="scenario-controls" aria-label="Daily pipeline scenario controls">
+            <button class="scenario-button is-active" type="button" data-scenario="current">Current Source</button>
+            <button class="scenario-button" type="button" data-scenario="qa">QA Checks</button>
+            <button class="scenario-button" type="button" data-scenario="optimized">Power BI Feed</button>
           </div>
 
           <section class="scenario-grid" id="scenarioCards"></section>
 
           <section class="section">
-            <h2>Bundle-To-Survey Creation</h2>
+            <h2>Daily Survey Completion Pipeline</h2>
             <div class="flow-grid">
               <article class="flow-step is-active">
                 <span>1</span>
-                <strong>Candidate universe</strong>
-                <p>Read LandCare Active and Request Only tags from the assignment source.</p>
+                <strong>Survey completion source</strong>
+                <p>Read the latest Regrid/survey completion output on a daily schedule.</p>
               </article>
               <article class="flow-step is-active">
                 <span>2</span>
-                <strong>Ownership and parcel-key QA</strong>
-                <p>Hold sold, transferred, duplicate, stale, or unmatched parcels before the Regrid/ArcGIS handoff.</p>
+                <strong>Normalize and validate</strong>
+                <p>Standardize parcel, period, contractor, completion status, and timestamps into one reporting contract.</p>
               </article>
               <article class="flow-step">
                 <span>3</span>
-                <strong>Bundle optimization</strong>
-                <p>Group parcels by geography, acreage, contractor capacity, and historical completion patterns.</p>
+                <strong>Publish dashboard layer</strong>
+                <p>Update the map/key metrics page and performance/timeline page with freshness indicators.</p>
               </article>
               <article class="flow-step">
                 <span>4</span>
-                <strong>Survey package</strong>
-                <p>Emit assignment CSV, ArcGIS hosted layer, or web-form task list using the same survey contract.</p>
+                <strong>Power BI consumption</strong>
+                <p>Expose the same trusted table/view for Power BI refresh and downstream reporting.</p>
               </article>
             </div>
           </section>
@@ -1041,12 +1041,11 @@
 
         <section class="module-panel" data-panel="workflow">
           <section class="module-brief">
-            <span class="module-status is-live-status">Regrid context</span>
-            <h2>Observed Regrid project context should shape, not dominate, the workflow.</h2>
+            <span class="module-status is-live-status">Later backlog</span>
+            <h2>Optimization and survey interface can wait.</h2>
             <p>
-              Chrome showed the URA Regrid profile with the LandCare Network project in Pittsburgh and attached
-              datasets labeled `Survey 727` and `CSV 1,191`. The proposal keeps that current path working while
-              creating a platform-neutral intake contract.
+              Meeting feedback shifts the first delivery toward shared monitoring and daily survey-completion ingestion.
+              Bundle optimization and a new surveyor-facing interface should be sequenced after the monitoring tool is reliable.
             </p>
           </section>
           <section class="survey-worker-panel" aria-label="Field worker survey demo">
@@ -1149,10 +1148,10 @@
             <p>Each two-week block creates a usable artifact for leadership and operations.</p>
           </section>
           <section class="status-grid">
-            <article class="status-card is-live"><span>Weeks 1-2</span><strong>Baseline and integrity</strong><p>Reconcile metrics, document monthly automation, and create exception logic.</p></article>
-            <article class="status-card"><span>Weeks 3-4</span><strong>Monitoring product</strong><p>Publish map-first assignment and compliance views.</p></article>
-            <article class="status-card"><span>Weeks 5-6</span><strong>Optimization prototype</strong><p>Compare current export to QA and optimized bundle scenarios.</p></article>
-            <article class="status-card"><span>Weeks 7-8</span><strong>Survey intake pilot</strong><p>Specify or pilot ArcGIS/web forms and recommend Regrid keep/wrap/reduce/replace.</p></article>
+            <article class="status-card is-live"><span>Weeks 1-2</span><strong>Baseline and integrity</strong><p>Reconcile metrics, document monthly automation, and define dashboard data contract.</p></article>
+            <article class="status-card"><span>Weeks 3-4</span><strong>Map + KPI page</strong><p>Publish the shared map-based monitoring page for URA and contractor review.</p></article>
+            <article class="status-card"><span>Weeks 5-6</span><strong>Performance + pipeline</strong><p>Add detailed metrics, timeline, and daily survey-completion ingestion feeding Power BI.</p></article>
+            <article class="status-card"><span>Weeks 7-8</span><strong>Access and hardening</strong><p>Validate contractor access, Power BI handoff, runbook, and backlog for optimization/survey UI.</p></article>
           </section>
         </section>
 
@@ -1160,7 +1159,7 @@
           <section class="module-brief">
             <span class="module-status is-live-status">Deck ready</span>
             <h2>Open the completed proposal deck.</h2>
-            <p>The PDF deck packages the two-month scope, real latest-month map evidence, contractor compliance metrics, roadmap, and field surveyor workflow.</p>
+            <p>The PDF deck packages the original two-month scope and evidence. The current meeting feedback narrows the first implementation focus to shared monitoring and daily ingestion.</p>
           </section>
           <a class="download-link" href="../LandCare%20Assurance%20Proposal.pdf">Open Deck</a>
           <a class="download-link" href="../landcare-two-month-scope-proposal.md">Open Scope Plan</a>

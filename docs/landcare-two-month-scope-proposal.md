@@ -1,31 +1,32 @@
 # LandCare Assurance Two-Month Scope Proposal
 
-Prepared for a two-month delivery window. This proposal is written as a strategic scope, not a final technical specification. It assumes the team wants a practical path that improves LandCare success rate, contractor compliance visibility, and trust in the survey metrics without making a risky full-platform migration the first move.
+Prepared for a two-month delivery window. This proposal is written as a strategic scope, not a final technical specification. Based on meeting feedback, the first delivery focus is a monitoring tool and daily data pipeline that can be used by URA staff and contractors. Optimization and new survey interfaces should remain backlog/future-phase items until the monitoring foundation is trusted.
 
 Interactive web demo: `docs/proposal/index.html`, publishable through GitHub Pages at `/land-care-assurance/proposal/` when the repo is served from the `docs` folder.
 
 ## Narrative Focus
 
-LandCare's low survey return rate is not a single dashboard problem. It is an operating-system problem: the assignment universe may include parcels that should not be surveyed, the headline completion metric can hide the difference between expected and request-only work, contractor performance is hard to compare fairly, and the survey workflow still depends on fragile handoffs around Regrid.
+LandCare's immediate need is a monitoring tool that makes survey completion, contractor performance, and data freshness visible to both URA and contractors. The project should begin by making the current workflow observable and reliable: daily survey-completion ingestion, a shared dashboard, and clear metrics that can also feed Power BI.
 
 The project should therefore be framed around assurance:
 
-1. Make the monthly assignment universe trustworthy.
-2. Make the completion and compliance metrics reproducible.
-3. Make contractor workload and geography visible on a map.
-4. Use history and spatial optimization to assign feasible bundles.
-5. Modernize the survey intake path through ArcGIS or an open-source web app, with Regrid treated as an adapter that can be reduced or replaced.
+1. Create a shared monitoring dashboard that URA and contractors can access.
+2. Provide a map-based first page with key metrics, parcel status, contractor coloring, and current-month visibility.
+3. Provide a second performance page with detailed contractor metrics, timeline trends, open/overdue work, and daily refresh status.
+4. Automate daily survey-completion ingestion into a clean data contract that can also be consumed by Power BI.
+5. Treat optimization and a new survey interface as future backlog after monitoring and data ingestion are stable.
 
-The first win is not a new model. The first win is a system where staff can answer: which parcels were assigned, which were expected to be surveyed, which contractor was responsible, which were returned, which were invalid because of ownership or data issues, and what changed since last month.
+The first win is not a new model or a new survey app. The first win is a system where URA and contractors can answer every day: which parcels were assigned, which have completed surveys, which remain open, which contractor is responsible, what changed since yesterday, and whether Power BI is reading the same trusted data.
 
 ## Core Outcomes
 
-- Improve LandCare survey success rate by separating valid assignment, feasible workload, and contractor compliance.
-- Increase contractor compliance visibility through a map-first performance view by month, contractor, geography, and status.
+- Improve LandCare survey success rate by making completion, open work, and contractor follow-up visible every day.
+- Increase contractor compliance visibility through a shared monitoring tool by month, contractor, geography, and status.
 - Correct the metrics so Active, Request Only, assigned, returned, excluded, stale, and overdue parcels are not blended.
-- Reduce wasted survey effort by flagging sold, transferred, duplicate, stale, or non-URA/PLB parcels before monthly assignment.
-- Prepare a decision-ready path for either ArcGIS Experience Builder or an open-source web app, while keeping a common data contract underneath both.
-- Create a practical survey form workflow for land care provider surveyors in ArcGIS Field Maps/Survey123 or an equivalent web form.
+- Automate daily survey-completion ingestion so the monitoring tool and Power BI consume the same refreshed data.
+- Create a dashboard structure with at least two pages: map/key metrics and performance/timeline.
+- Prepare a decision-ready path for either ArcGIS Experience Builder, Power BI, or an open-source web app, while keeping a common data contract underneath all three.
+- Keep optimization and survey-interface work out of the first delivery unless the monitoring/pipeline scope is complete.
 
 ## Scope Summary
 
@@ -52,9 +53,9 @@ Confirmed workflow implication:
 - `bundle_assignment_creation.py` is assignment export, not optimization. It filters `gis.epp_snapshot` by LandCare tags, formats parcel numbers for Regrid, and writes one row per parcel. It does not currently balance bundles, check ownership, exclude sold parcels, or optimize surveyor workload.
 - The two-month scope should therefore add assurance gates around this monthly cycle: pre-15th universe QA and exclusions, post-18th return monitoring, and a future-ready survey intake contract.
 
-### Phase 1: Monitoring, Map View, And Data Integrity
+### Phase 1: Shared Monitoring Tool, Map View, And Data Integrity
 
-Goal: establish the trusted baseline and operational control view.
+Goal: establish the trusted baseline and first shared operating view for URA and contractors.
 
 Deliverables:
 
@@ -62,55 +63,55 @@ Deliverables:
 - Metric definitions for assigned, returned, expected, Active, Request Only, excluded, stale, valid-owned, open, overdue, and contractor completion.
 - Ownership and eligibility checks using available county, URA, PLB, and city property references.
 - Map view showing assigned vs returned parcels by month, contractor, ownership status, and completion status.
+- First dashboard page: map-based view with key metrics, parcel coloring by survey status or contractor, contractor/month filters, and open-work callouts.
 - Data freshness indicators for assignment, survey return, ownership, and dashboard refresh.
 - Exception log for parcels excluded or flagged before assignment.
-- Dashboard-ready data contract that can serve Power BI, ArcGIS Online, or the open-source prototype.
+- Dashboard-ready data contract that can serve the web app, ArcGIS Online/Experience Builder, and Power BI.
 
 Success criteria:
 
 - Staff can reproduce the denominator for each monthly metric.
 - Active completion is visible separately from Request Only.
 - Invalid or questionable parcels are flagged before they inflate contractor assignments.
-- A map makes contractor territory, open assignments, and data integrity issues visible.
+- A map makes contractor territory, open assignments, and data integrity issues visible to URA and contractors.
 
-### Phase 2: Correct Metrics, Visual Product, And Assignment Optimization
+### Phase 2: Performance Metrics, Timeline, And Daily Ingestion Pipeline
 
-Goal: move from reporting what happened to improving what gets assigned.
+Goal: make detailed performance, time trends, and daily refresh reliable enough for operations and Power BI.
 
 Deliverables:
 
 - Metric layer for LandCare success rate, contractor compliance, return timeliness, open assignments, expected-vs-returned, and valid-assignment rate.
 - Contractor scorecard with fair comparisons by month, workload, geography, assigned area, returned parcels, and exceptions.
-- Workload optimizer prototype that bundles parcels by area, geography, contractor capacity, and historical completion likelihood.
-- Past-succession or historical-completion model that learns which parcel and bundle patterns are likely to be completed.
-- Scenario comparison: current assignment vs optimized assignment by contractor, total parcel count, total acreage, distance/geographic compactness, and expected completion.
-- Visual presentation in the open-source web app and/or ArcGIS Experience Builder.
+- Second dashboard page: performance/detail view with contractor drilldowns, timeline trends, open/overdue aging, and refresh status.
+- Daily survey-completion ingestion job that normalizes the latest Regrid/survey output into the reporting table.
+- Power BI-consumable dataset or view using the same metric definitions as the monitoring dashboard.
+- Daily pipeline status indicators: last survey completion ingestion, row counts, failure alerts, and downstream Power BI refresh readiness.
+- Visual presentation in the open-source web app, ArcGIS Experience Builder, and/or Power BI depending on audience.
 
 Success criteria:
 
 - The team can distinguish contractor non-compliance from impossible or inefficient bundles.
-- Monthly bundles can be generated or reviewed using explicit optimization rules.
-- Leadership can see expected improvement, not just retrospective completion.
-- The dashboard tells a monthly operating story: assigned, feasible, completed, overdue, exception, next action.
+- URA and contractors can see map status, detailed performance, and trends without waiting for manual analysis.
+- Survey completions refresh daily into the dashboard data contract and Power BI-ready layer.
+- The dashboard tells a daily/monthly operating story: assigned, completed, overdue, exception, next action.
 
-### Phase 3: Survey Form Workflow And Regrid Reduction
+### Phase 3: Backlog: Optimization And Survey Interface
 
-Goal: reduce dependency risk and improve the field workflow.
+Goal: defer larger workflow changes until monitoring and ingestion are operating reliably.
 
 Deliverables:
 
-- Land care provider/surveyor form design for ArcGIS Field Maps, Survey123, Experience Builder, or a lightweight open-source form.
-- Required form fields and validation rules: parcel ID, period, contractor, visit status, completion status, photo evidence, notes, geolocation, timestamp, and issue reason.
-- Survey ingestion contract so Regrid, ArcGIS, or a custom web form can all feed the same downstream table.
-- Regrid dependency assessment: keep, wrap, partially replace, or eliminate.
-- Pilot workflow for one contractor or one monthly assignment cycle.
+- Optimization backlog: assignment balance by contractor, parcel count, acreage, geography, and historical completion.
+- Survey-interface backlog: ArcGIS Field Maps, Survey123, Experience Builder, or lightweight web form.
+- Regrid dependency assessment after the daily ingestion path is stable.
+- Pilot design only if Phase 1 and Phase 2 deliverables are complete.
 
 Success criteria:
 
-- Surveyors can submit parcel-level results with less manual export friction.
-- The same metrics work regardless of whether returns come from Regrid or ArcGIS.
-- Regrid becomes replaceable because the project controls the intake contract.
-- The team can decide whether to eliminate legacy Regrid based on pilot evidence.
+- Optimization is framed as a later operating improvement, not a prerequisite for monitoring.
+- Survey-interface replacement is framed as a later workflow improvement, not the first delivery risk.
+- Regrid becomes easier to replace later because daily ingestion and the reporting contract are already controlled.
 
 ## Two-Month Delivery Plan
 
@@ -132,11 +133,11 @@ Outputs:
 - Valid-assignment and exclusion query draft.
 - First map view of assigned, returned, open, and flagged parcels.
 
-### Weeks 3-4: Monitoring Product
+### Weeks 3-4: Monitoring Product, Page 1
 
 Focus:
 
-- Build the first operational dashboard view.
+- Build the first operational dashboard view: map plus key metrics.
 - Add contractor and month filters.
 - Add map coloring by completion status, contractor, ownership status, and exception reason.
 - Add data freshness and dashboard refresh labels.
@@ -147,40 +148,40 @@ Outputs:
 - Monitoring-ready web app or ArcGIS layer.
 - Contractor scorecard draft.
 - Leadership-ready metric summary.
-- Decision note on Power BI vs ArcGIS Experience Builder vs open-source web app for the next phase.
+- Decision note on contractor access model and whether the shared view is hosted in ArcGIS Experience Builder, Power BI, or the open-source web app.
 
-### Weeks 5-6: Optimization Prototype
-
-Focus:
-
-- Define bundle constraints: contractor capacity, parcel count, acreage, geography, prior completion, maintenance level, and assignment month.
-- Build a transparent scoring model before moving to a more complex model.
-- Compare historical completion by contractor, geography, and bundle type.
-- Prototype optimized monthly bundles and compare them to current assignments.
-
-Outputs:
-
-- Optimization scoring method.
-- Scenario comparison table.
-- Map view showing current vs proposed bundles.
-- Recommendation for pilot assignment logic.
-
-### Weeks 7-8: Survey Form Pilot And Transition Plan
+### Weeks 5-6: Performance Page And Daily Ingestion
 
 Focus:
 
-- Design the field survey form and submission workflow.
-- Create the shared survey ingestion contract.
-- Test ArcGIS-based and open-source form options against required fields.
-- Identify which legacy Regrid steps can be removed, wrapped, automated, or left in place.
-- Package the implementation roadmap and executive proposal.
+- Build the second dashboard page: performance/detail metrics and timeline.
+- Add contractor drilldowns, trend lines, open/overdue aging, and completion by period.
+- Automate daily ingestion of survey-completion data into the reporting contract.
+- Expose a Power BI-consumable table/view with the same metric definitions.
+- Add pipeline health checks for last ingestion time, row counts, and refresh failures.
 
 Outputs:
 
-- Survey form specification.
-- ArcGIS or open-source form pilot path.
-- Regrid transition recommendation.
-- Final two-month proposal package and next-phase backlog.
+- Performance/timeline dashboard page.
+- Daily survey-completion ingestion job or scheduled pipeline specification.
+- Power BI-ready dataset/view.
+- Pipeline freshness and QA checks.
+
+### Weeks 7-8: Contractor Access, Hardening, And Backlog
+
+Focus:
+
+- Validate access for URA users and contractor users.
+- Harden daily ingestion, dashboard filters, row-level/security assumptions, and Power BI refresh handoff.
+- Package monitoring documentation, metric definitions, and operating procedures.
+- Create backlog recommendation for optimization and survey-interface work.
+
+Outputs:
+
+- Shared monitoring tool ready for URA/contractor review.
+- Power BI consumption notes and refresh dependency list.
+- Monitoring runbook and metric dictionary.
+- Next-phase backlog for optimization and survey interface.
 
 ## Metric Framework
 
@@ -204,7 +205,9 @@ Outputs:
 - Parcels with repeated non-return across periods.
 - Parcels returned without a matching valid assignment.
 
-### Optimization Metrics
+### Backlog Optimization Metrics
+
+These remain useful for a future phase after the monitoring tool and daily ingestion are stable:
 
 - Expected completion probability by parcel or bundle.
 - Geographic compactness score.
@@ -223,7 +226,7 @@ Best when the priority is speed, flexibility, custom metric logic, and source-co
 Recommended use:
 
 - Continue the existing Leaflet prototype.
-- Add dashboard filters, map layers, metric cards, contractor panels, and scenario comparison.
+- Add dashboard filters, map layers, metric cards, contractor panels, performance timelines, and daily-ingestion status.
 - Generate static data files from PostgreSQL for low-friction publishing.
 - Later migrate to MapLibre/vector tiles or an API if scale requires it.
 
@@ -241,12 +244,12 @@ Recommended use:
 
 - Publish the assignment/survey layer to ArcGIS Online.
 - Build Experience Builder pages for monitoring, contractor comparison, and parcel review.
-- Connect to Survey123 or Field Maps for field submission.
+- Use hosted layer refreshes or feature layer views to support contractor-facing monitoring.
 - Use Arcade expressions and hosted feature layer views for operational filters.
 
 Tradeoffs:
 
-- Faster alignment with field survey workflows.
+- Faster alignment with existing GIS/contractor-facing workflows.
 - More constrained for custom optimization comparisons.
 - Needs governance around hosted layer refresh and permissions.
 
@@ -254,8 +257,9 @@ Tradeoffs:
 
 Use a shared data contract and build both paths deliberately:
 
-- Open-source web app for fast analytics, optimization comparison, and proposal/demo quality.
-- ArcGIS Online/Experience Builder for field operations, survey form pilot, and staff adoption.
+- Open-source web app for fast analytics, public proposal/demo quality, and custom monitoring logic.
+- ArcGIS Online/Experience Builder for hosted operational layers, contractor-facing access, and staff adoption.
+- Power BI for internal reporting using the same daily refreshed completion data.
 
 The decision should not be "web app or ArcGIS." The decision should be: which surface owns each job, with the same source data underneath.
 
@@ -277,9 +281,11 @@ Compliance reporting should therefore show:
 - Geography/territory burden.
 - Historical performance against similar bundles.
 
-This gives leadership a fair basis for action: fix the data, adjust assignments, or address contractor performance.
+This gives leadership a fair basis for action: fix the data, follow up with contractors, improve operating cadence, or later adjust assignments.
 
-## Survey Form Scope
+## Backlog Survey Interface Scope
+
+The survey interface can wait. The first two-month scope should not depend on replacing Regrid, Survey123, Field Maps, or contractor field tools. These fields remain useful when the team later designs a survey interface:
 
 Required fields:
 
@@ -305,13 +311,13 @@ Validation rules:
 - Geolocation captured where possible.
 - Duplicate submissions resolved by period, parcel, and contractor rule.
 
-Integration:
+Future integration:
 
 - The form should write to a normalized survey submissions table or export that matches the current downstream metric model.
 - Regrid submissions can continue temporarily if mapped into the same contract.
 - ArcGIS Survey123 or Field Maps should be evaluated first because they align with hosted layers and surveyor workflows.
 - The Regrid export URL step should be treated as a known operational risk until replaced by a managed integration or removed from the workflow.
-- The proposal web demo includes a `Take Worker Survey` interaction that loads a real latest-month parcel task, shows contractor/period/status fields, simulates a required evidence/photo step, and writes a local normalized survey confirmation without transmitting data.
+- The proposal web demo includes a `Take Worker Survey` interaction as backlog evidence only; it is not the first implementation priority after meeting feedback.
 
 ## Regrid Context To Preserve
 
@@ -319,8 +325,8 @@ Read-only Chrome inspection of the URA Regrid profile showed the current `LandCa
 
 - Treat Regrid as the current operating reference, not as the first thing to rip out.
 - Normalize Regrid survey and CSV outputs into one survey-submission contract.
-- Pilot ArcGIS or web-form intake against that same contract.
-- Decide whether to keep, wrap, reduce, or replace Regrid after the pilot proves field usability and data quality.
+- Use the daily ingestion layer to reduce manual risk before deciding whether to keep, wrap, reduce, or replace Regrid.
+- Decide on survey-interface replacement after the monitoring dashboard and Power BI feed are stable.
 
 ## Risks And Mitigations
 
@@ -330,14 +336,14 @@ Read-only Chrome inspection of the URA Regrid profile showed the current `LandCa
 - Risk: completion rate improves on paper by excluding difficult parcels.
   Mitigation: report valid-assignment rate and exception rate alongside completion.
 
-- Risk: optimization overfits historical contractor behavior.
-  Mitigation: start with transparent scoring, compare scenarios, and pilot before automation.
+- Risk: optimization distracts from the monitoring tool.
+  Mitigation: keep optimization in backlog until the dashboard, daily ingestion, and Power BI feed are stable.
 
 - Risk: ArcGIS and open-source paths diverge.
   Mitigation: define one data contract and make both products consume it.
 
-- Risk: Regrid replacement becomes too large for two months.
-  Mitigation: design an intake contract and pilot one alternate form instead of forcing a full migration.
+- Risk: survey interface replacement becomes too large for two months.
+  Mitigation: keep the current survey source working, automate daily ingestion, and defer interface replacement.
 
 ## Decisions Needed
 
@@ -345,8 +351,8 @@ Read-only Chrome inspection of the URA Regrid profile showed the current `LandCa
 - Which source controls ownership when county, URA, PLB, and city references disagree?
 - What is the expected return window after monthly assignment?
 - Should Request Only parcels ever be included in contractor compliance denominators?
-- Should the first field workflow pilot use ArcGIS Survey123, Field Maps, Experience Builder, or an open-source form?
-- Who approves Regrid reduction or replacement?
+- What contractor access model and permissions are acceptable for shared dashboard access?
+- Who owns the daily ingestion job and Power BI refresh monitoring?
 
 ## Final Two-Month Definition Of Done
 
@@ -355,6 +361,8 @@ The project is successful after two months if URA has:
 - A trusted monthly assignment denominator with documented exclusions.
 - Correct and visible metrics for LandCare success rate and contractor compliance.
 - A map-first monitoring view for assignments, returns, open work, and exceptions.
-- A prototype optimization method for assigning contractor bundles by geography, acreage, capacity, and historical completion.
-- A survey form pilot specification or working pilot path in ArcGIS or the web app.
-- A clear recommendation on whether to keep, wrap, reduce, or replace Regrid.
+- A performance/detail page with contractor scorecards, timelines, and open/overdue aging.
+- Daily survey-completion ingestion into the shared reporting contract.
+- A Power BI-ready dataset or view using the same metric definitions.
+- A contractor access and dashboard governance recommendation.
+- A next-phase backlog for optimization and survey interface work.

@@ -10,7 +10,7 @@ Audience:
 
 Core message:
 
-- LandCare's low survey completion is a controllable assurance problem. In two months, URA can make the assignment universe trustworthy, make contractor compliance visible, and pilot better assignment and survey workflows.
+- LandCare's immediate need is a shared monitoring tool. In two months, URA can make completion status, contractor performance, timeline trends, and daily survey-completion refresh visible to URA staff and contractors. Optimization and a new survey interface should be treated as later backlog.
 
 Tone:
 
@@ -36,11 +36,11 @@ Visual language:
 
 Title:
 
-- LandCare Assurance: Two-Month Scope To Improve Survey Success And Contractor Compliance
+- LandCare Assurance: Two-Month Monitoring Tool Scope
 
 Subtitle:
 
-- Monitoring, map view, data integrity, assignment optimization, and survey workflow modernization.
+- Shared URA/contractor monitoring, map view, performance metrics, timeline, and daily survey-completion ingestion.
 
 Visual:
 
@@ -48,7 +48,7 @@ Visual:
 
 Speaker note:
 
-- This proposal is not only about a dashboard. It is about creating a trusted operating layer for monthly LandCare assignments and survey returns.
+- This proposal is about creating the monitoring layer first: a shared dashboard and daily data pipeline that make LandCare status clear to URA and contractors.
 
 ### Slide 2: Current Workflow Reality
 
@@ -104,8 +104,8 @@ Key points:
 
 - Truth: reconcile assignments, returns, ownership, and exclusions.
 - Visibility: map assigned, returned, open, and flagged parcels.
-- Action: compare contractors fairly and optimize monthly bundles.
-- Workflow: pilot a better survey intake path through ArcGIS or the web app.
+- Action: compare contractors fairly and identify follow-up work.
+- Pipeline: ingest survey completions daily and feed both the monitoring dashboard and Power BI.
 
 Visual:
 
@@ -113,7 +113,7 @@ Visual:
 
 Speaker note:
 
-- The path is deliberate: stabilize the data first, then optimize and modernize.
+- The path is deliberate: stabilize monitoring and daily ingestion before optimizing assignments or redesigning survey intake.
 
 ### Slide 5: Phase 1 Scope
 
@@ -137,49 +137,50 @@ Speaker note:
 
 - This phase turns the dashboard from a static report into an operational control view.
 
-### Slide 6: Phase 2 Scope
+### Slide 6: Page 2 Scope
 
 Headline:
 
-- Phase 2: Correct metrics and optimize monthly assignments.
+- Page 2: Performance, detailed metrics, and timeline.
 
 Key points:
 
 - Create contractor scorecards with valid denominators.
 - Compare assigned parcels and assigned acreage by contractor per month.
-- Model historical completion patterns.
-- Bundle parcels by geography, acreage, capacity, and expected completion.
-- Compare current assignment vs optimized assignment scenarios.
+- Track completion by contractor, geography, maintenance level, and age.
+- Add timeline trends for daily/weekly survey completion movement.
+- Show open/overdue aging and contractor drilldowns.
+- Show pipeline freshness, last daily ingestion, and Power BI refresh readiness.
 
 Visual:
 
-- Side-by-side "current assignment" and "optimized assignment" map/table using the real latest-month assignment layer and bundle scenario controls from `/proposal/`.
+- Contractor performance table plus timeline trend and daily ingestion status.
 
 Speaker note:
 
-- Optimization helps separate poor compliance from poorly designed workload.
+- This page turns the dashboard into an operating tool: who is behind, what changed, and whether the data refreshed.
 
-### Slide 7: Phase 3 Scope
+### Slide 7: Daily Data Pipeline
 
 Headline:
 
-- Phase 3: Survey form workflow and Regrid reduction path.
+- Daily survey-completion ingestion feeds dashboard and Power BI.
 
 Key points:
 
-- Design a land care provider survey form.
-- Use ArcGIS Survey123/Field Maps, Experience Builder, or a lightweight web form.
-- Standardize parcel, period, contractor, status, photo, geolocation, timestamp, and issue reason fields.
-- Keep Regrid temporarily only if it conforms to the shared ingestion contract.
-- Pilot before deciding full replacement.
+- Automate daily ingestion from the current survey-completion source.
+- Normalize survey completions into a shared reporting table.
+- Feed the web/ArcGIS monitoring dashboard and Power BI from the same data contract.
+- Track pipeline health: last run, row counts, validation failures, and freshness.
+- Keep survey-interface replacement and optimization as backlog until the monitoring pipeline is stable.
 
 Visual:
 
-- Screenshot of the opened `Take Worker Survey` form beside the parcel map, followed by a form-to-data-contract-to-dashboard diagram.
+- Pipeline diagram: survey completion source -> daily ingestion -> normalized reporting table -> monitoring dashboard and Power BI.
 
 Speaker note:
 
-- The goal is not a risky platform swap. The goal is to control the intake contract so platforms become replaceable.
+- The goal is not a risky platform swap. The goal is to make completion data refresh daily and consistently everywhere it is consumed.
 
 ### Slide 8: Two-Month Roadmap
 
@@ -191,8 +192,8 @@ Timeline:
 
 - Weeks 1-2: baseline, reconciliation, data integrity checks.
 - Weeks 3-4: monitoring product and contractor scorecards.
-- Weeks 5-6: optimization prototype and scenario comparison.
-- Weeks 7-8: survey form pilot and Regrid transition recommendation.
+- Weeks 5-6: performance/timeline page and daily ingestion pipeline.
+- Weeks 7-8: contractor access, Power BI handoff, hardening, and backlog.
 
 Visual:
 
@@ -200,7 +201,7 @@ Visual:
 
 Speaker note:
 
-- The sequencing protects the project from jumping into optimization before the denominator is trusted.
+- The sequencing protects the project from jumping into optimization or survey-app redesign before monitoring and daily ingestion are trusted.
 
 ### Slide 9: Metric Framework
 
@@ -240,13 +241,13 @@ Headline:
 
 Recommended split:
 
-- Open-source web app for fast analytics, map demos, optimization scenarios, and proposal iteration.
+- Open-source web app for fast analytics, shared dashboard pages, and proposal iteration.
 - ArcGIS Online/Experience Builder for hosted operational layers and field workflow adoption.
 - Shared PostgreSQL/export data contract underneath both.
 
 Visual:
 
-- Architecture diagram: source data to data contract to Power BI, web app, ArcGIS, survey form.
+- Architecture diagram: survey completion source to daily ingestion to data contract to Power BI, web app, and ArcGIS.
 
 Speaker note:
 
@@ -284,8 +285,8 @@ Decision list:
 - Confirm ownership source-of-truth rules.
 - Confirm expected return window.
 - Confirm whether Request Only parcels belong in compliance denominators.
-- Choose first survey form pilot surface.
-- Confirm who approves Regrid reduction or replacement.
+- Confirm contractor access and security model.
+- Confirm Power BI refresh ownership and daily pipeline alert process.
 
 Visual:
 
@@ -307,9 +308,10 @@ Deliverables:
 - Correct success and compliance metrics.
 - Map-first monitoring view.
 - Contractor scorecard.
-- Optimization prototype.
-- Survey form pilot path.
-- Recommendation on Regrid: keep, wrap, reduce, or replace.
+- Performance/timeline page.
+- Daily survey-completion ingestion.
+- Power BI-ready reporting layer.
+- Backlog for optimization and survey interface.
 
 Visual:
 
@@ -332,7 +334,7 @@ Speaker note:
 
 - Build slides around evidence and decisions.
 - Use maps and operational UI mockups as the main visuals.
-- Keep every slide anchored to a business action: trust the data, adjust assignments, hold contractors accountable, or improve survey intake.
-- Do not over-index on model terminology. Use "optimization prototype" and "historical completion scoring" unless a specific model has been validated.
+- Keep every slide anchored to a business action: trust the data, see daily status, follow up with contractors, and keep Power BI aligned.
+- Do not over-index on model terminology. Optimization and survey-interface concepts should be labeled as future backlog, not the first implementation scope.
 - Use the two-month roadmap as the spine of the deck.
 - Style the deck in the same URA-blue system as the interactive web version and vacant-land triage web theme: blue header/accent bars, square white content panels, blue table headers, gold/orange only for status meaning, and minimal ornament.

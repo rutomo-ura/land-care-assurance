@@ -33,23 +33,23 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
       const scenarioData = {
         current: {
           cards: [
-            ["Layer", "2026-04", "Latest survey month with returned submissions in the prototype export"],
-            ["Mapped parcels", "1,076", "Real parcel polygons loaded from the PostGIS export"],
-            ["No QA gate yet", "Current state", "Assignment export still needs pre-15th ownership and key checks"]
+            ["Source", "Survey completion", "Start from the current Regrid/survey completion output"],
+            ["Cadence", "Daily", "Refresh completion status every day instead of waiting for manual review"],
+            ["Consumers", "Dashboard + Power BI", "The same normalized table should feed web/ArcGIS and Power BI"]
           ]
         },
         qa: {
           cards: [
-            ["QA candidate", "Owner check", "Join assignment candidates to county, URA, PLB, and city ownership references"],
-            ["Holdout logic", "Exception log", "Flag stale, transferred, duplicate, or unmatched parcels before survey handoff"],
-            ["Dashboard impact", "Cleaner denominator", "Completion and compliance should show valid assignments separately"]
+            ["Validation", "Parcel + period", "Check parcel keys, assignment period, contractor, and duplicate submissions"],
+            ["Freshness", "Last run", "Expose ingestion timestamp, row counts, and failure state in the dashboard"],
+            ["Metric impact", "One denominator", "Keep web/ArcGIS and Power BI aligned on the same completion logic"]
           ]
         },
         optimized: {
           cards: [
-            ["Bundle input", "Real parcels", "Start from this latest-month mapped assignment layer"],
-            ["Balance", "Count + area", "Optimize by contractor capacity, parcel count, acreage, and geography"],
-            ["Survey package", "ArcGIS or CSV", "Emit the reviewed bundle to Regrid, Survey123, Field Maps, or a web form"]
+            ["Power BI view", "Ready table", "Publish a consumable table or view with agreed metric definitions"],
+            ["Refresh handoff", "Daily status", "Confirm Power BI can refresh after survey completion ingestion"],
+            ["Backlog", "Optimization later", "Use the monitoring data before changing bundle or survey interfaces"]
           ]
         }
       };
@@ -351,7 +351,9 @@ window.__landcareProposal = { booted: true, arcgisStarted: false, arcgisReady: f
         if (viewButton) setViewMode(viewButton.dataset.viewMode);
       });
 
-      document.querySelectorAll("#primaryTakeSurveyButton, #takeSurveyButton").forEach((button) => {
+      document.getElementById("primaryMonitoringButton").addEventListener("click", () => activateModule("monitoring"));
+
+      document.querySelectorAll("#takeSurveyButton").forEach((button) => {
         button.addEventListener("click", openSurveyForm);
       });
 
