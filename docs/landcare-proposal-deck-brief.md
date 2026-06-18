@@ -151,7 +151,7 @@ Key points:
 
 Visual:
 
-- Side-by-side "current assignment" and "optimized assignment" map/table using the pseudo bundle scenario from `/proposal/`.
+- Side-by-side "current assignment" and "optimized assignment" map/table using the real latest-month assignment layer and bundle scenario controls from `/proposal/`.
 
 Speaker note:
 

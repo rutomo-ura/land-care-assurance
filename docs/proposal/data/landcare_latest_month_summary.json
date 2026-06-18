@@ -1,0 +1,35 @@
+{
+  "latest_month": "2026-04",
+  "latest_assignment_period": "2026-05-15",
+  "latest_survey_period": "2026-04-15",
+  "source_note": "PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.",
+  "feature_count": 1076,
+  "status_counts": {
+    "missing": 848,
+    "request_only": 86,
+    "returned": 142
+  },
+  "contractor_counts": {
+    "Amani Christian CDC": 37,
+    "Center That CARES": 26,
+    "Chatman Properties": 208,
+    "Ervin Home Beautification": 112,
+    "FHCV Contracting LLC & LawnCare": 26,
+    "Hilltop Rising": 297,
+    "KRJ Enterprises": 339,
+    "One Call Handles It All": 17,
+    "Operation Better Block": 14
+  },
+  "contractor_returned": {
+    "Chatman Properties": 3,
+    "Ervin Home Beautification": 73,
+    "FHCV Contracting LLC & LawnCare": 12,
+    "Hilltop Rising": 33,
+    "KRJ Enterprises": 4,
+    "One Call Handles It All": 17
+  },
+  "level_counts": {
+    "Active": 990,
+    "Request Only": 86
+  }
+}

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Assurance Proposal</title>
-    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
     <style>
       :root {
         --ink: #111820;
@@ -309,7 +309,8 @@
       }
 
       .module-tab.is-active,
-      .scenario-button.is-active {
+      .scenario-button.is-active,
+      .color-button.is-active {
         color: #ffffff;
         background: var(--accent-dark);
         border-color: var(--accent-dark);
@@ -429,11 +430,16 @@
         border-top: 4px solid var(--accent);
       }
 
-      .scenario-controls {
+      .scenario-controls,
+      .view-controls {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
         margin: 12px 0;
+      }
+
+      .view-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .scenario-card {
@@ -580,6 +586,7 @@
         .site-links,
         .module-tabs,
         .scenario-controls,
+        .view-controls,
         .kpi-grid {
           grid-template-columns: 1fr;
           display: grid;
@@ -641,7 +648,7 @@
           <h1>Turn LandCare from a monthly export into an assurance system.</h1>
           <p>
             This proposal demo uses the same ArcGIS-style Pittsburgh map pattern as the vacant-land triage work.
-            It shows how the two-month scope can monitor assignments, validate the denominator, create pseudo survey bundles,
+            It shows the latest real LandCare parcel-month layer, colored by contractor or survey status,
             and prepare an ArcGIS or web-form path beyond fragile Regrid handoffs.
           </p>
         </header>
@@ -658,20 +665,20 @@
         <section class="module-panel is-active" data-panel="overview">
           <section class="kpi-grid" aria-label="Proposal KPIs">
             <article class="kpi">
-              <span class="kpi-value">1,214</span>
-              <span class="kpi-label">current assigned parcels reference</span>
+              <span class="kpi-value" id="kpiAssigned">1,076</span>
+              <span class="kpi-label">latest-month mapped parcels</span>
             </article>
             <article class="kpi">
-              <span class="kpi-value">142</span>
-              <span class="kpi-label">returned survey reference</span>
+              <span class="kpi-value" id="kpiReturned">142</span>
+              <span class="kpi-label">returned surveys</span>
             </article>
             <article class="kpi">
-              <span class="kpi-value">14.0%</span>
-              <span class="kpi-label">active-only completion from QA note</span>
+              <span class="kpi-value" id="kpiCompletion">14.3%</span>
+              <span class="kpi-label">active completion</span>
             </article>
             <article class="kpi">
-              <span class="kpi-value">2 mo</span>
-              <span class="kpi-label">proposal delivery window</span>
+              <span class="kpi-value" id="kpiMonth">2026-04</span>
+              <span class="kpi-label">survey month shown</span>
             </article>
           </section>
 
@@ -697,19 +704,23 @@
         <section class="module-panel" data-panel="monitoring">
           <section class="module-brief">
             <span class="module-status is-live-status">Operating view</span>
-            <h2>Monitoring should explain the low completion number.</h2>
+            <h2>Monitoring shows the real latest-month parcel map.</h2>
             <p>
               The map distinguishes valid open assignments from returned surveys and data-integrity exceptions.
-              It also keeps Active and Request Only out of one blended compliance denominator.
+              Toggle between contractor coloring and survey-status coloring for the latest survey month only.
             </p>
           </section>
+          <div class="view-controls" aria-label="Map color controls">
+            <button class="color-button is-active" type="button" data-color-mode="status">Color By Survey Status</button>
+            <button class="color-button" type="button" data-color-mode="contractor">Color By Contractor</button>
+          </div>
           <section class="chart-section">
             <div class="chart-card">
-              <h2>Metric Funnel</h2>
+              <h2>Survey Status</h2>
               <div class="native-chart" id="funnelChart"></div>
             </div>
             <div class="chart-card">
-              <h2>Contractor Compliance Lens</h2>
+              <h2>Contractor Assignments</h2>
               <div class="native-chart" id="contractorChart"></div>
             </div>
           </section>
@@ -717,11 +728,11 @@
 
         <section class="module-panel" data-panel="bundle">
           <section class="module-brief">
-            <span class="module-status is-live-status">Pseudo demo</span>
+            <span class="module-status is-live-status">Real map input</span>
             <h2>Bundle creation should become an assurance gate, not just a CSV export.</h2>
             <p>
-              Today, assignment creation is a tag-filtered export from `gis.epp_snapshot`. This demo shows
-              how a future monthly bundle step can validate ownership, balance workload, and create survey-ready groups.
+              Today, assignment creation is a tag-filtered export from `gis.epp_snapshot`. This page uses the
+              real latest-month parcel layer as the input that a future QA and bundle-creation step would review.
             </p>
           </section>
 
@@ -734,7 +745,7 @@
           <section class="scenario-grid" id="scenarioCards"></section>
 
           <section class="section">
-            <h2>Pseudo Bundle-To-Survey Creation</h2>
+            <h2>Bundle-To-Survey Creation</h2>
             <div class="flow-grid">
               <article class="flow-step is-active">
                 <span>1</span>
@@ -818,7 +829,7 @@
           <section class="module-brief">
             <span class="module-status is-live-status">Deck ready</span>
             <h2>Use this demo as the deck's visual anchor.</h2>
-            <p>The deck should use this URA-blue map-first style: square panels, blue headers, white cards, Pittsburgh map views, and gold/orange only for status meaning.</p>
+            <p>The deck should use this real latest-month map as the visual anchor: color once by survey status, then by contractor.</p>
           </section>
           <a class="download-link" href="../landcare-proposal-deck-brief.md">Open Deck Brief</a>
           <a class="download-link" href="../landcare-two-month-scope-proposal.md">Open Scope Plan</a>
@@ -826,345 +837,6 @@
       </aside>
     </main>
 
-    <script src="https://js.arcgis.com/4.30/"></script>
-    <script>
-      const colors = {
-        returned: "#0098d3",
-        open: "#f0c24b",
-        flagged: "#c2410c",
-        optimized: "#554a8f",
-        current: "#586872",
-        teal: "#008f9f"
-      };
-
-      const scenarioData = {
-        current: {
-          title: "Current tag-filtered export",
-          cards: [
-            ["Assigned", "1,214", "LandCare tags exported to monthly assignment"],
-            ["Returned", "142", "Survey responses matched back to assignment keys"],
-            ["Risk", "No QA gate", "Ownership and sold-parcel checks happen after the fact"]
-          ],
-          mode: "current"
-        },
-        qa: {
-          title: "QA holdout before survey package",
-          cards: [
-            ["Valid assignments", "1,148", "Illustrative denominator after ownership review"],
-            ["Held for review", "66", "Gap consistent with stale or non-URA/PLB ownership risk"],
-            ["Action", "Exception log", "Every exclusion needs a reason code before assignment"]
-          ],
-          mode: "qa"
-        },
-        optimized: {
-          title: "Optimized monthly bundle",
-          cards: [
-            ["Bundle A", "North/East", "Compact group for one contractor"],
-            ["Bundle B", "Central", "Balanced by parcel count and acreage"],
-            ["Bundle C", "South/West", "Scenario based on history and geography"]
-          ],
-          mode: "optimized"
-        }
-      };
-
-      const layerModes = {
-        overview: "overview",
-        monitoring: "monitoring",
-        bundle: "bundle",
-        workflow: "workflow",
-        roadmap: "overview",
-        deck: "overview"
-      };
-
-      const pittsburghPoints = [
-        { name: "Homewood North", lon: -79.8958, lat: 40.4587, contractor: "KRJ Enterprises", status: "returned", bundle: "A", acres: 0.18 },
-        { name: "Larimer", lon: -79.9129, lat: 40.4665, contractor: "Operation Better Block", status: "open", bundle: "A", acres: 0.11 },
-        { name: "Lincoln-Lemington", lon: -79.8997, lat: 40.4764, contractor: "Amani Christian CDC", status: "flagged", bundle: "A", acres: 0.23 },
-        { name: "Middle Hill", lon: -79.9722, lat: 40.4497, contractor: "Center That CARES", status: "returned", bundle: "B", acres: 0.08 },
-        { name: "Hill District", lon: -79.9667, lat: 40.4451, contractor: "Hilltop Rising", status: "open", bundle: "B", acres: 0.2 },
-        { name: "Hazelwood", lon: -79.9415, lat: 40.4098, contractor: "FHCV Contracting", status: "returned", bundle: "B", acres: 0.31 },
-        { name: "Perry South", lon: -80.014, lat: 40.4682, contractor: "One Call Handles It All", status: "open", bundle: "C", acres: 0.16 },
-        { name: "Manchester", lon: -80.0249, lat: 40.4548, contractor: "Chatman Properties", status: "flagged", bundle: "C", acres: 0.09 },
-        { name: "South Side Slopes", lon: -79.9731, lat: 40.4235, contractor: "Ervin Home Beautification", status: "returned", bundle: "C", acres: 0.14 },
-        { name: "Knoxville", lon: -79.9913, lat: 40.4142, contractor: "Hilltop Rising", status: "optimized", bundle: "C", acres: 0.12 }
-      ];
-
-      const funnelData = [
-        { label: "Assignment candidates", value: 1214, color: colors.current },
-        { label: "Active expected", value: 1011, color: colors.open },
-        { label: "Returned matched", value: 142, color: colors.returned },
-        { label: "Potential ownership gap", value: 66, color: colors.flagged }
-      ];
-
-      const contractorData = [
-        { label: "KRJ Enterprises", value: 22, color: colors.returned },
-        { label: "Hilltop Rising", value: 18, color: colors.returned },
-        { label: "Center That CARES", value: 16, color: colors.returned },
-        { label: "FHCV Contracting", value: 13, color: colors.returned },
-        { label: "One Call Handles It All", value: 9, color: colors.returned }
-      ];
-
-      const mapState = {
-        graphicsLayer: null,
-        view: null,
-        mode: "overview",
-        scenario: "current"
-      };
-
-      function escapeHtml(value) {
-        return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          "\"": "&quot;",
-          "'": "&#39;"
-        }[char]));
-      }
-
-      function formatNumber(value) {
-        return new Intl.NumberFormat("en-US").format(value);
-      }
-
-      function renderLegend(mode) {
-        const legend = document.getElementById("mapLegend");
-        const items = [
-          ["Returned", colors.returned, "matched survey"],
-          ["Open", colors.open, "valid but not returned"],
-          ["Exception", colors.flagged, "hold for review"],
-          ["Optimized", colors.optimized, "proposed bundle"]
-        ];
-        legend.innerHTML = `
-          <div class="legend-heading">${escapeHtml(mode === "bundle" ? "Bundle / Survey Scenario" : "Assignment Status")}</div>
-          <div class="legend-items">
-            ${items.map(([label, color, count]) => `
-              <div class="legend-item">
-                <span class="swatch" style="background:${color}"></span>
-                <span class="legend-label">${label}</span>
-                <span class="legend-count">${count}</span>
-              </div>
-            `).join("")}
-          </div>
-        `;
-      }
-
-      function renderBarChart(containerId, data) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const maxValue = Math.max(...data.map((item) => item.value));
-        container.innerHTML = data.map((item) => {
-          const width = Math.max((item.value / maxValue) * 100, 4);
-          return `
-            <div class="chart-row">
-              <div class="chart-label">${escapeHtml(item.label)}</div>
-              <div class="chart-track"><span class="chart-bar" style="width:${width}%;background:${item.color}"></span></div>
-              <div class="chart-value">${formatNumber(item.value)}</div>
-            </div>
-          `;
-        }).join("");
-      }
-
-      function renderScenarioCards(scenarioName) {
-        const scenario = scenarioData[scenarioName];
-        const container = document.getElementById("scenarioCards");
-        container.innerHTML = scenario.cards.map(([label, value, note], index) => `
-          <article class="scenario-card ${index === 2 && scenarioName !== "optimized" ? "is-risk" : ""}">
-            <span class="detail-label">${escapeHtml(label)}</span>
-            <h2>${escapeHtml(value)}</h2>
-            <p>${escapeHtml(note)}</p>
-          </article>
-        `).join("");
-      }
-
-      function activateModule(moduleName) {
-        document.querySelectorAll("[data-module]").forEach((tab) => {
-          tab.classList.toggle("is-active", tab.dataset.module === moduleName);
-        });
-        document.querySelectorAll("[data-panel]").forEach((panel) => {
-          panel.classList.toggle("is-active", panel.dataset.panel === moduleName);
-        });
-        mapState.mode = layerModes[moduleName] || "overview";
-        window.updateMapGraphics();
-      }
-
-      function setScenario(scenarioName) {
-        mapState.scenario = scenarioName;
-        document.querySelectorAll("[data-scenario]").forEach((button) => {
-          button.classList.toggle("is-active", button.dataset.scenario === scenarioName);
-        });
-        renderScenarioCards(scenarioName);
-        window.updateMapGraphics();
-      }
-
-      document.querySelectorAll("[data-module]").forEach((button) => {
-        button.addEventListener("click", () => activateModule(button.dataset.module));
-      });
-
-      document.querySelectorAll("[data-scenario]").forEach((button) => {
-        button.addEventListener("click", () => setScenario(button.dataset.scenario));
-      });
-
-      renderLegend("overview");
-      renderBarChart("funnelChart", funnelData);
-      renderBarChart("contractorChart", contractorData);
-      renderScenarioCards("current");
-
-      require([
-        "esri/Map",
-        "esri/views/MapView",
-        "esri/layers/GraphicsLayer",
-        "esri/layers/FeatureLayer",
-        "esri/Graphic",
-        "esri/geometry/Point",
-        "esri/geometry/Polyline",
-        "esri/widgets/Home",
-        "esri/widgets/Search",
-        "esri/widgets/BasemapToggle",
-        "esri/widgets/Expand",
-        "esri/widgets/Legend"
-      ], (Map, MapView, GraphicsLayer, FeatureLayer, Graphic, Point, Polyline, Home, Search, BasemapToggle, Expand, Legend) => {
-        const assignmentLayer = new GraphicsLayer({ title: "Pseudo LandCare assignments" });
-        mapState.graphicsLayer = assignmentLayer;
-
-        const neighborhoodLayer = new FeatureLayer({
-          url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
-          title: "City Neighborhoods",
-          opacity: 0.2,
-          renderer: {
-            type: "simple",
-            symbol: {
-              type: "simple-fill",
-              color: [0, 152, 211, 0.04],
-              outline: { color: [0, 108, 159, 0.45], width: 0.7 }
-            }
-          },
-          popupEnabled: false
-        });
-
-        const councilLayer = new FeatureLayer({
-          url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0",
-          title: "Council Districts",
-          visible: false,
-          renderer: {
-            type: "simple",
-            symbol: {
-              type: "simple-fill",
-              color: [240, 194, 75, 0.05],
-              outline: { color: [158, 116, 17, 0.75], width: 1.2 }
-            }
-          },
-          popupEnabled: false
-        });
-
-        const map = new Map({
-          basemap: "topo-vector",
-          layers: [neighborhoodLayer, councilLayer, assignmentLayer]
-        });
-
-        const view = new MapView({
-          container: "viewDiv",
-          map,
-          center: [-79.9959, 40.4406],
-          zoom: 12,
-          constraints: { minZoom: 10 },
-          popup: {
-            dockEnabled: true,
-            dockOptions: { buttonEnabled: false, breakpoint: false, position: "bottom-left" }
-          }
-        });
-
-        mapState.view = view;
-        view.ui.add(new Home({ view }), "top-left");
-        view.ui.add(new Search({ view, includeDefaultSources: true }), "top-right");
-        view.ui.add(new BasemapToggle({ view, nextBasemap: "satellite" }), "bottom-right");
-        view.ui.add(new Expand({
-          view,
-          content: new Legend({ view, layerInfos: [{ layer: neighborhoodLayer }, { layer: councilLayer }] }),
-          expanded: false
-        }), "top-left");
-
-        window.updateMapGraphics = function updateMapGraphics() {
-          if (!mapState.graphicsLayer) return;
-          assignmentLayer.removeAll();
-          councilLayer.visible = mapState.mode === "bundle";
-
-          const currentScenario = scenarioData[mapState.scenario] || scenarioData.current;
-          const showOptimized = mapState.mode === "bundle" && currentScenario.mode === "optimized";
-          const showQA = mapState.mode === "bundle" && currentScenario.mode === "qa";
-          const visiblePoints = pittsburghPoints.filter((point) => {
-            if (showOptimized) return true;
-            if (showQA) return point.status !== "flagged";
-            return mapState.mode !== "workflow" || point.status === "returned" || point.status === "open";
-          });
-
-          const symbolFor = (point) => {
-            const status = showOptimized ? (point.status === "flagged" ? "flagged" : "optimized") : point.status;
-            return {
-              type: "simple-marker",
-              style: status === "flagged" ? "triangle" : "square",
-              color: colors[status] || colors.current,
-              size: status === "flagged" ? 13 : 11,
-              outline: { color: "#ffffff", width: 1.4 }
-            };
-          };
-
-          visiblePoints.forEach((point) => {
-            assignmentLayer.add(new Graphic({
-              geometry: new Point({ longitude: point.lon, latitude: point.lat }),
-              symbol: symbolFor(point),
-              attributes: point,
-              popupTemplate: {
-                title: "{name}",
-                content: `
-                  <b>Contractor:</b> {contractor}<br>
-                  <b>Status:</b> {status}<br>
-                  <b>Bundle:</b> {bundle}<br>
-                  <b>Acres:</b> {acres}
-                `
-              }
-            }));
-          });
-
-          if (showOptimized) {
-            ["A", "B", "C"].forEach((bundle) => {
-              const bundlePoints = visiblePoints.filter((point) => point.bundle === bundle);
-              if (bundlePoints.length < 2) return;
-              assignmentLayer.add(new Graphic({
-                geometry: new Polyline({
-                  paths: [bundlePoints.map((point) => [point.lon, point.lat])]
-                }),
-                symbol: {
-                  type: "simple-line",
-                  color: bundle === "A" ? colors.returned : bundle === "B" ? colors.teal : colors.optimized,
-                  width: 2.4,
-                  style: "short-dash"
-                }
-              }));
-            });
-          }
-
-          const callout = document.getElementById("mapCallout");
-          const status = document.getElementById("mapStatus");
-          const modeLabels = {
-            overview: ["Citywide LandCare operating view", "Pseudo parcels are placed across Pittsburgh neighborhoods for proposal storytelling."],
-            monitoring: ["Monitoring view", "Blue returned, gold open, orange exceptions. Use this to separate data issues from contractor compliance."],
-            bundle: [currentScenario.title, "Scenario map changes with Current Export, QA Holdout, and Optimized Bundle controls."],
-            workflow: ["Survey intake workflow", "Returned and open points represent the minimum contract that Regrid, ArcGIS, or a web form should feed."]
-          };
-          const [title, text] = modeLabels[mapState.mode] || modeLabels.overview;
-          callout.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span>`;
-          status.textContent = "ArcGIS basemap, City neighborhoods, Council district reference, and pseudo LandCare assignments loaded.";
-          renderLegend(mapState.mode);
-        };
-
-        view.when(() => {
-          updateMapGraphics();
-          view.goTo({ center: [-79.9959, 40.4406], zoom: 12 }, { duration: 500 }).catch(() => {});
-        }).catch(() => {
-          document.getElementById("mapStatus").textContent = "Map could not load. Check ArcGIS CDN/network access.";
-        });
-      });
-
-      window.updateMapGraphics = window.updateMapGraphics || function noop() {};
-    </script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
