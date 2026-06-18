@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
 :root {
   --ura-blue: #0098d3;
   --ura-blue-dark: #006c9f;
@@ -27,7 +29,8 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--panel);
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 button,
@@ -83,7 +86,8 @@ textarea {
 .title-block strong {
   overflow: hidden;
   color: #ffffff;
-  font-size: 21px;
+  font-size: 22px;
+  font-weight: 850;
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -110,7 +114,7 @@ textarea {
   color: #ffffff;
   border: 2px solid #ffffff;
   background: transparent;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   text-decoration: none;
 }
@@ -125,13 +129,14 @@ textarea {
   max-width: 260px;
   line-height: 1.35;
   text-align: right;
+  text-transform: none;
 }
 
 .eyebrow {
   color: var(--ura-blue-dark);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -196,7 +201,8 @@ textarea {
 .mini-kpis strong {
   display: block;
   color: var(--ura-blue);
-  font-size: 23px;
+  font-size: 25px;
+  font-weight: 850;
   line-height: 1;
 }
 
@@ -459,7 +465,8 @@ textarea {
   display: block;
   margin: 9px 0 6px;
   color: var(--ink);
-  font-size: 29px;
+  font-size: 31px;
+  font-weight: 850;
   line-height: 1.05;
 }
 
@@ -506,6 +513,59 @@ select {
 .reconcile-grid {
   display: grid;
   gap: 10px;
+}
+
+.line-chart {
+  min-height: 300px;
+}
+
+.line-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-axis {
+  stroke: #b9c9d4;
+  stroke-width: 1;
+}
+
+.chart-grid {
+  stroke: #e4edf2;
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--ura-blue);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.chart-area {
+  fill: rgba(0, 152, 211, 0.12);
+}
+
+.chart-marker {
+  fill: #ffffff;
+  stroke: var(--ura-blue);
+  stroke-width: 3;
+}
+
+.chart-label,
+.chart-tick {
+  fill: var(--muted);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chart-value-label {
+  fill: var(--ink);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .bar-row {

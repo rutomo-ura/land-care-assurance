@@ -149,7 +149,7 @@ function renderKpis() {
   const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
   const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
   const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
-  document.getElementById("latestMonthLabel").textContent = `${state.summary.latest_month} latest survey month`;
+  document.getElementById("latestMonthLabel").textContent = `${state.summary.latest_month} URA-owned survey month`;
   document.getElementById("assignedKpi").textContent = formatNumber(uniqueCount(features));
   document.getElementById("returnedKpi").textContent = formatNumber(returned);
   document.getElementById("completionKpi").textContent = pct(returned, active);
@@ -204,15 +204,19 @@ function renderLegend() {
 
 function renderActionFocus() {
   const features = filteredFeatures();
-  const city = uniqueCount(features, (feature) => feature.properties.ownership_type === "City of Pittsburgh");
-  const ura = uniqueCount(features, (feature) => feature.properties.ownership_type === "URA");
-  const other = uniqueCount(features, (feature) => feature.properties.ownership_type === "Other or unknown");
+  const activeOpen = uniqueCount(
+    features,
+    (feature) =>
+      feature.properties.maintenance_level === "Active" &&
+      feature.properties.completion_status === "missing"
+  );
+  const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
   const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
   document.getElementById("actionFocus").innerHTML = `
-    <div><strong>${formatNumber(city)}</strong><span>City-owned parcels in current filter</span></div>
-    <div><strong>${formatNumber(ura)}</strong><span>URA-owned parcels in current filter</span></div>
-    <div><strong>${formatNumber(other)}</strong><span>Other or unknown owner labels to verify</span></div>
-    <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only assignments separated from Active compliance</span></div>
+    <div><strong>${formatNumber(features.length)}</strong><span>URA-owned parcels in current filter</span></div>
+    <div><strong>${formatNumber(activeOpen)}</strong><span>Active URA-owned parcels still open</span></div>
+    <div><strong>${formatNumber(returned)}</strong><span>Returned surveys matched to URA-owned parcels</span></div>
+    <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only URA-owned assignments separated from Active compliance</span></div>
   `;
 }
 
@@ -223,7 +227,7 @@ function renderFreshness() {
   document.getElementById("mapBadge").textContent =
     `${formatNumber(state.summary.feature_count)} parcels - ${state.summary.latest_month} - PostgreSQL/PostGIS`;
   document.getElementById("mapCallout").innerHTML = `
-    <strong>Real ${state.summary.latest_month} LandCare parcels</strong>
+    <strong>URA-owned ${state.summary.latest_month} LandCare parcels</strong>
     <span>Colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}; current contractor filter: ${state.contractorFilter === "all" ? "all" : escapeHtml(shortContractor(state.contractorFilter))}.</span>
   `;
 }

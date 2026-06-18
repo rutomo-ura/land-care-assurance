@@ -113,28 +113,70 @@ function renderContractorBars(rows, latestMonth, selected = "all") {
 }
 
 function renderTimeline(monthlyMetrics) {
-  const maxRate = Math.max(...monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0)), 100);
-  document.getElementById("timelineBars").innerHTML = monthlyMetrics.map((row) => {
+  renderLineChart(monthlyMetrics);
+  document.getElementById("timelineBars").innerHTML = monthlyMetrics.slice(-4).map((row) => {
     const rate = Number(row.active_completion_rate_pct || 0);
     const color = rateColor(rate);
     return `
       <div class="bar-row">
         <strong>${shortMonth(row.period_month)}</strong>
-        <div class="track"><span class="fill" style="width:${Math.max((rate / maxRate) * 100, 1)}%;background:${color}"></span></div>
+        <div class="track"><span class="fill" style="width:${Math.max(rate, 1)}%;background:${color}"></span></div>
         <span style="color:${color};font-weight:800">${formatPct(rate)}</span>
       </div>
     `;
   }).join("");
 }
 
+function renderLineChart(monthlyMetrics) {
+  const container = document.getElementById("completionLineChart");
+  const width = 720;
+  const height = 300;
+  const margin = { top: 24, right: 34, bottom: 48, left: 50 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
+  const maxValue = Math.max(20, Math.ceil(Math.max(...values) / 10) * 10);
+  const toX = (index) =>
+    margin.left + (monthlyMetrics.length === 1 ? plotWidth / 2 : (index / (monthlyMetrics.length - 1)) * plotWidth);
+  const toY = (value) => margin.top + plotHeight - (value / maxValue) * plotHeight;
+  const points = monthlyMetrics.map((row, index) => [toX(index), toY(Number(row.active_completion_rate_pct || 0))]);
+  const linePath = points.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
+  const yTicks = [0, Math.round(maxValue / 2), maxValue];
+  const xTickIndexes = [...new Set([0, Math.floor((monthlyMetrics.length - 1) / 2), monthlyMetrics.length - 1])];
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="URA-owned active completion rate over time">
+      ${yTicks.map((tick) => {
+        const y = toY(tick);
+        return `
+          <line class="chart-grid" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>
+          <text class="chart-tick" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>
+        `;
+      }).join("")}
+      <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
+      <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
+      <path class="chart-area" d="${areaPath}"></path>
+      <path class="chart-line" d="${linePath}"></path>
+      ${points.map(([x, y], index) => `
+        <circle class="chart-marker" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"></circle>
+        ${index === points.length - 1 ? `<text class="chart-value-label" x="${(x - 8).toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="end">${formatPct(values[index])}</text>` : ""}
+      `).join("")}
+      ${xTickIndexes.map((index) => `
+        <text class="chart-label" x="${toX(index).toFixed(1)}" y="${height - 16}" text-anchor="middle">${shortMonth(monthlyMetrics[index].period_month)}</text>
+      `).join("")}
+    </svg>
+  `;
+}
+
 function renderReconciliation(latestSummary) {
   const comparison = latestSummary.powerbi_comparison || {};
   const cards = [
     ["Power BI assigned", comparison.dashboard_assigned_count],
-    ["SQL mapped assigned", comparison.sql_export_assigned_count],
+    ["URA-owned mapped assigned", comparison.sql_export_assigned_count],
     ["Power BI returned", comparison.dashboard_returned_count],
-    ["SQL returned", comparison.sql_export_returned_count],
-    ["Assigned difference", comparison.assigned_difference],
+    ["URA-owned returned", comparison.sql_export_returned_count],
+    ["Scope difference", comparison.assigned_difference],
     ["Returned difference", comparison.returned_difference]
   ];
   document.getElementById("reconcileGrid").innerHTML = cards.map(([label, value]) => `
@@ -147,7 +189,7 @@ function renderReconciliation(latestSummary) {
 
 function renderSource(summary, latestSummary) {
   document.getElementById("sourceText").textContent =
-    `${latestSummary.source_note} Source tables include gis.regrid_bundle_assignments, gis.regrid_survey_submissions, gis.pgh_parcels, gis.epp_parcels_full, gis.epp_snapshot, analysis.city_epp_properties, and analysis.assessment_snapshot. The latest map layer is ${summary.latest_month}; assignment freshness is ${latestSummary.latest_assignment_period}; survey completion freshness is ${latestSummary.latest_survey_period}.`;
+    `${latestSummary.source_note} Source tables include gis.regrid_bundle_assignments, gis.regrid_survey_submissions, gis.pgh_parcels, gis.epp_parcels_full, gis.epp_snapshot, analysis.city_epp_properties, and analysis.assessment_snapshot. The published web layer is filtered to ownership_type = URA. The latest map layer is ${summary.latest_month}; assignment freshness is ${latestSummary.latest_assignment_period}; survey completion freshness is ${latestSummary.latest_survey_period}.`;
 }
 
 async function loadData() {

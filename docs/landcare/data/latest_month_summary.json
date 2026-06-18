@@ -2,34 +2,37 @@
   "latest_month": "2026-04",
   "latest_assignment_period": "2026-05-15",
   "latest_survey_period": "2026-04-15",
-  "source_note": "PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.",
-  "feature_count": 1076,
+  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels only. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.",
+  "feature_count": 218,
+  "ownership_scope": "URA owned only",
   "status_counts": {
-    "missing": 848,
-    "request_only": 86,
-    "returned": 142
+    "missing": 167,
+    "request_only": 37,
+    "returned": 14
   },
   "contractor_counts": {
-    "Amani Christian CDC": 37,
-    "Center That CARES": 26,
-    "Chatman Properties": 208,
-    "Ervin Home Beautification": 112,
-    "FHCV Contracting LLC & LawnCare": 26,
-    "Hilltop Rising": 297,
-    "KRJ Enterprises": 339,
-    "One Call Handles It All": 17,
-    "Operation Better Block": 14
+    "Amani Christian CDC": 12,
+    "Center That CARES": 11,
+    "Chatman Properties": 30,
+    "Ervin Home Beautification": 12,
+    "FHCV Contracting LLC & LawnCare": 3,
+    "Hilltop Rising": 82,
+    "KRJ Enterprises": 63,
+    "One Call Handles It All": 3,
+    "Operation Better Block": 2
   },
   "contractor_returned": {
-    "Chatman Properties": 3,
-    "Ervin Home Beautification": 73,
-    "FHCV Contracting LLC & LawnCare": 12,
-    "Hilltop Rising": 33,
-    "KRJ Enterprises": 4,
-    "One Call Handles It All": 17
+    "Ervin Home Beautification": 8,
+    "FHCV Contracting LLC & LawnCare": 1,
+    "Hilltop Rising": 1,
+    "KRJ Enterprises": 1,
+    "One Call Handles It All": 3
   },
   "level_counts": {
-    "Active": 990,
-    "Request Only": 86
+    "Active": 181,
+    "Request Only": 37
+  },
+  "ownership_counts": {
+    "URA": 218
   }
 }
