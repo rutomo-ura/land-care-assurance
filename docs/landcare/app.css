@@ -181,6 +181,10 @@ textarea {
   margin-top: 9px;
 }
 
+.compact-field {
+  margin-top: 8px;
+}
+
 .field-label span {
   color: var(--muted);
   font-size: 10px;
@@ -376,11 +380,12 @@ textarea {
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(0, 152, 211, 0.24);
   box-shadow: var(--shadow);
+  pointer-events: none;
 }
 
 .map-badge {
   top: 14px;
-  right: 14px;
+  left: 58px;
   padding: 9px 12px;
   color: var(--ink);
   font-size: 12px;
@@ -388,7 +393,7 @@ textarea {
 }
 
 .map-callout {
-  bottom: 14px;
+  bottom: 38px;
   left: 14px;
   display: grid;
   gap: 3px;
@@ -404,6 +409,15 @@ textarea {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
+}
+
+.map-stage .esri-search {
+  max-width: min(330px, calc(100% - 24px));
+}
+
+.map-stage .esri-popup__main-container {
+  border: 1px solid rgba(0, 152, 211, 0.24);
+  box-shadow: var(--shadow);
 }
 
 .parcel-panel {

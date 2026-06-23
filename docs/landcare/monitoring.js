@@ -18,10 +18,14 @@ const CURRENT_OUT_FIELDS = [
   "property_id",
   "inventory_type",
   "current_status",
+  "census_tract",
+  "council_district",
   "neighborhood",
   "project_name",
   "property_class",
   "property_maint_mgr_name",
+  "par_calcacreag",
+  "zoned_as",
   "tags",
   "mod_dt",
   "parcel_sqft"
@@ -55,9 +59,11 @@ const state = {
   view: null,
   layers: {},
   contractorFilter: "all",
+  districtFilter: "all",
   colorMode: "status",
   selectedMonth: null,
-  dataView: "current"
+  dataView: "current",
+  mapFocusLabel: ""
 };
 
 const formatter = new Intl.NumberFormat("en-US");
@@ -103,7 +109,7 @@ function contractorItems() {
   const returned = {};
   const active = {};
   const requestOnly = {};
-  for (const feature of currentMonthFeatures()) {
+  for (const feature of districtFilteredFeatures()) {
     const props = feature.properties || {};
     const org = props.organization || "Unassigned";
     const parcelKey = props.parcel_key;
@@ -133,6 +139,40 @@ function contractorItems() {
 
 function contractorColor(name) {
   return contractorItems().find((item) => item.name === name)?.color || "#8a8f98";
+}
+
+function districtItems() {
+  const counts = {};
+  const features = state.datasets?.current?.geojson?.features || [];
+  for (const feature of features) {
+    const district = String(feature.properties.council_district || "").trim();
+    if (!district) continue;
+    const parcelKey = feature.properties.parcel_key;
+    counts[district] ||= new Set();
+    if (parcelKey) counts[district].add(parcelKey);
+  }
+  return Object.entries(counts)
+    .map(([district, parcels]) => ({ district, count: parcels.size }))
+    .sort((a, b) => Number(a.district) - Number(b.district) || a.district.localeCompare(b.district));
+}
+
+function sqlValue(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function contractorContactClause(name) {
+  if (!name || name === "all") return null;
+  const contacts = [
+    ...new Set(
+      (state.datasets?.current?.geojson?.features || [])
+        .filter((feature) => feature.properties.organization === name)
+        .map((feature) => feature.properties.organization_contact)
+        .filter(Boolean)
+    )
+  ];
+  return contacts.length
+    ? `(${contacts.map((contact) => `property_maint_mgr_name = ${sqlValue(contact)}`).join(" OR ")})`
+    : null;
 }
 
 function dateFromMillis(value) {
@@ -168,9 +208,13 @@ function normalizeCurrentAttributes(attrs) {
     ownership_type: "URA",
     inventory_type: attrs.inventory_type,
     current_status: attrs.current_status,
+    census_tract: attrs.census_tract,
+    council_district: attrs.council_district,
     neighborhood: attrs.neighborhood,
     project_name: attrs.project_name,
     property_class: attrs.property_class,
+    acreage: attrs.par_calcacreag,
+    zoning: attrs.zoned_as,
     parcel_sqft: attrs.parcel_sqft,
     tags: attrs.tags,
     mod_dt: dateFromMillis(attrs.mod_dt),
@@ -184,8 +228,14 @@ function currentMonthFeatures() {
   return features.filter((feature) => feature.properties.period_month === state.selectedMonth);
 }
 
-function filteredFeatures() {
+function districtFilteredFeatures() {
   const features = currentMonthFeatures();
+  if (state.dataView !== "current" || state.districtFilter === "all") return features;
+  return features.filter((feature) => String(feature.properties.council_district || "") === state.districtFilter);
+}
+
+function filteredFeatures() {
+  const features = districtFilteredFeatures();
   if (state.contractorFilter === "all") return features;
   return features.filter((feature) => feature.properties.organization === state.contractorFilter);
 }
@@ -262,6 +312,9 @@ function whereForFilter(mode = state.dataView) {
   const clauses = [];
   if (mode === "current") {
     clauses.push(CURRENT_WHERE);
+    if (state.districtFilter !== "all") {
+      clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
+    }
   }
   if (mode === "history") {
     const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
@@ -269,19 +322,10 @@ function whereForFilter(mode = state.dataView) {
   }
   if (state.contractorFilter !== "all") {
     if (mode === "current") {
-      const contacts = [
-        ...new Set(
-          (state.datasets?.current?.geojson?.features || [])
-            .filter((feature) => feature.properties.organization === state.contractorFilter)
-            .map((feature) => feature.properties.organization_contact)
-            .filter(Boolean)
-        )
-      ];
-      if (contacts.length) {
-        clauses.push(`(${contacts.map((contact) => `property_maint_mgr_name = '${String(contact).replace(/'/g, "''")}'`).join(" OR ")})`);
-      }
+      const contactClause = contractorContactClause(state.contractorFilter);
+      if (contactClause) clauses.push(contactClause);
     } else {
-      clauses.push(`organization = '${String(state.contractorFilter).replace(/'/g, "''")}'`);
+      clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
     }
   }
   return clauses.length ? clauses.join(" AND ") : "1=1";
@@ -303,6 +347,19 @@ function renderMonthOptions() {
     .map((month) => `<option value="${escapeHtml(month)}">${escapeHtml(month)}</option>`)
     .join("");
   select.value = state.selectedMonth;
+}
+
+function renderDistrictOptions() {
+  const select = document.getElementById("districtSelect");
+  if (!select) return;
+  const options = districtItems();
+  select.innerHTML = [
+    `<option value="all">All council districts</option>`,
+    ...options.map((item) =>
+      `<option value="${escapeHtml(item.district)}">District ${escapeHtml(item.district)} - ${formatNumber(item.count)} parcels</option>`
+    )
+  ].join("");
+  select.value = state.districtFilter;
 }
 
 function renderKpis() {
@@ -432,11 +489,15 @@ function renderActionFocus() {
 function renderFreshness() {
   document.getElementById("freshnessNote").textContent = "Current LandCare universe";
   if (state.dataView === "current") {
+    const visibleFeatures = filteredFeatures();
+    const districtText = state.districtFilter === "all" ? "all council districts" : `Council District ${state.districtFilter}`;
+    const contractorText =
+      state.contractorFilter === "all" ? "all contractors" : shortContractor(state.contractorFilter);
     document.getElementById("mapBadge").textContent =
-      `${formatNumber(currentMonthFeatures().length)} records / ${formatNumber(uniqueCount(currentMonthFeatures()))} parcels`;
+      `${formatNumber(visibleFeatures.length)} records / ${formatNumber(uniqueCount(visibleFeatures))} parcels`;
     document.getElementById("mapCallout").innerHTML = `
       <strong>Current URA-owned LandCare universe</strong>
-      <span>Active and request-only records organized by contractor.</span>
+      <span>${escapeHtml(districtText)} - ${escapeHtml(contractorText)}${state.mapFocusLabel ? ` - ${escapeHtml(state.mapFocusLabel)}` : ""}</span>
     `;
     return;
   }
@@ -452,14 +513,20 @@ function parcelDetail(props) {
   if (state.dataView === "current") {
     return `
       <strong>${escapeHtml(props.parcel_key)}</strong><br>
+      Property ID: ${escapeHtml(props.property_id || "Unknown")}<br>
       Contractor: ${escapeHtml(props.organization)}<br>
-      Maintenance level: ${escapeHtml(props.maintenance_level)}<br>
-      Current status: ${escapeHtml(props.current_status || "Unknown")}<br>
+      LandCare status: ${escapeHtml(props.maintenance_level)}<br>
+      Property status: ${escapeHtml(props.current_status || "Unknown")}<br>
+      Council district: ${escapeHtml(props.council_district || "Unknown")}<br>
       Neighborhood: ${escapeHtml(props.neighborhood || "Unknown")}<br>
+      Census tract: ${escapeHtml(props.census_tract || "Unknown")}<br>
       Project: ${escapeHtml(props.project_name || "None")}<br>
       Inventory: ${escapeHtml(props.inventory_type || "Unknown")}<br>
-      Modified: ${escapeHtml(props.mod_dt || "Unknown")}<br>
-      Source: ArcGIS parcel inventory
+      Property class: ${escapeHtml(props.property_class || "Unknown")}<br>
+      Zoning: ${escapeHtml(props.zoning || "Unknown")}<br>
+      Area: ${formatNumber(props.parcel_sqft)} sq ft${props.acreage ? ` / ${Number(props.acreage).toFixed(2)} ac` : ""}<br>
+      Tags: ${escapeHtml(props.tags || "None")}<br>
+      Modified: ${escapeHtml(props.mod_dt || "Unknown")}
     `;
   }
   return `
@@ -478,6 +545,65 @@ function setParcelDetail(props) {
   document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
 }
 
+function currentZoomWhere({ contractor = state.contractorFilter, district = state.districtFilter, neighborhood = null } = {}) {
+  const clauses = [CURRENT_WHERE];
+  if (district && district !== "all") clauses.push(`council_district = ${sqlValue(district)}`);
+  const contactClause = contractorContactClause(contractor);
+  if (contactClause) clauses.push(contactClause);
+  if (neighborhood) clauses.push(`neighborhood = ${sqlValue(neighborhood)}`);
+  return clauses.join(" AND ");
+}
+
+async function zoomToCurrentWhere(where, { expand = 1.18, duration = 650 } = {}) {
+  const layer = state.layers.current;
+  if (!state.view || !layer?.queryExtent) return;
+  const result = await layer.queryExtent({
+    where,
+    outSpatialReference: state.view.spatialReference
+  }).catch(() => null);
+  if (!result?.extent) return;
+  await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
+}
+
+async function zoomToDefaultCurrent() {
+  state.mapFocusLabel = "";
+  if (!state.view) return;
+  await state.view.goTo({ center: [-79.9959, 40.4406], zoom: 13 }, { duration: 650 }).catch(() => {});
+}
+
+async function zoomToDistrict(district = state.districtFilter) {
+  if (district === "all") {
+    await zoomToDefaultCurrent();
+    return;
+  }
+  state.mapFocusLabel = `district focus`;
+  await zoomToCurrentWhere(currentZoomWhere({ contractor: "all", district }), { expand: 1.12 });
+}
+
+function dominantNeighborhoodForContractor(name) {
+  const counts = {};
+  const features = districtFilteredFeatures().filter((feature) => feature.properties.organization === name);
+  for (const feature of features) {
+    const neighborhood = feature.properties.neighborhood;
+    if (!neighborhood) continue;
+    counts[neighborhood] = (counts[neighborhood] || 0) + 1;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || null;
+}
+
+async function zoomToContractorCluster(name) {
+  if (!name || name === "all") {
+    await zoomToDistrict();
+    return;
+  }
+  const neighborhood = dominantNeighborhoodForContractor(name);
+  state.mapFocusLabel = neighborhood ? `largest cluster: ${neighborhood}` : "";
+  await zoomToCurrentWhere(
+    currentZoomWhere({ contractor: name, district: state.districtFilter, neighborhood }),
+    { expand: 1.28 }
+  );
+}
+
 function setColorMode(mode) {
   state.colorMode = mode === "contractor" ? "contractor" : "status";
   document.querySelectorAll("[data-color-mode]").forEach((button) => {
@@ -491,8 +617,23 @@ function setColorMode(mode) {
   renderFreshness();
 }
 
-function setContractorFilter(name) {
+async function setDistrictFilter(district, { zoom = true } = {}) {
+  state.districtFilter = district || "all";
+  state.contractorFilter = "all";
+  state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
+  const layer = activeLayer();
+  if (layer) {
+    layer.definitionExpression = whereForFilter();
+  }
+  renderAll();
+  if (zoom && state.dataView === "current") await zoomToDistrict(state.districtFilter);
+}
+
+async function setContractorFilter(name, { zoom = false } = {}) {
   state.contractorFilter = name || "all";
+  if (state.contractorFilter === "all") {
+    state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
+  }
   const layer = activeLayer();
   if (layer) {
     layer.definitionExpression = whereForFilter();
@@ -501,6 +642,10 @@ function setContractorFilter(name) {
   renderContractors();
   renderActionFocus();
   renderFreshness();
+  if (zoom && state.dataView === "current") {
+    await zoomToContractorCluster(state.contractorFilter);
+    renderFreshness();
+  }
 }
 
 function setActiveDataset() {
@@ -521,6 +666,7 @@ function activeLayer() {
 
 function renderAll() {
   renderMonthOptions();
+  renderDistrictOptions();
   renderKpis();
   renderContractors();
   renderLegend();
@@ -531,6 +677,8 @@ function renderAll() {
 async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
   state.contractorFilter = "all";
+  state.districtFilter = state.dataView === "current" ? state.districtFilter : "all";
+  state.mapFocusLabel = "";
   setActiveDataset();
   const dataViewSelect = document.getElementById("dataViewSelect");
   if (dataViewSelect) dataViewSelect.value = state.dataView;
@@ -551,6 +699,8 @@ function setMonthFilter(month) {
   setActiveDataset();
   state.selectedMonth = month || state.summary.latest_month;
   state.contractorFilter = "all";
+  state.districtFilter = "all";
+  state.mapFocusLabel = "";
   const layer = activeLayer();
   if (layer) {
     layer.definitionExpression = whereForFilter();
@@ -568,14 +718,16 @@ function wireControls() {
     const contractorButton = event.target.closest("[data-contractor]");
     if (contractorButton) {
       const name = contractorButton.dataset.contractor;
-      setContractorFilter(state.contractorFilter === name ? "all" : name);
+      setContractorFilter(state.contractorFilter === name ? "all" : name, { zoom: true });
     }
   });
   const dataViewSelect = document.getElementById("dataViewSelect");
   if (dataViewSelect) {
     dataViewSelect.addEventListener("change", (event) => setDataView(event.target.value));
   }
-  document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all"));
+  document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
+  document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
+  document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
 }
 
@@ -716,14 +868,28 @@ function buildCurrentLayer({ visible }) {
     renderer: statusRenderer("current"),
     opacity: 0.9,
     popupTemplate: {
-      title: "{property_maint_mgr_name}",
-      content: `
-        <b>Parcel:</b> {parcel_number}<br>
-        <b>Inventory:</b> {inventory_type}<br>
-        <b>Status:</b> {current_status}<br>
-        <b>Tags:</b> {tags}<br>
-        <b>Neighborhood:</b> {neighborhood}
-      `
+      title: "Parcel {parcel_number}",
+      content: [
+        {
+          type: "fields",
+          fieldInfos: [
+            { fieldName: "property_id", label: "Property ID" },
+            { fieldName: "property_maint_mgr_name", label: "LandCare contractor" },
+            { fieldName: "tags", label: "LandCare tags" },
+            { fieldName: "current_status", label: "Property status" },
+            { fieldName: "inventory_type", label: "Inventory type" },
+            { fieldName: "property_class", label: "Property class" },
+            { fieldName: "project_name", label: "Project" },
+            { fieldName: "council_district", label: "Council district" },
+            { fieldName: "neighborhood", label: "Neighborhood" },
+            { fieldName: "census_tract", label: "Census tract" },
+            { fieldName: "zoned_as", label: "Zoning" },
+            { fieldName: "parcel_sqft", label: "Parcel sq ft", format: { digitSeparator: true, places: 0 } },
+            { fieldName: "par_calcacreag", label: "Acres", format: { places: 2 } },
+            { fieldName: "mod_dt", label: "Last modified", format: { dateFormat: "short-date" } }
+          ]
+        }
+      ]
     }
   });
 }
@@ -764,11 +930,10 @@ async function initMap() {
     container: "mapView",
     map,
     center: [-79.9959, 40.4406],
-    zoom: 12,
-    constraints: { minZoom: 10 },
+    zoom: 13,
+    constraints: { minZoom: 11 },
     popup: {
-      dockEnabled: true,
-      dockOptions: { buttonEnabled: false, breakpoint: false, position: "bottom-left" }
+      dockEnabled: false
     }
   });
 
@@ -787,10 +952,7 @@ async function initMap() {
 
   await view.when();
   await Promise.all([historyLayer.when(), currentLayer.when()]);
-  const layer = activeLayer();
-  if (layer?.fullExtent) {
-    await view.goTo(layer.fullExtent.expand(1.08), { duration: 650 }).catch(() => {});
-  }
+  await zoomToDefaultCurrent();
 }
 
 async function main() {
