@@ -27,6 +27,13 @@
       <aside class="monitor-sidebar" aria-label="Monitoring controls">
         <section class="sidebar-section compact">
           <span class="eyebrow" id="latestMonthLabel">Latest survey month</span>
+          <label class="field-label" for="dataViewSelect">
+            <span>Data View</span>
+            <select id="dataViewSelect" aria-label="Data view">
+              <option value="current">Current ArcGIS Universe</option>
+              <option value="history">Monthly Assurance History</option>
+            </select>
+          </label>
           <label class="field-label" for="monthSelect">
             <span>Survey Month</span>
             <select id="monthSelect" aria-label="Survey month"></select>
@@ -34,19 +41,19 @@
           <div class="mini-kpis">
             <article>
               <strong id="assignedKpi">--</strong>
-              <span>Assigned</span>
+              <span id="assignedKpiLabel">Assigned</span>
             </article>
             <article>
               <strong id="returnedKpi">--</strong>
-              <span>Returned</span>
+              <span id="returnedKpiLabel">Returned</span>
             </article>
             <article>
               <strong id="completionKpi">--</strong>
-              <span>Completion</span>
+              <span id="completionKpiLabel">Completion</span>
             </article>
             <article>
               <strong id="openKpi">--</strong>
-              <span>Open</span>
+              <span id="openKpiLabel">Open</span>
             </article>
           </div>
         </section>

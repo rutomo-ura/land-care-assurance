@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "docs/**"
+      - "scripts/build_landcare_*.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -39,6 +40,8 @@ jobs:
           test -f docs/landcare/data/latest_month_summary.json
           test -f docs/landcare/data/latest_month.geojson
           test -f docs/landcare/data/all_months.geojson
+          test -f docs/landcare/data/current_universe_summary.json
+          test -f docs/landcare/data/current_universe.geojson
           test -f docs/landcare/data/refresh_manifest.json
           python - <<'PY'
           import json
@@ -47,6 +50,8 @@ jobs:
           summary = json.loads(Path("docs/landcare/data/latest_month_summary.json").read_text())
           geojson = json.loads(Path("docs/landcare/data/latest_month.geojson").read_text())
           all_months = json.loads(Path("docs/landcare/data/all_months.geojson").read_text())
+          current_summary = json.loads(Path("docs/landcare/data/current_universe_summary.json").read_text())
+          current_geojson = json.loads(Path("docs/landcare/data/current_universe.geojson").read_text())
           manifest = json.loads(Path("docs/landcare/data/refresh_manifest.json").read_text())
 
           required_top_level_keys = {
@@ -103,6 +108,35 @@ jobs:
           ]
           if non_ura:
               raise SystemExit(f"all_months.geojson includes non-URA ownership values: {sorted(set(non_ura))}")
+
+          current_features = current_geojson.get("features") or []
+          if not current_features:
+              raise SystemExit("current_universe.geojson has no features")
+
+          if current_summary.get("ownership_scope") != "URA owned only":
+              raise SystemExit("current universe is not scoped to URA owned only")
+
+          if current_summary.get("feature_count") != len(current_features):
+              raise SystemExit("current_universe_summary feature_count does not match current_universe.geojson")
+
+          current_keys = [
+              feature.get("properties", {}).get("parcel_key")
+              for feature in current_features
+              if feature.get("properties", {}).get("parcel_key")
+          ]
+          if current_summary.get("unique_parcel_count") != len(set(current_keys)):
+              raise SystemExit("current_universe_summary unique_parcel_count does not match GeoJSON parcel keys")
+
+          current_non_ura = [
+              feature.get("properties", {}).get("inventory_type")
+              for feature in current_features
+              if feature.get("properties", {}).get("inventory_type") != "URA Owned"
+          ]
+          if current_non_ura:
+              raise SystemExit(f"current_universe.geojson includes non-URA inventory values: {sorted(set(current_non_ura))}")
+
+          if "current_active" not in current_summary.get("status_counts", {}):
+              raise SystemExit("current_universe_summary status_counts missing current_active")
           PY
 
       - name: Upload docs site

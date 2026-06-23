@@ -87,6 +87,11 @@ ArcGIS Online automated layer candidates checked on June 23, 2026:
   - LandCare-tagged records: `1,221`.
   - `LandCare - Active`: `1,127`.
   - `LandCare - Request Only`: `94`.
+  - URA-owned-only LandCare query: `1,125`.
+  - Current dashboard mapped records: `1,103`, representing `1,102` unique parcel keys.
+  - Current unique parcel counts: `1,015` Active and `87` Request Only.
+  - Current mapped record counts: `1,015` Active and `88` Request Only; one Request Only parcel key appears twice.
+  - `22` URA-owned LandCare records did not return usable geometry in the ArcGIS GeoJSON build.
   - Useful for current LandCare parcel universe and contractor assignment fields, but not a monthly completion fact layer.
 - `gisdb_gis_regrid_surveys`: `https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer`
   - Owner: `gis_urap`
@@ -125,6 +130,12 @@ Prototype app data after the read-only PostgreSQL export:
 
 Current public monitoring app values after narrowing the app to URA-owned LandCare parcels:
 
+- Default monitoring data view: current ArcGIS universe from `gisdb_gis_epp_parcels_full`
+- Current ArcGIS mapped URA-owned LandCare records: `1,103`
+- Current ArcGIS unique URA-owned LandCare parcel keys: `1,102`
+- Current ArcGIS Active records: `1,015`
+- Current ArcGIS Request Only unique parcel keys: `87`
+- Current ArcGIS contractors: `9`
 - Latest map layer: April 2026
 - Assignment freshness: May 15, 2026
 - Survey completion freshness: April 15, 2026
@@ -135,7 +146,7 @@ Current public monitoring app values after narrowing the app to URA-owned LandCa
 - Active completion: `7.7%`
 - Open active assignments: `167`
 - Request Only assignments: `37`
-- Main app data files: `docs/landcare/data/all_months.geojson`, `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, `docs/landcare/data/contractor_monthly.json`, and `docs/landcare/data/refresh_manifest.json`
+- Main app data files: `docs/landcare/data/current_universe.geojson`, `docs/landcare/data/current_universe_summary.json`, `docs/landcare/data/all_months.geojson`, `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, `docs/landcare/data/contractor_monthly.json`, and `docs/landcare/data/refresh_manifest.json`
 
 ## Important Implementation Details
 
@@ -200,6 +211,12 @@ Rebuild current public monitoring/KPI data from the app-ready export artifact:
 
 ```powershell
 python scripts/build_landcare_web_data.py
+```
+
+Rebuild current ArcGIS LandCare universe data from hosted public ArcGIS layers:
+
+```powershell
+python scripts/build_landcare_arcgis_current.py
 ```
 
 Export app-ready GeoJSON from PostgreSQL:

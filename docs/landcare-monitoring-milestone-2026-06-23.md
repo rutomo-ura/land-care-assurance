@@ -26,6 +26,10 @@ The older native ArcGIS dashboard, `LandCare Assurance Monitoring Dashboard` (`2
 - The latest map view is limited to URA-owned LandCare parcels only.
 - The monitoring page can now switch across all available URA-owned parcel-month records from the current export artifact.
 - All-month data currently covers 2,415 URA-owned parcel-month records across 11 available months from May 2025 through April 2026.
+- The monitoring page now also has a `Current ArcGIS Universe` data view backed by the public `gisdb_gis_epp_parcels_full` hosted layer.
+- Current ArcGIS view maps 1,103 current URA-owned LandCare records representing 1,102 unique parcel keys, across 9 contractors.
+- Current unique parcel counts are 1,015 Active and 87 Request Only. Mapped record counts are 1,015 Active and 88 Request Only because one Request Only parcel key appears twice.
+- The current ArcGIS query returns 1,125 URA-owned LandCare records, with 22 omitted from the mapped GeoJSON because they did not return usable geometry.
 - Latest-map counts: 218 assigned URA-owned parcels, 14 returned, 167 open, 37 request-only, 7.7% completion.
 - Map color mode toggles between Survey Status and Contractor.
 - The legend changes correctly when switching from Survey Status to Contractor.
@@ -44,6 +48,8 @@ The current static web app is backed by exported data files in:
 - `docs/landcare/data/kpi_summary.json`
 - `docs/landcare/data/monthly_metrics.json`
 - `docs/landcare/data/contractor_monthly.json`
+- `docs/landcare/data/current_universe.geojson`
+- `docs/landcare/data/current_universe_summary.json`
 - `docs/landcare/data/refresh_manifest.json`
 
 The source narrative shown in the app:
