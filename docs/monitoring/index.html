@@ -27,13 +27,6 @@
       <aside class="monitor-sidebar" aria-label="Monitoring controls">
         <section class="sidebar-section compact">
           <span class="eyebrow" id="latestMonthLabel">Latest survey month</span>
-          <label class="field-label" for="dataViewSelect">
-            <span>Data View</span>
-            <select id="dataViewSelect" aria-label="Data view">
-              <option value="current">Current ArcGIS Universe</option>
-              <option value="history">Monthly Assurance History</option>
-            </select>
-          </label>
           <label class="field-label" for="monthSelect">
             <span>Survey Month</span>
             <select id="monthSelect" aria-label="Survey month"></select>
@@ -84,10 +77,10 @@
 
       <section class="map-stage" aria-label="LandCare parcel map">
         <div id="mapView"></div>
-        <div class="map-badge" id="mapBadge">Starting ArcGIS map...</div>
+        <div class="map-badge" id="mapBadge">Loading parcel map...</div>
         <div class="map-callout" id="mapCallout">
           <strong>URA-owned Pittsburgh parcels</strong>
-          <span>Latest-month LandCare assignments from the PostgreSQL export.</span>
+          <span>Current LandCare records organized by contractor and status.</span>
         </div>
       </section>
 

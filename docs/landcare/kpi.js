@@ -150,7 +150,7 @@ function renderKpis(summary, monthlyMetrics, latestSummary, currentMetrics) {
   const comparison = latestSummary.powerbi_comparison || {};
 
   document.getElementById("freshnessNote").textContent =
-    `Current universe from live ArcGIS EPP layer edited ${currentMetrics.eppEdited || "unknown"}. Monthly completion history generated ${latestSummary.generated_on}.`;
+    `Current LandCare universe updated ${currentMetrics.eppEdited || "recently"}`;
   document.getElementById("activeAssignedKpi").textContent = formatNumber(activeAssigned);
   document.getElementById("activeAssignedNote").textContent =
     `${formatNumber(currentMetrics.uniqueParcels)} current URA-owned parcels`;
@@ -271,11 +271,6 @@ function renderReconciliation(latestSummary) {
   `).join("");
 }
 
-function renderSource(summary, latestSummary, currentMetrics) {
-  document.getElementById("sourceText").textContent =
-    `Current parcel universe is queried live from ArcGIS layer ${currentMetrics.sourceLayer}, filtered to URA Owned LandCare records. Live counts: ${formatNumber(currentMetrics.records)} records, ${formatNumber(currentMetrics.uniqueParcels)} unique parcels, ${formatNumber(currentMetrics.activeParcels)} Active, ${formatNumber(currentMetrics.requestOnlyParcels)} Request Only, ${formatNumber(currentMetrics.contractors)} contractors. Monthly survey completion history remains the assurance export for ${summary.latest_month}; assignment freshness is ${latestSummary.latest_assignment_period}; survey completion freshness is ${latestSummary.latest_survey_period}.`;
-}
-
 async function loadData() {
   const [summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
@@ -294,7 +289,6 @@ async function main() {
   renderContractorBars(contractorRows, summary.latest_month);
   renderTimeline(monthlyMetrics);
   renderReconciliation(latestSummary);
-  renderSource(summary, latestSummary, currentMetrics);
 
   document.getElementById("contractorSelect").addEventListener("change", (event) => {
     renderContractorBars(contractorRows, summary.latest_month, event.target.value);

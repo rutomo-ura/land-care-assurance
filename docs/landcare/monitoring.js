@@ -314,7 +314,7 @@ function renderKpis() {
   if (state.dataView === "current") {
     const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
     const contractors = new Set(features.map((feature) => feature.properties.organization).filter(Boolean)).size;
-    document.getElementById("latestMonthLabel").textContent = "Current URA-owned ArcGIS universe";
+    document.getElementById("latestMonthLabel").textContent = "Current URA-owned LandCare parcels";
     document.getElementById("assignedKpiLabel").textContent = "Parcels";
     document.getElementById("returnedKpiLabel").textContent = "Active";
     document.getElementById("completionKpiLabel").textContent = "Request Only";
@@ -406,8 +406,8 @@ function renderActionFocus() {
     const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
     const neighborhoods = new Set(features.map((feature) => feature.properties.neighborhood).filter(Boolean)).size;
     document.getElementById("actionFocus").innerHTML = `
-      <div><strong>${formatNumber(features.length)}</strong><span>Live current URA-owned LandCare records from ArcGIS Online</span></div>
-      <div><strong>${formatNumber(active)}</strong><span>Active LandCare records in the current EPP layer</span></div>
+      <div><strong>${formatNumber(features.length)}</strong><span>Current URA-owned LandCare records</span></div>
+      <div><strong>${formatNumber(active)}</strong><span>Active LandCare records in the current parcel inventory</span></div>
       <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only records separated from compliance metrics</span></div>
       <div><strong>${formatNumber(neighborhoods)}</strong><span>Neighborhoods represented in the current layer</span></div>
     `;
@@ -430,15 +430,13 @@ function renderActionFocus() {
 }
 
 function renderFreshness() {
-  const note = state.summary.source_note || "PostgreSQL export";
-  document.getElementById("freshnessNote").textContent =
-    `${note} Generated ${state.summary.generated_on || "from export"}.`;
+  document.getElementById("freshnessNote").textContent = "Current LandCare universe";
   if (state.dataView === "current") {
     document.getElementById("mapBadge").textContent =
-      `${formatNumber(currentMonthFeatures().length)} live records / ${formatNumber(uniqueCount(currentMonthFeatures()))} parcels - EPP edited ${state.summary.epp_layer?.data_last_edit || "unknown"}`;
+      `${formatNumber(currentMonthFeatures().length)} records / ${formatNumber(uniqueCount(currentMonthFeatures()))} parcels`;
     document.getElementById("mapCallout").innerHTML = `
-      <strong>Live current URA-owned LandCare universe</strong>
-      <span>Queried directly from ArcGIS EPP; survey completion still requires the monthly assurance join.</span>
+      <strong>Current URA-owned LandCare universe</strong>
+      <span>Active and request-only records organized by contractor.</span>
     `;
     return;
   }
@@ -461,7 +459,7 @@ function parcelDetail(props) {
       Project: ${escapeHtml(props.project_name || "None")}<br>
       Inventory: ${escapeHtml(props.inventory_type || "Unknown")}<br>
       Modified: ${escapeHtml(props.mod_dt || "Unknown")}<br>
-      Source geometry: ArcGIS Online EPP layer
+      Source: ArcGIS parcel inventory
     `;
   }
   return `
@@ -472,7 +470,7 @@ function parcelDetail(props) {
     Status: ${escapeHtml(statusLabel(props.completion_status))}<br>
     Ownership: ${escapeHtml(props.ownership_type || "Other or unknown")}<br>
     Owner: ${escapeHtml(props.owner_name || "Unknown")}<br>
-    Source geometry: ${props.masked_geometry ? "masked" : "PostgreSQL export"}
+    Source: Monthly assurance layer
   `;
 }
 
@@ -534,7 +532,8 @@ async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
   state.contractorFilter = "all";
   setActiveDataset();
-  document.getElementById("dataViewSelect").value = state.dataView;
+  const dataViewSelect = document.getElementById("dataViewSelect");
+  if (dataViewSelect) dataViewSelect.value = state.dataView;
   Object.entries(state.layers).forEach(([key, layer]) => {
     layer.visible = key === state.dataView;
     layer.definitionExpression = whereForFilter(key);
@@ -572,7 +571,10 @@ function wireControls() {
       setContractorFilter(state.contractorFilter === name ? "all" : name);
     }
   });
-  document.getElementById("dataViewSelect").addEventListener("change", (event) => setDataView(event.target.value));
+  const dataViewSelect = document.getElementById("dataViewSelect");
+  if (dataViewSelect) {
+    dataViewSelect.addEventListener("change", (event) => setDataView(event.target.value));
+  }
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all"));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
 }
@@ -641,8 +643,7 @@ function summarizeCurrentDataset(features, options) {
     statusCounts[props.completion_status] = (statusCounts[props.completion_status] || 0) + 1;
     contractorCounts[props.organization] = (contractorCounts[props.organization] || 0) + 1;
   }
-  const sourceNote =
-    "Live ArcGIS Online EPP parcel layer filtered to inventory_type = URA Owned and LandCare tags. Survey-completion metrics still come from the monthly assurance export until a derived hosted layer is built.";
+  const sourceNote = "Current URA-owned LandCare parcel inventory.";
   return {
     summary: {
       generated_on: options.generatedOn,
@@ -708,7 +709,7 @@ function buildHistoryLayer({ url, title, mode, visible }) {
 function buildCurrentLayer({ visible }) {
   return new FeatureLayer({
     url: EPP_LAYER_URL,
-    title: "Live Current ArcGIS URA-Owned LandCare Universe",
+    title: "Current URA-Owned LandCare Parcels",
     outFields: ["*"],
     visible,
     definitionExpression: whereForFilter("current"),

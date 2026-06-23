@@ -325,8 +325,7 @@ textarea {
 .contractor-row small,
 .legend-list span,
 .parcel-detail,
-.focus-list span,
-.source-panel p {
+.focus-list span {
   color: var(--muted);
   font-size: 11px;
 }
@@ -697,16 +696,6 @@ select {
   color: var(--ink);
   font-size: 13px;
   line-height: 1.35;
-}
-
-.source-panel {
-  border-left: 5px solid var(--ura-blue);
-}
-
-.source-panel p {
-  margin: 8px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 @media (max-width: 1180px) {
