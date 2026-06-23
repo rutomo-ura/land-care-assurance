@@ -1,6 +1,6 @@
 # Agent Handoff Knowledge
 
-Last updated: June 10, 2026
+Last updated: June 23, 2026
 
 This is the living handoff document for future Codex or analyst sessions. Update it at the end of each meaningful work session so the next agent can continue without rediscovering the project.
 
@@ -22,13 +22,22 @@ Improve URA LandCare assurance by making parcel assignment, survey completion, o
 
 ## Current Prototype State
 
-The Week 1 prototype is a working static web dashboard.
+The Week 1 prototype is a working static web dashboard. As of June 23, 2026, the work has also moved beyond proposal mode into a public monitoring/KPI web app and ArcGIS Online dashboard shell. See `docs/landcare-monitoring-milestone-2026-06-23.md`.
 
 - Frontend: `prototype/index.html`, `prototype/styles.css`, `prototype/app.js`
 - Generated data: `prototype/data/`
 - Data-prep script: `prototype/scripts/build_prototype_data.py`
 - Read-only SQL export: `prototype/sql/export_prototype_data_readonly.sql`
 - Handoff status: `docs/week-1-prototype-status-2026-06-09.md`
+
+Current published monitoring deliverables:
+
+- Public monitoring app: `https://rutomo-ura.github.io/land-care-assurance/monitoring/`
+- Public KPI app: `https://rutomo-ura.github.io/land-care-assurance/kpi/`
+- Main ArcGIS Online dashboard shell: `https://urap.maps.arcgis.com/apps/dashboards/341377524e02486ba71684ad67d9b273`
+- ArcGIS Online hosted feature layer: `https://urap.maps.arcgis.com/home/item.html?id=47eb06a43565442d813189b78d318006`
+- ArcGIS Online web map: `https://urap.maps.arcgis.com/home/item.html?id=82218aabb92d4903b247093b7a7be312`
+- Deprecated old native dashboard: `https://urap.maps.arcgis.com/apps/dashboards/2fb899d781df444ca26a6231f505cc60`
 
 Current map stack:
 
@@ -92,6 +101,18 @@ Prototype app data after the read-only PostgreSQL export:
   - URA: `218`
   - Pittsburgh Land Bank: `3`
 
+Current public monitoring app values after narrowing the app to URA-owned LandCare parcels:
+
+- Latest map layer: April 2026
+- Assignment freshness: May 15, 2026
+- Survey completion freshness: April 15, 2026
+- URA-owned latest-month assigned parcels: `218`
+- Returned surveys matched to URA-owned assigned parcels: `14`
+- Active completion: `7.7%`
+- Open active assignments: `167`
+- Request Only assignments: `37`
+- Main app data files: `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, and `docs/landcare/data/contractor_monthly.json`
+
 ## Important Implementation Details
 
 Map rendering:
@@ -103,6 +124,9 @@ Map rendering:
   - Tile pane: `z-index: 200`
   - Parcel overlay pane: `z-index: 400`
 - Parcel shapes are SVG paths, not canvas, so they are easier to inspect during Week 1.
+- Parcel hover updates the side detail pane and shows a sticky map tooltip.
+- Hover is handled with map-level nearest-parcel detection plus invisible parcel-center hit targets, because full-city parcel polygons can be too small for reliable direct SVG hover.
+- Parcel click still sets the side detail pane as the selected parcel.
 
 Basemap:
 

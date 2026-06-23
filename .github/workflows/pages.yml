@@ -1,11 +1,11 @@
-name: Deploy prototype to GitHub Pages
+name: Deploy LandCare web app to GitHub Pages
 
 on:
   push:
     branches:
       - master
     paths:
-      - "prototype/**"
+      - "docs/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,10 +31,65 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload prototype
+      - name: Validate LandCare web app
+        shell: bash
+        run: |
+          test -f docs/monitoring/index.html
+          test -f docs/kpi/index.html
+          test -f docs/landcare/data/latest_month_summary.json
+          test -f docs/landcare/data/latest_month.geojson
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary = json.loads(Path("docs/landcare/data/latest_month_summary.json").read_text())
+          geojson = json.loads(Path("docs/landcare/data/latest_month.geojson").read_text())
+
+          required_top_level_keys = {
+              "latest_month",
+              "latest_assignment_period",
+              "latest_survey_period",
+              "feature_count",
+              "ownership_scope",
+              "status_counts",
+              "level_counts",
+              "ownership_counts",
+          }
+          missing = sorted(required_top_level_keys - set(summary))
+          if missing:
+              raise SystemExit(f"latest_month_summary.json missing keys: {missing}")
+
+          features = geojson.get("features") or []
+          if not features:
+              raise SystemExit("latest_month.geojson has no features")
+
+          if summary["ownership_scope"] != "URA owned only":
+              raise SystemExit(f"unexpected ownership scope: {summary['ownership_scope']}")
+
+          if summary["feature_count"] != len(features):
+              raise SystemExit(f"summary feature_count {summary['feature_count']} does not match GeoJSON {len(features)}")
+
+          status_counts = summary["status_counts"]
+          for key in ("missing", "request_only", "returned"):
+              if key not in status_counts:
+                  raise SystemExit(f"status_counts missing key: {key}")
+
+          if summary["ownership_counts"].get("URA") != len(features):
+              raise SystemExit("ownership_counts URA does not match GeoJSON feature count")
+
+          non_ura = [
+              feature.get("properties", {}).get("ownership_type")
+              for feature in features
+              if feature.get("properties", {}).get("ownership_type") != "URA"
+          ]
+          if non_ura:
+              raise SystemExit(f"latest_month.geojson includes non-URA ownership values: {sorted(set(non_ura))}")
+          PY
+
+      - name: Upload docs site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: prototype
+          path: docs
 
       - name: Deploy
         id: deployment
