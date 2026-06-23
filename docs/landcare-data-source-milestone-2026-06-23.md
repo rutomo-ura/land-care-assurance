@@ -7,6 +7,7 @@ This note records the current data-source investigation for the next LandCare mo
 - The monitoring page now has a data-view selector:
   - `Current ArcGIS Universe` queries ArcGIS Online `gisdb_gis_epp_parcels_full` live at runtime.
   - `Monthly Assurance History` uses `docs/landcare/data/all_months.geojson`, generated from the existing PostgreSQL export artifact.
+- The KPI page also queries ArcGIS Online `gisdb_gis_epp_parcels_full` live for current-universe headline cards.
 - The monitoring page now reads `docs/landcare/data/all_months.geojson`, not only `latest_month.geojson`.
 - The month selector exposes all available URA-owned parcel-month records from the current export artifact.
 - Available months: May 2025, June 2025, July 2025, September 2025, October 2025, November 2025, December 2025, January 2026, February 2026, March 2026, and April 2026.
@@ -16,7 +17,7 @@ This note records the current data-source investigation for the next LandCare mo
 - Survey completion freshness in the export: April 15, 2026.
 - The current web data was regenerated from `prototype/source/app_ready_parcels_monthly.geojson`; it was not a fresh direct PostgreSQL pull from this machine.
 - The live current ArcGIS universe returns `1,125` current URA-owned LandCare records representing `1,124` unique parcel keys.
-- The committed `current_universe.geojson` remains as a static fallback/reference artifact. That fallback maps `1,103` records representing `1,102` unique parcel keys, with `22` records omitted because they did not return usable geometry and `1` duplicate parcel key retained as a mapped record.
+- Current ArcGIS universe data is not committed as a GeoJSON snapshot; it is queried live in the monitoring and KPI pages.
 
 ## Local PostgreSQL Pull Status
 
@@ -48,9 +49,6 @@ Public ArcGIS REST checks found two useful URA-owned hosted layers under `gis_ur
 - `LandCare - Request Only` records: `94`.
 - URA-owned-only LandCare query: `1,125` records.
 - Runtime dashboard current view: `1,125` records, `1,124` unique parcel keys, `1,035` Active parcel keys, and `89` Request Only parcel keys.
-- Static fallback mapped records generated for the dashboard: `1,103`, representing `1,102` unique parcel keys.
-- Static fallback mapped records by level: `1,015` Active and `88` Request Only.
-- Static fallback unique parcel counts by level: `1,015` Active and `87` Request Only.
 - Useful fields include `parcel_number`, `inventory_type`, `current_status`, `neighborhood`, `project_name`, `property_maint_mgr_name`, `tags`, and `mod_dt`.
 - This is the strongest candidate for an automated current assignment/universe layer.
 

@@ -600,40 +600,31 @@ async function fetchArcgisJson(url, params) {
 }
 
 async function loadCurrentArcgisDataset() {
-  try {
-    const [layerInfo, surveyInfo, result] = await Promise.all([
-      fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
-      fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
-      fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
-        f: "json",
-        where: CURRENT_WHERE,
-        outFields: CURRENT_OUT_FIELDS,
-        returnGeometry: "false",
-        resultRecordCount: "2000",
-        orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
-      })
-    ]);
-    const features = (result.features || []).map((feature) => ({
-      type: "Feature",
-      geometry: null,
-      properties: normalizeCurrentAttributes(feature.attributes || {})
-    }));
-    return summarizeCurrentDataset(features, {
-      sourceKind: "live_arcgis",
-      generatedOn: "live",
-      eppLayerEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
-      surveyLayerEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
-      eppRecordCount: layerInfo.recordCount,
-      surveyRecordCount: surveyInfo.recordCount
-    });
-  } catch (error) {
-    console.warn("Falling back to static current universe data.", error);
-    const [summary, geojson] = await Promise.all([
-      fetch(`${DATA_ROOT}/current_universe_summary.json`).then((response) => response.json()),
-      fetch(`${DATA_ROOT}/current_universe.geojson`).then((response) => response.json())
-    ]);
-    return { summary: { ...summary, view_source: "static_fallback" }, geojson };
-  }
+  const [layerInfo, surveyInfo, result] = await Promise.all([
+    fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
+    fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
+    fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
+      f: "json",
+      where: CURRENT_WHERE,
+      outFields: CURRENT_OUT_FIELDS,
+      returnGeometry: "false",
+      resultRecordCount: "2000",
+      orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
+    })
+  ]);
+  const features = (result.features || []).map((feature) => ({
+    type: "Feature",
+    geometry: null,
+    properties: normalizeCurrentAttributes(feature.attributes || {})
+  }));
+  return summarizeCurrentDataset(features, {
+    sourceKind: "live_arcgis",
+    generatedOn: "live",
+    eppLayerEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
+    surveyLayerEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
+    eppRecordCount: layerInfo.recordCount,
+    surveyRecordCount: surveyInfo.recordCount
+  });
 }
 
 function summarizeCurrentDataset(features, options) {
@@ -651,9 +642,7 @@ function summarizeCurrentDataset(features, options) {
     contractorCounts[props.organization] = (contractorCounts[props.organization] || 0) + 1;
   }
   const sourceNote =
-    options.sourceKind === "live_arcgis"
-      ? "Live ArcGIS Online EPP parcel layer filtered to inventory_type = URA Owned and LandCare tags. Survey-completion metrics still come from the monthly assurance export until a derived hosted layer is built."
-      : "Static fallback generated from the ArcGIS Online EPP parcel layer.";
+    "Live ArcGIS Online EPP parcel layer filtered to inventory_type = URA Owned and LandCare tags. Survey-completion metrics still come from the monthly assurance export until a derived hosted layer is built.";
   return {
     summary: {
       generated_on: options.generatedOn,

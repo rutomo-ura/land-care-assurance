@@ -1,4 +1,18 @@
 const DATA_ROOT = "../landcare/data";
+const EPP_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
+const SURVEY_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
+const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
+const CURRENT_OUT_FIELDS = [
+  "OBJECTID",
+  "parcel_number",
+  "property_id",
+  "inventory_type",
+  "property_maint_mgr_name",
+  "tags",
+  "mod_dt"
+].join(",");
 
 const formatter = new Intl.NumberFormat("en-US");
 const moneyFormatter = new Intl.NumberFormat("en-US", {
@@ -39,6 +53,74 @@ function shortContractor(name) {
     .replace("One Call Handles It All", "One Call");
 }
 
+function dateFromMillis(value) {
+  if (!value) return null;
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function currentMaintenanceLevel(tags) {
+  const text = String(tags || "");
+  if (text.includes("LandCare - Request Only")) return "Request Only";
+  if (text.includes("LandCare - Active")) return "Active";
+  return "LandCare";
+}
+
+function stripPrimaryContact(value) {
+  return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
+}
+
+function normalizeCurrentRecord(attrs) {
+  const parcelKey = attrs.parcel_number || attrs.property_id || `EPP-${attrs.OBJECTID}`;
+  return {
+    parcelKey,
+    contractor: stripPrimaryContact(attrs.property_maint_mgr_name),
+    contact: attrs.property_maint_mgr_name || "Unassigned",
+    level: currentMaintenanceLevel(attrs.tags),
+    modDate: dateFromMillis(attrs.mod_dt)
+  };
+}
+
+async function fetchArcgisJson(url, params) {
+  const response = await fetch(`${url}?${new URLSearchParams(params).toString()}`);
+  if (!response.ok) throw new Error(`ArcGIS request failed: ${response.status}`);
+  const payload = await response.json();
+  if (payload.error) throw new Error(payload.error.message || "ArcGIS request failed");
+  return payload;
+}
+
+async function loadCurrentArcgisMetrics() {
+  const [layerInfo, surveyInfo, result] = await Promise.all([
+    fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
+    fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
+    fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
+      f: "json",
+      where: CURRENT_WHERE,
+      outFields: CURRENT_OUT_FIELDS,
+      returnGeometry: "false",
+      resultRecordCount: "2000",
+      orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
+    })
+  ]);
+  const records = (result.features || []).map((feature) => normalizeCurrentRecord(feature.attributes || {}));
+  const parcelKeys = new Set(records.map((record) => record.parcelKey).filter(Boolean));
+  const activeKeys = new Set(records.filter((record) => record.level === "Active").map((record) => record.parcelKey));
+  const requestOnlyKeys = new Set(records.filter((record) => record.level === "Request Only").map((record) => record.parcelKey));
+  const contractorKeys = new Set(records.map((record) => record.contractor).filter(Boolean));
+  return {
+    source: "live_arcgis",
+    records: records.length,
+    uniqueParcels: parcelKeys.size,
+    activeParcels: activeKeys.size,
+    requestOnlyParcels: requestOnlyKeys.size,
+    duplicateKeys: records.length - parcelKeys.size,
+    contractors: contractorKeys.size,
+    eppEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
+    surveyEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
+    sourceLayer: "gisdb_gis_epp_parcels_full",
+    surveyLayer: "gisdb_gis_regrid_surveys"
+  };
+}
+
 function rateColor(rate) {
   if (rate >= 80) return "#2e7d32";
   if (rate >= 50) return "#0098d3";
@@ -55,27 +137,29 @@ function priorMetric(monthlyMetrics, latestMonth) {
   return index > 0 ? monthlyMetrics[index - 1] : null;
 }
 
-function renderKpis(summary, monthlyMetrics, latestSummary) {
+function renderKpis(summary, monthlyMetrics, latestSummary, currentMetrics) {
   const latest = latestMetric(monthlyMetrics, summary.latest_month);
   const prior = priorMetric(monthlyMetrics, summary.latest_month);
-  const activeAssigned = summary.level_counts?.Active || latest?.assigned_active || 0;
+  const activeAssigned = currentMetrics.activeParcels;
   const returned = summary.status_counts?.returned || latest?.returned_assigned || 0;
   const open = summary.status_counts?.missing || 0;
-  const completion = activeAssigned ? (100 * returned) / activeAssigned : 0;
+  const monthlyActive = summary.level_counts?.Active || latest?.assigned_active || 0;
+  const completion = monthlyActive ? (100 * returned) / monthlyActive : 0;
   const priorRate = Number(prior?.active_completion_rate_pct || 0);
   const delta = completion - priorRate;
   const comparison = latestSummary.powerbi_comparison || {};
 
   document.getElementById("freshnessNote").textContent =
-    `${latestSummary.source_note} Generated ${latestSummary.generated_on}.`;
+    `Current universe from live ArcGIS EPP layer edited ${currentMetrics.eppEdited || "unknown"}. Monthly completion history generated ${latestSummary.generated_on}.`;
   document.getElementById("activeAssignedKpi").textContent = formatNumber(activeAssigned);
-  document.getElementById("activeAssignedNote").textContent = `${summary.latest_month} active denominator`;
-  document.getElementById("returnedKpi").textContent = formatNumber(returned);
+  document.getElementById("activeAssignedNote").textContent =
+    `${formatNumber(currentMetrics.uniqueParcels)} current URA-owned parcels`;
+  document.getElementById("returnedKpi").textContent = formatNumber(currentMetrics.requestOnlyParcels);
   document.getElementById("completionKpi").textContent = formatPct(completion);
   document.getElementById("completionDelta").textContent =
     prior ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${prior.period_month}` : "No prior month";
   document.getElementById("openKpi").textContent = formatNumber(open);
-  document.getElementById("mappedKpi").textContent = formatNumber(summary.feature_count);
+  document.getElementById("mappedKpi").textContent = formatNumber(currentMetrics.records);
   document.getElementById("spendKpi").textContent = moneyFormatter.format(comparison.total_amount_spent || 0);
   document.getElementById("spendNote").textContent =
     `${Math.round((100 * (comparison.total_amount_spent || 0)) / (comparison.projected_yearly_limit || 1))}% of ${moneyFormatter.format(comparison.projected_yearly_limit || 0)} limit`;
@@ -187,29 +271,30 @@ function renderReconciliation(latestSummary) {
   `).join("");
 }
 
-function renderSource(summary, latestSummary) {
+function renderSource(summary, latestSummary, currentMetrics) {
   document.getElementById("sourceText").textContent =
-    `${latestSummary.source_note} Source tables include gis.regrid_bundle_assignments, gis.regrid_survey_submissions, gis.pgh_parcels, gis.epp_parcels_full, gis.epp_snapshot, analysis.city_epp_properties, and analysis.assessment_snapshot. The published web layer is filtered to ownership_type = URA. The latest map layer is ${summary.latest_month}; assignment freshness is ${latestSummary.latest_assignment_period}; survey completion freshness is ${latestSummary.latest_survey_period}.`;
+    `Current parcel universe is queried live from ArcGIS layer ${currentMetrics.sourceLayer}, filtered to URA Owned LandCare records. Live counts: ${formatNumber(currentMetrics.records)} records, ${formatNumber(currentMetrics.uniqueParcels)} unique parcels, ${formatNumber(currentMetrics.activeParcels)} Active, ${formatNumber(currentMetrics.requestOnlyParcels)} Request Only, ${formatNumber(currentMetrics.contractors)} contractors. Monthly survey completion history remains the assurance export for ${summary.latest_month}; assignment freshness is ${latestSummary.latest_assignment_period}; survey completion freshness is ${latestSummary.latest_survey_period}.`;
 }
 
 async function loadData() {
-  const [summary, monthlyMetrics, contractorRows, latestSummary] = await Promise.all([
+  const [summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json())
+    fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
+    loadCurrentArcgisMetrics()
   ]);
-  return { summary, monthlyMetrics, contractorRows, latestSummary };
+  return { summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics };
 }
 
 async function main() {
-  const { summary, monthlyMetrics, contractorRows, latestSummary } = await loadData();
-  renderKpis(summary, monthlyMetrics, latestSummary);
+  const { summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics } = await loadData();
+  renderKpis(summary, monthlyMetrics, latestSummary, currentMetrics);
   renderContractorOptions(contractorRows, summary.latest_month);
   renderContractorBars(contractorRows, summary.latest_month);
   renderTimeline(monthlyMetrics);
   renderReconciliation(latestSummary);
-  renderSource(summary, latestSummary);
+  renderSource(summary, latestSummary, currentMetrics);
 
   document.getElementById("contractorSelect").addEventListener("change", (event) => {
     renderContractorBars(contractorRows, summary.latest_month, event.target.value);
