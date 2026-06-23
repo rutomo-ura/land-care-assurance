@@ -5,7 +5,7 @@ This note records the current data-source investigation for the next LandCare mo
 ## Current Dashboard State
 
 - The monitoring page now has a data-view selector:
-  - `Current ArcGIS Universe` uses `docs/landcare/data/current_universe.geojson`, generated directly from ArcGIS Online `gisdb_gis_epp_parcels_full`.
+  - `Current ArcGIS Universe` queries ArcGIS Online `gisdb_gis_epp_parcels_full` live at runtime.
   - `Monthly Assurance History` uses `docs/landcare/data/all_months.geojson`, generated from the existing PostgreSQL export artifact.
 - The monitoring page now reads `docs/landcare/data/all_months.geojson`, not only `latest_month.geojson`.
 - The month selector exposes all available URA-owned parcel-month records from the current export artifact.
@@ -15,7 +15,8 @@ This note records the current data-source investigation for the next LandCare mo
 - Assignment freshness in the export: May 15, 2026.
 - Survey completion freshness in the export: April 15, 2026.
 - The current web data was regenerated from `prototype/source/app_ready_parcels_monthly.geojson`; it was not a fresh direct PostgreSQL pull from this machine.
-- The current ArcGIS universe maps `1,103` current URA-owned LandCare records representing `1,102` unique parcel keys. The underlying ArcGIS query returns `1,125` URA-owned LandCare records, with `22` omitted from the map output because they did not return usable geometry and `1` duplicate parcel key retained as a mapped record.
+- The live current ArcGIS universe returns `1,125` current URA-owned LandCare records representing `1,124` unique parcel keys.
+- The committed `current_universe.geojson` remains as a static fallback/reference artifact. That fallback maps `1,103` records representing `1,102` unique parcel keys, with `22` records omitted because they did not return usable geometry and `1` duplicate parcel key retained as a mapped record.
 
 ## Local PostgreSQL Pull Status
 
@@ -46,9 +47,10 @@ Public ArcGIS REST checks found two useful URA-owned hosted layers under `gis_ur
 - `LandCare - Active` records: `1,127`.
 - `LandCare - Request Only` records: `94`.
 - URA-owned-only LandCare query: `1,125` records.
-- URA-owned-only mapped records generated for the dashboard: `1,103`, representing `1,102` unique parcel keys.
-- URA-owned-only mapped records by level: `1,015` Active and `88` Request Only.
-- URA-owned-only unique parcel counts by level: `1,015` Active and `87` Request Only.
+- Runtime dashboard current view: `1,125` records, `1,124` unique parcel keys, `1,035` Active parcel keys, and `89` Request Only parcel keys.
+- Static fallback mapped records generated for the dashboard: `1,103`, representing `1,102` unique parcel keys.
+- Static fallback mapped records by level: `1,015` Active and `88` Request Only.
+- Static fallback unique parcel counts by level: `1,015` Active and `87` Request Only.
 - Useful fields include `parcel_number`, `inventory_type`, `current_status`, `neighborhood`, `project_name`, `property_maint_mgr_name`, `tags`, and `mod_dt`.
 - This is the strongest candidate for an automated current assignment/universe layer.
 
@@ -92,6 +94,6 @@ Recommended next architecture:
 1. Use `gisdb_gis_epp_parcels_full` as the automated current LandCare parcel universe and contractor assignment source.
 2. Use `gisdb_gis_regrid_surveys` or PostgreSQL `gis.regrid_survey_submissions` as the survey-completion feed after freshness is reconciled.
 3. Build one derived monthly assurance table/layer with the dashboard-ready contract: `period_month`, `parcel_number`, `ownership_type`, `maintenance_level`, `contractor`, `survey_status`, `returned/open/request-only`, freshness dates, and geometry.
-4. Let the web dashboard query that derived layer or continue consuming validated static GeoJSON generated from it.
+4. Let the web dashboard query that derived layer directly, matching the current live EPP-layer pattern.
 
 This avoids relying on this local machine for manual pull/push while preserving the dashboard's operational metrics.

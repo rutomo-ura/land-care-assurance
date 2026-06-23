@@ -26,10 +26,10 @@ The older native ArcGIS dashboard, `LandCare Assurance Monitoring Dashboard` (`2
 - The latest map view is limited to URA-owned LandCare parcels only.
 - The monitoring page can now switch across all available URA-owned parcel-month records from the current export artifact.
 - All-month data currently covers 2,415 URA-owned parcel-month records across 11 available months from May 2025 through April 2026.
-- The monitoring page now also has a `Current ArcGIS Universe` data view backed by the public `gisdb_gis_epp_parcels_full` hosted layer.
-- Current ArcGIS view maps 1,103 current URA-owned LandCare records representing 1,102 unique parcel keys, across 9 contractors.
-- Current unique parcel counts are 1,015 Active and 87 Request Only. Mapped record counts are 1,015 Active and 88 Request Only because one Request Only parcel key appears twice.
-- The current ArcGIS query returns 1,125 URA-owned LandCare records, with 22 omitted from the mapped GeoJSON because they did not return usable geometry.
+- The monitoring page now also has a `Current ArcGIS Universe` data view backed live by the public `gisdb_gis_epp_parcels_full` hosted layer.
+- The live current ArcGIS view returns 1,125 current URA-owned LandCare records representing 1,124 unique parcel keys, across 9 contractors.
+- Current unique parcel counts are 1,035 Active and 89 Request Only.
+- The committed `current_universe.geojson` remains as a static fallback/reference artifact. That fallback maps 1,103 records representing 1,102 unique parcel keys because 22 source records did not return usable geometry.
 - Latest-map counts: 218 assigned URA-owned parcels, 14 returned, 167 open, 37 request-only, 7.7% completion.
 - Map color mode toggles between Survey Status and Contractor.
 - The legend changes correctly when switching from Survey Status to Contractor.
@@ -69,7 +69,7 @@ Important findings:
 
 - `gisdb_gis_epp_parcels_full` is a public/queryable ArcGIS hosted layer owned by `gis_urap`, updated June 23, 2026 at 2:12 AM ET. It has 25,023 records and 1,221 LandCare-tagged records, split into 1,127 Active and 94 Request Only records.
 - `gisdb_gis_regrid_surveys` is a public/queryable ArcGIS hosted layer owned by `gis_urap`, updated May 21, 2026 at 1:24 PM ET. It has 9,389 survey records and Regrid-style survey fields.
-- These layers are useful automated source candidates, but neither one alone is the dashboard-ready monthly assurance layer. The dashboard still needs a derived monthly fact layer joining assignment universe, ownership scope, contractor, survey completion, and period.
+- The monitoring app now queries `gisdb_gis_epp_parcels_full` live for the current LandCare universe. A derived monthly fact layer is still needed for live completion metrics because survey completion requires assignment universe, ownership scope, contractor, survey completion, and period to be joined.
 - The existing dashboard-specific hosted layer (`47eb06a43565442d813189b78d318006`) and web map (`82218aabb92d4903b247093b7a7be312`) returned `403` through unauthenticated REST.
 
 ## Improvement Plan

@@ -7,6 +7,25 @@ import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
 
 const DATA_ROOT = "../landcare/data";
+const EPP_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
+const SURVEY_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
+const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
+const CURRENT_OUT_FIELDS = [
+  "OBJECTID",
+  "parcel_number",
+  "property_id",
+  "inventory_type",
+  "current_status",
+  "neighborhood",
+  "project_name",
+  "property_class",
+  "property_maint_mgr_name",
+  "tags",
+  "mod_dt",
+  "parcel_sqft"
+].join(",");
 
 const statusColors = {
   current_active: "#0098d3",
@@ -116,6 +135,49 @@ function contractorColor(name) {
   return contractorItems().find((item) => item.name === name)?.color || "#8a8f98";
 }
 
+function dateFromMillis(value) {
+  if (!value) return null;
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function stripPrimaryContact(value) {
+  return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
+}
+
+function currentMaintenanceLevel(tags) {
+  const text = String(tags || "");
+  if (text.includes("LandCare - Request Only")) return "Request Only";
+  if (text.includes("LandCare - Active")) return "Active";
+  return "LandCare";
+}
+
+function normalizeCurrentAttributes(attrs) {
+  const maintenanceLevel = currentMaintenanceLevel(attrs.tags);
+  const parcelKey = attrs.parcel_number || attrs.property_id || `EPP-${attrs.OBJECTID}`;
+  return {
+    objectid: attrs.OBJECTID,
+    parcel_key: parcelKey,
+    parcel_number: attrs.parcel_number,
+    property_id: attrs.property_id,
+    period_month: "Current",
+    organization: stripPrimaryContact(attrs.property_maint_mgr_name),
+    organization_contact: attrs.property_maint_mgr_name || "Unassigned",
+    maintenance_level: maintenanceLevel,
+    completion_status: maintenanceLevel === "Request Only" ? "request_only" : "current_active",
+    returned_flag: false,
+    ownership_type: "URA",
+    inventory_type: attrs.inventory_type,
+    current_status: attrs.current_status,
+    neighborhood: attrs.neighborhood,
+    project_name: attrs.project_name,
+    property_class: attrs.property_class,
+    parcel_sqft: attrs.parcel_sqft,
+    tags: attrs.tags,
+    mod_dt: dateFromMillis(attrs.mod_dt),
+    source_layer: "gisdb_gis_epp_parcels_full"
+  };
+}
+
 function currentMonthFeatures() {
   const features = state.geojson?.features || [];
   if (state.dataView === "current") return features;
@@ -145,7 +207,19 @@ function fillSymbol(color, outline = "#ffffff") {
   };
 }
 
-function statusRenderer() {
+function statusRenderer(mode = state.dataView) {
+  if (mode === "current") {
+    return {
+      type: "unique-value",
+      valueExpression: "IIF(Find('LandCare - Request Only', $feature.tags) > -1, 'request_only', 'current_active')",
+      defaultSymbol: fillSymbol("#8a8f98"),
+      uniqueValueInfos: ["current_active", "request_only"].map((value) => ({
+        value,
+        label: statusLabel(value),
+        symbol: fillSymbol(statusColors[value])
+      }))
+    };
+  }
   return {
     type: "unique-value",
     field: "completion_status",
@@ -158,7 +232,20 @@ function statusRenderer() {
   };
 }
 
-function contractorRenderer() {
+function contractorRenderer(mode = state.dataView) {
+  if (mode === "current") {
+    return {
+      type: "unique-value",
+      valueExpression:
+        "When(IsEmpty($feature.property_maint_mgr_name), 'Unassigned', Replace($feature.property_maint_mgr_name, ' Primary Contact', ''))",
+      defaultSymbol: fillSymbol("#8a8f98"),
+      uniqueValueInfos: contractorItems().map((item) => ({
+        value: item.name,
+        label: item.label,
+        symbol: fillSymbol(item.color)
+      }))
+    };
+  }
   return {
     type: "unique-value",
     field: "organization",
@@ -173,12 +260,29 @@ function contractorRenderer() {
 
 function whereForFilter(mode = state.dataView) {
   const clauses = [];
+  if (mode === "current") {
+    clauses.push(CURRENT_WHERE);
+  }
   if (mode === "history") {
     const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
     clauses.push(`period_month = '${month}'`);
   }
   if (state.contractorFilter !== "all") {
-    clauses.push(`organization = '${String(state.contractorFilter).replace(/'/g, "''")}'`);
+    if (mode === "current") {
+      const contacts = [
+        ...new Set(
+          (state.datasets?.current?.geojson?.features || [])
+            .filter((feature) => feature.properties.organization === state.contractorFilter)
+            .map((feature) => feature.properties.organization_contact)
+            .filter(Boolean)
+        )
+      ];
+      if (contacts.length) {
+        clauses.push(`(${contacts.map((contact) => `property_maint_mgr_name = '${String(contact).replace(/'/g, "''")}'`).join(" OR ")})`);
+      }
+    } else {
+      clauses.push(`organization = '${String(state.contractorFilter).replace(/'/g, "''")}'`);
+    }
   }
   return clauses.length ? clauses.join(" AND ") : "1=1";
 }
@@ -302,7 +406,7 @@ function renderActionFocus() {
     const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
     const neighborhoods = new Set(features.map((feature) => feature.properties.neighborhood).filter(Boolean)).size;
     document.getElementById("actionFocus").innerHTML = `
-      <div><strong>${formatNumber(features.length)}</strong><span>Mapped current URA-owned LandCare parcels from ArcGIS Online</span></div>
+      <div><strong>${formatNumber(features.length)}</strong><span>Live current URA-owned LandCare records from ArcGIS Online</span></div>
       <div><strong>${formatNumber(active)}</strong><span>Active LandCare records in the current EPP layer</span></div>
       <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only records separated from compliance metrics</span></div>
       <div><strong>${formatNumber(neighborhoods)}</strong><span>Neighborhoods represented in the current layer</span></div>
@@ -331,10 +435,10 @@ function renderFreshness() {
     `${note} Generated ${state.summary.generated_on || "from export"}.`;
   if (state.dataView === "current") {
     document.getElementById("mapBadge").textContent =
-      `${formatNumber(currentMonthFeatures().length)} mapped records / ${formatNumber(uniqueCount(currentMonthFeatures()))} parcels - EPP edited ${state.summary.epp_layer?.data_last_edit || "unknown"}`;
+      `${formatNumber(currentMonthFeatures().length)} live records / ${formatNumber(uniqueCount(currentMonthFeatures()))} parcels - EPP edited ${state.summary.epp_layer?.data_last_edit || "unknown"}`;
     document.getElementById("mapCallout").innerHTML = `
-      <strong>Current URA-owned LandCare universe</strong>
-      <span>From ArcGIS EPP layer; survey completion still requires the monthly assurance join.</span>
+      <strong>Live current URA-owned LandCare universe</strong>
+      <span>Queried directly from ArcGIS EPP; survey completion still requires the monthly assurance join.</span>
     `;
     return;
   }
@@ -474,28 +578,130 @@ function wireControls() {
 }
 
 async function loadData() {
-  const [historySummary, historyGeojson, currentSummary, currentGeojson] = await Promise.all([
+  const [historySummary, historyGeojson, currentDataset] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/current_universe_summary.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/current_universe.geojson`).then((response) => response.json())
+    loadCurrentArcgisDataset()
   ]);
   state.datasets = {
     history: { summary: historySummary, geojson: historyGeojson },
-    current: { summary: currentSummary, geojson: currentGeojson }
+    current: currentDataset
   };
   state.selectedMonth = historySummary.latest_month;
   setActiveDataset();
 }
 
-function buildParcelLayer({ url, title, mode, visible }) {
+async function fetchArcgisJson(url, params) {
+  const response = await fetch(`${url}?${new URLSearchParams(params).toString()}`);
+  if (!response.ok) throw new Error(`ArcGIS request failed: ${response.status}`);
+  const payload = await response.json();
+  if (payload.error) throw new Error(payload.error.message || "ArcGIS request failed");
+  return payload;
+}
+
+async function loadCurrentArcgisDataset() {
+  try {
+    const [layerInfo, surveyInfo, result] = await Promise.all([
+      fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
+      fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
+      fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
+        f: "json",
+        where: CURRENT_WHERE,
+        outFields: CURRENT_OUT_FIELDS,
+        returnGeometry: "false",
+        resultRecordCount: "2000",
+        orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
+      })
+    ]);
+    const features = (result.features || []).map((feature) => ({
+      type: "Feature",
+      geometry: null,
+      properties: normalizeCurrentAttributes(feature.attributes || {})
+    }));
+    return summarizeCurrentDataset(features, {
+      sourceKind: "live_arcgis",
+      generatedOn: "live",
+      eppLayerEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
+      surveyLayerEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
+      eppRecordCount: layerInfo.recordCount,
+      surveyRecordCount: surveyInfo.recordCount
+    });
+  } catch (error) {
+    console.warn("Falling back to static current universe data.", error);
+    const [summary, geojson] = await Promise.all([
+      fetch(`${DATA_ROOT}/current_universe_summary.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/current_universe.geojson`).then((response) => response.json())
+    ]);
+    return { summary: { ...summary, view_source: "static_fallback" }, geojson };
+  }
+}
+
+function summarizeCurrentDataset(features, options) {
+  const parcelKeys = new Set();
+  const levelCounts = {};
+  const statusCounts = {};
+  const contractorCounts = {};
+  const neighborhoods = new Set();
+  for (const feature of features) {
+    const props = feature.properties;
+    if (props.parcel_key) parcelKeys.add(props.parcel_key);
+    if (props.neighborhood) neighborhoods.add(props.neighborhood);
+    levelCounts[props.maintenance_level] = (levelCounts[props.maintenance_level] || 0) + 1;
+    statusCounts[props.completion_status] = (statusCounts[props.completion_status] || 0) + 1;
+    contractorCounts[props.organization] = (contractorCounts[props.organization] || 0) + 1;
+  }
+  const sourceNote =
+    options.sourceKind === "live_arcgis"
+      ? "Live ArcGIS Online EPP parcel layer filtered to inventory_type = URA Owned and LandCare tags. Survey-completion metrics still come from the monthly assurance export until a derived hosted layer is built."
+      : "Static fallback generated from the ArcGIS Online EPP parcel layer.";
+  return {
+    summary: {
+      generated_on: options.generatedOn,
+      view: "current_arcgis_universe",
+      view_source: options.sourceKind,
+      source_note: sourceNote,
+      source_layer: "gisdb_gis_epp_parcels_full",
+      source_layer_url: EPP_LAYER_URL.replace(/\/0$/, ""),
+      survey_layer: "gisdb_gis_regrid_surveys",
+      survey_layer_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
+      ownership_scope: "URA owned only",
+      feature_count: features.length,
+      unique_parcel_count: parcelKeys.size,
+      duplicate_parcel_key_count: features.length - parcelKeys.size,
+      active_count: levelCounts.Active || 0,
+      request_only_count: levelCounts["Request Only"] || 0,
+      contractor_count: Object.keys(contractorCounts).length,
+      neighborhood_count: neighborhoods.size,
+      level_counts: levelCounts,
+      status_counts: statusCounts,
+      contractor_counts: contractorCounts,
+      epp_layer: {
+        data_last_edit: options.eppLayerEdited,
+        record_count: options.eppRecordCount,
+        service_url: EPP_LAYER_URL.replace(/\/0$/, "")
+      },
+      survey_layer_summary: {
+        data_last_edit: options.surveyLayerEdited,
+        record_count: options.surveyRecordCount,
+        service_url: SURVEY_LAYER_URL.replace(/\/0$/, "")
+      }
+    },
+    geojson: {
+      type: "FeatureCollection",
+      metadata: {},
+      features
+    }
+  };
+}
+
+function buildHistoryLayer({ url, title, mode, visible }) {
   return new GeoJSONLayer({
     url,
     title,
     outFields: ["*"],
     visible,
     definitionExpression: whereForFilter(mode),
-    renderer: statusRenderer(),
+    renderer: statusRenderer(mode),
     opacity: 0.9,
     popupTemplate: {
       title: "{organization}",
@@ -510,17 +716,36 @@ function buildParcelLayer({ url, title, mode, visible }) {
   });
 }
 
+function buildCurrentLayer({ visible }) {
+  return new FeatureLayer({
+    url: EPP_LAYER_URL,
+    title: "Live Current ArcGIS URA-Owned LandCare Universe",
+    outFields: ["*"],
+    visible,
+    definitionExpression: whereForFilter("current"),
+    renderer: statusRenderer("current"),
+    opacity: 0.9,
+    popupTemplate: {
+      title: "{property_maint_mgr_name}",
+      content: `
+        <b>Parcel:</b> {parcel_number}<br>
+        <b>Inventory:</b> {inventory_type}<br>
+        <b>Status:</b> {current_status}<br>
+        <b>Tags:</b> {tags}<br>
+        <b>Neighborhood:</b> {neighborhood}
+      `
+    }
+  });
+}
+
 async function initMap() {
-  const historyLayer = buildParcelLayer({
+  const historyLayer = buildHistoryLayer({
     url: `${DATA_ROOT}/all_months.geojson`,
     title: "LandCare URA-Owned Parcel Months",
     mode: "history",
     visible: state.dataView === "history"
   });
-  const currentLayer = buildParcelLayer({
-    url: `${DATA_ROOT}/current_universe.geojson`,
-    title: "Current ArcGIS URA-Owned LandCare Universe",
-    mode: "current",
+  const currentLayer = buildCurrentLayer({
     visible: state.dataView === "current"
   });
   state.layers = { history: historyLayer, current: currentLayer };
@@ -565,7 +790,9 @@ async function initMap() {
   view.on("click", async (event) => {
     const hit = await view.hitTest(event);
     const graphic = hit.results.find((result) => result.graphic?.layer === activeLayer())?.graphic;
-    if (graphic?.attributes) setParcelDetail(graphic.attributes);
+    if (!graphic?.attributes) return;
+    const props = state.dataView === "current" ? normalizeCurrentAttributes(graphic.attributes) : graphic.attributes;
+    setParcelDetail(props);
   });
 
   await view.when();
