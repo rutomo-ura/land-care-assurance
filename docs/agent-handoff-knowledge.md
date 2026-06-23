@@ -38,6 +38,7 @@ Current published monitoring deliverables:
 - ArcGIS Online hosted feature layer: `https://urap.maps.arcgis.com/home/item.html?id=47eb06a43565442d813189b78d318006`
 - ArcGIS Online web map: `https://urap.maps.arcgis.com/home/item.html?id=82218aabb92d4903b247093b7a7be312`
 - Deprecated old native dashboard: `https://urap.maps.arcgis.com/apps/dashboards/2fb899d781df444ca26a6231f505cc60`
+- Data-source investigation note: `docs/landcare-data-source-milestone-2026-06-23.md`
 
 Current map stack:
 
@@ -75,6 +76,27 @@ Other source references:
 - Script repository: `https://github.com/URA-GIS-User/URA-Data-Repository`
 - LandCare network path: `\\ura-fs\share\Public\LandCare\Y10-11 2025-2027 wPLB`
 
+ArcGIS Online automated layer candidates checked on June 23, 2026:
+
+- `gisdb_gis_epp_parcels_full`: `https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer`
+  - Owner: `gis_urap`
+  - Item ID: `a76345d353a343b99b3965e8028d2ae1`
+  - Public/queryable Feature Service.
+  - Data last edit observed through REST: June 23, 2026 at 2:12 AM ET.
+  - Total records: `25,023`.
+  - LandCare-tagged records: `1,221`.
+  - `LandCare - Active`: `1,127`.
+  - `LandCare - Request Only`: `94`.
+  - Useful for current LandCare parcel universe and contractor assignment fields, but not a monthly completion fact layer.
+- `gisdb_gis_regrid_surveys`: `https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer`
+  - Owner: `gis_urap`
+  - Item ID: `8a2395bcf9084e029a87f47346580a0a`
+  - Public/queryable Feature Service.
+  - Data last edit observed through REST: May 21, 2026 at 1:24 PM ET.
+  - Total records: `9,389`.
+  - Survey `created_at` observed range: November 15, 2023 through June 15, 2025.
+  - Useful survey fields exist, but freshness and monthly matching need reconciliation before this can replace PostgreSQL survey data.
+
 ## Current Metrics Captured
 
 Power BI landing page values captured during the Week 1 work:
@@ -106,12 +128,14 @@ Current public monitoring app values after narrowing the app to URA-owned LandCa
 - Latest map layer: April 2026
 - Assignment freshness: May 15, 2026
 - Survey completion freshness: April 15, 2026
+- Available map months: May 2025, June 2025, July 2025, September 2025, October 2025, November 2025, December 2025, January 2026, February 2026, March 2026, and April 2026
+- All-month URA-owned parcel-month records: `2,415`
 - URA-owned latest-month assigned parcels: `218`
 - Returned surveys matched to URA-owned assigned parcels: `14`
 - Active completion: `7.7%`
 - Open active assignments: `167`
 - Request Only assignments: `37`
-- Main app data files: `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, and `docs/landcare/data/contractor_monthly.json`
+- Main app data files: `docs/landcare/data/all_months.geojson`, `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, `docs/landcare/data/contractor_monthly.json`, and `docs/landcare/data/refresh_manifest.json`
 
 ## Important Implementation Details
 
@@ -172,6 +196,12 @@ Rebuild prototype data from an app-ready export:
 python prototype/scripts/build_prototype_data.py --app-ready-geojson prototype/source/app_ready_parcels_monthly.geojson
 ```
 
+Rebuild current public monitoring/KPI data from the app-ready export artifact:
+
+```powershell
+python scripts/build_landcare_web_data.py
+```
+
 Export app-ready GeoJSON from PostgreSQL:
 
 ```powershell
@@ -206,6 +236,7 @@ Most recent pushed commits at the time this file was created:
 
 - Confirm production deployment path.
 - Reconcile ownership definitions with Power BI and URA/PLB business rules.
+- Reconcile ArcGIS `gisdb_gis_epp_parcels_full` and `gisdb_gis_regrid_surveys` with PostgreSQL and decide whether to build a hosted monthly assurance layer from them.
 - Add contractor-colored parcel map mode.
 - Add last surveyed period as a map mode or coordinated filter.
 - Add reassignment planning that balances contractor workload by total parcel area.

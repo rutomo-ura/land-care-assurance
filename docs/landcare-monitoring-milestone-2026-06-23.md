@@ -24,6 +24,8 @@ The older native ArcGIS dashboard, `LandCare Assurance Monitoring Dashboard` (`2
 - The ArcGIS dashboard loads the monitoring web app in runtime mode.
 - The monitoring page shows the URA-branded header, real Pittsburgh parcel map, metrics, contractor filter, selected parcel panel, and action focus panel.
 - The latest map view is limited to URA-owned LandCare parcels only.
+- The monitoring page can now switch across all available URA-owned parcel-month records from the current export artifact.
+- All-month data currently covers 2,415 URA-owned parcel-month records across 11 available months from May 2025 through April 2026.
 - Latest-map counts: 218 assigned URA-owned parcels, 14 returned, 167 open, 37 request-only, 7.7% completion.
 - Map color mode toggles between Survey Status and Contractor.
 - The legend changes correctly when switching from Survey Status to Contractor.
@@ -37,10 +39,12 @@ The older native ArcGIS dashboard, `LandCare Assurance Monitoring Dashboard` (`2
 The current static web app is backed by exported data files in:
 
 - `docs/landcare/data/latest_month.geojson`
+- `docs/landcare/data/all_months.geojson`
 - `docs/landcare/data/latest_month_summary.json`
 - `docs/landcare/data/kpi_summary.json`
 - `docs/landcare/data/monthly_metrics.json`
 - `docs/landcare/data/contractor_monthly.json`
+- `docs/landcare/data/refresh_manifest.json`
 
 The source narrative shown in the app:
 
@@ -48,7 +52,19 @@ The source narrative shown in the app:
 - Assignment freshness: May 15, 2026.
 - Survey completion freshness: April 15, 2026.
 - Latest map layer: 2026-04.
+- Available map months: 2025-05, 2025-06, 2025-07, 2025-09, 2025-10, 2025-11, 2025-12, 2026-01, 2026-02, 2026-03, and 2026-04.
 - Source tables include `gis.regrid_bundle_assignments`, `gis.regrid_survey_submissions`, `gis.pgh_parcels`, `gis.epp_parcels_full`, `gis.epp_snapshot`, `analysis.city_epp_properties`, and `analysis.assessment_snapshot`.
+
+## ArcGIS Source Check
+
+See `docs/landcare-data-source-milestone-2026-06-23.md` for the full source investigation.
+
+Important findings:
+
+- `gisdb_gis_epp_parcels_full` is a public/queryable ArcGIS hosted layer owned by `gis_urap`, updated June 23, 2026 at 2:12 AM ET. It has 25,023 records and 1,221 LandCare-tagged records, split into 1,127 Active and 94 Request Only records.
+- `gisdb_gis_regrid_surveys` is a public/queryable ArcGIS hosted layer owned by `gis_urap`, updated May 21, 2026 at 1:24 PM ET. It has 9,389 survey records and Regrid-style survey fields.
+- These layers are useful automated source candidates, but neither one alone is the dashboard-ready monthly assurance layer. The dashboard still needs a derived monthly fact layer joining assignment universe, ownership scope, contractor, survey completion, and period.
+- The existing dashboard-specific hosted layer (`47eb06a43565442d813189b78d318006`) and web map (`82218aabb92d4903b247093b7a7be312`) returned `403` through unauthenticated REST.
 
 ## Improvement Plan
 
@@ -91,11 +107,11 @@ The source narrative shown in the app:
 
 ## Recommended Next Sprint
 
-1. Build `scripts/build_landcare_web_data.py` or equivalent to refresh the static app data from PostgreSQL.
-2. Add a refresh manifest under `docs/landcare/data/refresh_manifest.json`.
-3. Add automated checks that fail when row counts, latest dates, or ownership filters look wrong.
-4. Publish updated static data to GitHub Pages and confirm the embedded ArcGIS dashboard reflects the change.
-5. Decide whether the hosted ArcGIS feature layer should be updated by overwrite, replacement, or a stable feature layer view.
+1. Reconcile ArcGIS `gisdb_gis_epp_parcels_full` counts against PostgreSQL `gis.epp_snapshot` and the Power BI assignment denominator.
+2. Reconcile ArcGIS `gisdb_gis_regrid_surveys` freshness against PostgreSQL `gis.regrid_survey_submissions`.
+3. Promote the derived monthly assurance contract into a scheduled job or hosted feature layer so the dashboard is not dependent on a local export.
+4. Add automated checks that fail when row counts, latest dates, or ownership filters look wrong.
+5. Publish updated data to GitHub Pages or a stable ArcGIS layer and confirm the embedded ArcGIS dashboard reflects the change.
 
 ## Related Deployment Decision
 

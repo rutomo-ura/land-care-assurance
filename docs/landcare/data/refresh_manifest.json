@@ -1,0 +1,25 @@
+{
+  "generated_on": "2026-06-23",
+  "source_file": "prototype\\source\\app_ready_parcels_monthly.geojson",
+  "output_dir": "docs\\landcare\\data",
+  "ownership_scope": "URA owned only",
+  "available_months": [
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04"
+  ],
+  "latest_month": "2026-04",
+  "all_month_feature_count": 2415,
+  "latest_month_feature_count": 218,
+  "latest_assignment_period": "2026-05-15",
+  "latest_survey_period": "2026-04-15",
+  "note": "Generated from existing PostgreSQL export artifact; not a direct database pull."
+}

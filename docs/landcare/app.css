@@ -175,6 +175,30 @@ textarea {
   border-top: 0;
 }
 
+.field-label {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.field-label span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.field-label select {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 2px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .mini-kpis {
   display: grid;
   grid-template-columns: 1fr 1fr;

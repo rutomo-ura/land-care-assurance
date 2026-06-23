@@ -38,12 +38,16 @@ jobs:
           test -f docs/kpi/index.html
           test -f docs/landcare/data/latest_month_summary.json
           test -f docs/landcare/data/latest_month.geojson
+          test -f docs/landcare/data/all_months.geojson
+          test -f docs/landcare/data/refresh_manifest.json
           python - <<'PY'
           import json
           from pathlib import Path
 
           summary = json.loads(Path("docs/landcare/data/latest_month_summary.json").read_text())
           geojson = json.loads(Path("docs/landcare/data/latest_month.geojson").read_text())
+          all_months = json.loads(Path("docs/landcare/data/all_months.geojson").read_text())
+          manifest = json.loads(Path("docs/landcare/data/refresh_manifest.json").read_text())
 
           required_top_level_keys = {
               "latest_month",
@@ -51,6 +55,8 @@ jobs:
               "latest_survey_period",
               "feature_count",
               "ownership_scope",
+              "available_months",
+              "all_month_feature_count",
               "status_counts",
               "level_counts",
               "ownership_counts",
@@ -62,6 +68,16 @@ jobs:
           features = geojson.get("features") or []
           if not features:
               raise SystemExit("latest_month.geojson has no features")
+
+          all_features = all_months.get("features") or []
+          if len(all_features) <= len(features):
+              raise SystemExit("all_months.geojson should contain more records than latest_month.geojson")
+
+          if manifest.get("all_month_feature_count") != len(all_features):
+              raise SystemExit("refresh_manifest all_month_feature_count does not match all_months.geojson")
+
+          if manifest.get("latest_month_feature_count") != len(features):
+              raise SystemExit("refresh_manifest latest_month_feature_count does not match latest_month.geojson")
 
           if summary["ownership_scope"] != "URA owned only":
               raise SystemExit(f"unexpected ownership scope: {summary['ownership_scope']}")
@@ -77,13 +93,16 @@ jobs:
           if summary["ownership_counts"].get("URA") != len(features):
               raise SystemExit("ownership_counts URA does not match GeoJSON feature count")
 
+          if summary["all_month_feature_count"] != len(all_features):
+              raise SystemExit("summary all_month_feature_count does not match all_months.geojson")
+
           non_ura = [
               feature.get("properties", {}).get("ownership_type")
-              for feature in features
+              for feature in all_features
               if feature.get("properties", {}).get("ownership_type") != "URA"
           ]
           if non_ura:
-              raise SystemExit(f"latest_month.geojson includes non-URA ownership values: {sorted(set(non_ura))}")
+              raise SystemExit(f"all_months.geojson includes non-URA ownership values: {sorted(set(non_ura))}")
           PY
 
       - name: Upload docs site

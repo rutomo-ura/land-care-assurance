@@ -34,7 +34,8 @@ const state = {
   view: null,
   parcelLayer: null,
   contractorFilter: "all",
-  colorMode: "status"
+  colorMode: "status",
+  selectedMonth: null
 };
 
 const formatter = new Intl.NumberFormat("en-US");
@@ -75,13 +76,26 @@ function shortContractor(name) {
 }
 
 function contractorItems() {
-  return Object.entries(state.summary.contractor_counts || {})
+  const counts = {};
+  const returned = {};
+  for (const feature of currentMonthFeatures()) {
+    const props = feature.properties || {};
+    const org = props.organization || "Unassigned";
+    const parcelKey = props.parcel_key;
+    if (!parcelKey) continue;
+    counts[org] ||= new Set();
+    returned[org] ||= new Set();
+    counts[org].add(parcelKey);
+    if (props.returned_flag) returned[org].add(parcelKey);
+  }
+  return Object.entries(counts)
+    .map(([name, keys]) => [name, keys.size])
     .sort((a, b) => b[1] - a[1])
     .map(([name, count], index) => ({
       name,
       label: shortContractor(name),
       count,
-      returned: state.summary.contractor_returned?.[name] || 0,
+      returned: returned[name]?.size || 0,
       color: contractorPalette[index % contractorPalette.length]
     }));
 }
@@ -90,8 +104,13 @@ function contractorColor(name) {
   return contractorItems().find((item) => item.name === name)?.color || "#8a8f98";
 }
 
-function filteredFeatures() {
+function currentMonthFeatures() {
   const features = state.geojson?.features || [];
+  return features.filter((feature) => feature.properties.period_month === state.selectedMonth);
+}
+
+function filteredFeatures() {
+  const features = currentMonthFeatures();
   if (state.contractorFilter === "all") return features;
   return features.filter((feature) => feature.properties.organization === state.contractorFilter);
 }
@@ -140,8 +159,27 @@ function contractorRenderer() {
 }
 
 function whereForFilter() {
-  if (state.contractorFilter === "all") return "1=1";
-  return `organization = '${String(state.contractorFilter).replace(/'/g, "''")}'`;
+  const month = String(state.selectedMonth || state.summary.latest_month).replace(/'/g, "''");
+  const clauses = [`period_month = '${month}'`];
+  if (state.contractorFilter !== "all") {
+    clauses.push(`organization = '${String(state.contractorFilter).replace(/'/g, "''")}'`);
+  }
+  return clauses.join(" AND ");
+}
+
+function availableMonths() {
+  return state.summary.available_months || [
+    ...new Set((state.geojson?.features || []).map((feature) => feature.properties.period_month))
+  ].sort();
+}
+
+function renderMonthOptions() {
+  const select = document.getElementById("monthSelect");
+  const months = availableMonths();
+  select.innerHTML = months
+    .map((month) => `<option value="${escapeHtml(month)}">${escapeHtml(month)}</option>`)
+    .join("");
+  select.value = state.selectedMonth;
 }
 
 function renderKpis() {
@@ -149,7 +187,8 @@ function renderKpis() {
   const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
   const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
   const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
-  document.getElementById("latestMonthLabel").textContent = `${state.summary.latest_month} URA-owned survey month`;
+  document.getElementById("latestMonthLabel").textContent =
+    `${state.selectedMonth} URA-owned survey month`;
   document.getElementById("assignedKpi").textContent = formatNumber(uniqueCount(features));
   document.getElementById("returnedKpi").textContent = formatNumber(returned);
   document.getElementById("completionKpi").textContent = pct(returned, active);
@@ -190,14 +229,21 @@ function renderLegend() {
   }
 
   heading.textContent = "Legend - Survey Status";
-  const counts = state.summary.status_counts || {};
+  const counts = filteredFeatures().reduce((acc, feature) => {
+    const status = feature.properties.completion_status || "missing";
+    const parcelKey = feature.properties.parcel_key;
+    if (!parcelKey) return acc;
+    acc[status] ||= new Set();
+    acc[status].add(parcelKey);
+    return acc;
+  }, {});
   list.innerHTML = Object.entries(statusColors)
-    .filter(([status]) => status !== "ownership_risk" || counts[status])
+    .filter(([status]) => status !== "ownership_risk" || counts[status]?.size)
     .map(([status, color]) => `
       <div class="legend-item">
         <span class="legend-swatch" style="background:${color}"></span>
         <strong>${statusLabel(status)}</strong>
-        <span>${formatNumber(counts[status] || 0)}</span>
+        <span>${formatNumber(counts[status]?.size || 0)}</span>
       </div>
     `).join("");
 }
@@ -225,9 +271,9 @@ function renderFreshness() {
   document.getElementById("freshnessNote").textContent =
     `${note} Generated ${state.summary.generated_on || "from export"}.`;
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(state.summary.feature_count)} parcels - ${state.summary.latest_month} - PostgreSQL/PostGIS`;
+    `${formatNumber(currentMonthFeatures().length)} parcels - ${state.selectedMonth} - ${formatNumber(state.summary.all_month_feature_count || state.geojson.features.length)} records total`;
   document.getElementById("mapCallout").innerHTML = `
-    <strong>URA-owned ${state.summary.latest_month} LandCare parcels</strong>
+    <strong>URA-owned ${state.selectedMonth} LandCare parcels</strong>
     <span>Colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}; current contractor filter: ${state.contractorFilter === "all" ? "all" : escapeHtml(shortContractor(state.contractorFilter))}.</span>
   `;
 }
@@ -272,6 +318,22 @@ function setContractorFilter(name) {
   renderFreshness();
 }
 
+function setMonthFilter(month) {
+  state.selectedMonth = month || state.summary.latest_month;
+  state.contractorFilter = "all";
+  if (state.parcelLayer) {
+    state.parcelLayer.definitionExpression = whereForFilter();
+  }
+  renderMonthOptions();
+  renderKpis();
+  renderContractors();
+  renderLegend();
+  renderActionFocus();
+  renderFreshness();
+  document.getElementById("parcelDetail").textContent =
+    "Select a parcel to review contractor, status, ownership, and survey period.";
+}
+
 function wireControls() {
   document.addEventListener("click", (event) => {
     const modeButton = event.target.closest("[data-color-mode]");
@@ -284,22 +346,25 @@ function wireControls() {
     }
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all"));
+  document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
 }
 
 async function loadData() {
   const [summary, geojson] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/latest_month.geojson`).then((response) => response.json())
+    fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json())
   ]);
   state.summary = summary;
   state.geojson = geojson;
+  state.selectedMonth = summary.latest_month;
 }
 
 async function initMap() {
   const parcelLayer = new GeoJSONLayer({
-    url: `${DATA_ROOT}/latest_month.geojson`,
-    title: "LandCare Latest Month Parcels",
+    url: `${DATA_ROOT}/all_months.geojson`,
+    title: "LandCare URA-Owned Parcel Months",
     outFields: ["*"],
+    definitionExpression: whereForFilter(),
     renderer: statusRenderer(),
     opacity: 0.9,
     popupTemplate: {
@@ -368,6 +433,7 @@ async function initMap() {
 async function main() {
   wireControls();
   await loadData();
+  renderMonthOptions();
   renderKpis();
   renderContractors();
   renderLegend();
