@@ -282,6 +282,31 @@ textarea {
   background: transparent;
 }
 
+.export-button {
+  min-height: 28px;
+  padding: 0 10px;
+  color: #ffffff;
+  background: var(--ura-blue-dark);
+  border: 1px solid var(--ura-blue-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.export-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.export-status {
+  min-height: 18px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .contractor-section {
   padding-bottom: 8px;
 }
@@ -660,6 +685,10 @@ textarea {
   gap: 14px;
 }
 
+.leader-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .insight-card {
   display: grid;
   gap: 8px;
@@ -933,6 +962,31 @@ select {
   min-width: 0;
 }
 
+.stacked-bars {
+  display: flex;
+  min-width: 16px;
+  height: 15px;
+  overflow: hidden;
+  background: #e8eff4;
+}
+
+.stacked-segment {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.stacked-segment.returned,
+.grouped-bar.returned,
+.legend-line.returned {
+  background: #2e7d32;
+}
+
+.stacked-segment.open,
+.legend-line.open {
+  background: var(--orange);
+}
+
 .grouped-bar {
   display: block;
   height: 11px;
@@ -941,10 +995,6 @@ select {
 
 .grouped-bar.assigned {
   background: var(--ura-blue);
-}
-
-.grouped-bar.returned {
-  background: var(--gold);
 }
 
 .grouped-values {
@@ -1136,6 +1186,10 @@ select {
   .insight-grid {
     grid-template-columns: 1fr;
   }
+
+  .leader-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1207,6 +1261,10 @@ select {
   .grouped-values {
     grid-template-columns: 1fr 1fr;
     text-align: left;
+  }
+
+  .leader-grid {
+    grid-template-columns: 1fr;
   }
 
   .map-stage {

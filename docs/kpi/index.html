@@ -46,6 +46,29 @@
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
+        <section class="insight-grid leader-grid" aria-label="Leadership insights">
+          <article class="insight-card">
+            <span class="eyebrow">Monthly Completion</span>
+            <strong id="completionReadoutInsight">--</strong>
+            <p id="completionReadoutCopy">Loading completion trend...</p>
+          </article>
+          <article class="insight-card warning">
+            <span class="eyebrow">Largest Follow-Up</span>
+            <strong id="problemContractorInsight">--</strong>
+            <p id="problemContractorCopy">Loading contractor review...</p>
+          </article>
+          <article class="insight-card">
+            <span class="eyebrow">Open Active Work</span>
+            <strong id="openParcelInsight">--</strong>
+            <p id="openParcelCopy">Loading open parcel count...</p>
+          </article>
+          <article class="insight-card">
+            <span class="eyebrow">Budget Run Rate</span>
+            <strong id="budgetRunRateInsight">--</strong>
+            <p id="budgetRunRateCopy">Loading budget status...</p>
+          </article>
+        </section>
+
         <section class="metric-groups" aria-label="LandCare metrics">
           <article class="panel metric-group">
             <div class="panel-head">
@@ -93,36 +116,18 @@
           </article>
         </section>
 
-        <section class="insight-grid" aria-label="Leadership insights">
-          <article class="insight-card">
-            <span class="eyebrow">Monthly Signal</span>
-            <strong id="completionReadoutInsight">--</strong>
-            <p id="completionReadoutCopy">Loading completion trend...</p>
-          </article>
-          <article class="insight-card warning">
-            <span class="eyebrow">Needs Attention</span>
-            <strong id="problemContractorInsight">--</strong>
-            <p id="problemContractorCopy">Loading contractor review...</p>
-          </article>
-          <article class="insight-card">
-            <span class="eyebrow">Open Work</span>
-            <strong id="openParcelInsight">--</strong>
-            <p id="openParcelCopy">Loading open parcel count...</p>
-          </article>
-        </section>
-
         <section class="powerbi-grid" aria-label="Landing charts">
           <article class="panel powerbi-panel contractor-panel">
             <div class="panel-head">
               <div>
-                <span class="eyebrow">Contractor Comparison</span>
-                <h1>Latest Month Assigned vs Surveys Returned</h1>
+                <span class="eyebrow">Contractor Follow-Up Queue</span>
+                <h1>Latest Month Returned vs Open Active</h1>
               </div>
               <select id="contractorSelect" aria-label="Contractor filter">
                 <option value="all">All contractors</option>
               </select>
             </div>
-            <div class="chart-legend"><span class="legend-line assigned"></span> Assigned <span class="legend-line returned"></span> Returned</div>
+            <div class="chart-legend"><span class="legend-line returned"></span> Returned <span class="legend-line open"></span> Open active</div>
             <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
           </article>
 

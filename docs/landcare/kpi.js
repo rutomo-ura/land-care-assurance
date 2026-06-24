@@ -300,7 +300,7 @@ function contractorChartRows(rows, selected = "all") {
     .sort((a, b) => (b.assigned - b.returned) - (a.assigned - a.returned) || b.assigned - a.assigned);
 }
 
-function renderLeadershipInsights(monthlyMetrics, latestContractorRows) {
+function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary) {
   const latest = monthlyMetrics.at(-1);
   const prior = monthlyMetrics.at(-2);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
@@ -324,31 +324,38 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows) {
   document.getElementById("openParcelInsight").textContent = formatNumber(openTotal);
   document.getElementById("openParcelCopy").textContent =
     `Open active assignments after ${formatNumber(latest.returned_assigned)} returned surveys in ${shortMonth(latest.period_month)}.`;
+  document.getElementById("budgetRunRateInsight").textContent =
+    formatMoney(financeSummary?.summary?.annual_invoice_run_rate || 0);
+  document.getElementById("budgetRunRateCopy").textContent =
+    `${formatMoney(financeSummary?.summary?.monthly_invoice_total || 0)} monthly invoice run rate across ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors.`;
 }
 
 function renderContractorGroupedChart(rows, selected = "all") {
   const chartRows = contractorChartRows(rows, selected);
   const maxValue = Math.max(
     1,
-    ...chartRows.flatMap((row) => [Number(row.assigned || 0), Number(row.returned || 0)])
+    ...chartRows.map((row) => Number(row.assigned || 0))
   );
   document.getElementById("contractorGroupedChart").innerHTML = chartRows.map((row) => {
     const assigned = Number(row.assigned || 0);
     const returned = Number(row.returned || 0);
+    const open = Math.max(assigned - returned, 0);
     const rate = Number(row.completionRate || 0);
+    const returnedWidth = assigned ? (100 * returned) / assigned : 0;
+    const openWidth = assigned ? (100 * open) / assigned : 0;
     return `
       <div class="grouped-row">
         <div class="grouped-label">
           <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-          <span>${formatPct(rate)} complete - ${formatNumber(Math.max(assigned - returned, 0))} open</span>
+          <span>${formatPct(rate)} complete - ${formatNumber(open)} open active</span>
         </div>
-        <div class="grouped-bars">
-          <span class="grouped-bar assigned" style="width:${Math.max((100 * assigned) / maxValue, 2)}%"></span>
-          <span class="grouped-bar returned" style="width:${returned ? Math.max((100 * returned) / maxValue, 2) : 0}%"></span>
+        <div class="stacked-bars" style="width:${Math.max((100 * assigned) / maxValue, 4)}%">
+          <span class="stacked-segment returned" style="width:${returned ? Math.max(returnedWidth, 2) : 0}%"></span>
+          <span class="stacked-segment open" style="width:${open ? Math.max(openWidth, 2) : 0}%"></span>
         </div>
         <div class="grouped-values">
-          <span>${formatNumber(assigned)} assigned</span>
           <span>${formatNumber(returned)} returned</span>
+          <span>${formatNumber(open)} open</span>
         </div>
       </div>
     `;
@@ -589,7 +596,7 @@ async function main() {
   renderSourceSummary(summary, currentMetrics);
   appendFinanceSourceToSummary(financeSummary);
   renderKpis(monthlyMetrics, summary, currentMetrics);
-  renderLeadershipInsights(monthlyMetrics, latestContractorRows);
+  renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary);
   renderContractorOptions(latestContractorRows);
   renderContractorGroupedChart(latestContractorRows);
   renderTimeline(monthlyMetrics);

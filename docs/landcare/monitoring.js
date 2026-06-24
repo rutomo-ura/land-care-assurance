@@ -79,6 +79,13 @@ function pct(numerator, denominator) {
   return denominator ? `${((100 * numerator) / denominator).toFixed(1)}%` : "0.0%";
 }
 
+function slug(value) {
+  return String(value || "all")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "all";
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -664,6 +671,17 @@ async function zoomToDistrict(district = state.districtFilter) {
   await zoomToCurrentWhere(currentZoomWhere({ contractor: "all", district }), { expand: 1.12 });
 }
 
+async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}) {
+  const layer = activeLayer();
+  if (!state.view || !layer?.queryExtent) return;
+  const result = await layer.queryExtent({
+    where: whereForFilter(),
+    outSpatialReference: state.view.spatialReference
+  }).catch(() => null);
+  if (!result?.extent) return;
+  await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
+}
+
 function dominantNeighborhoodForContractor(name) {
   const counts = {};
   const features = districtFilteredFeatures().filter((feature) => feature.properties.organization === name);
@@ -727,8 +745,12 @@ async function setContractorFilter(name, { zoom = false } = {}) {
   renderContractors();
   renderActionFocus();
   renderFreshness();
-  if (zoom && state.dataView === "current") {
-    await zoomToContractorCluster(state.contractorFilter);
+  if (zoom) {
+    if (state.dataView === "current") {
+      await zoomToContractorCluster(state.contractorFilter);
+    } else {
+      await zoomToActiveFilteredExtent({ expand: state.contractorFilter === "all" ? 1.08 : 1.22 });
+    }
     renderFreshness();
   }
 }
@@ -817,6 +839,175 @@ function wireControls() {
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
+  document.getElementById("exportPdfButton").addEventListener("click", exportPrintPdf);
+}
+
+function exportStats(features) {
+  const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
+  const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
+  const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
+  const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
+  const assigned = uniqueCount(features);
+  const neighborhoods = new Set(features.map((feature) => feature.properties.neighborhood).filter(Boolean)).size;
+  return { active, returned, requestOnly, open, assigned, neighborhoods, completionRate: pct(returned, active) };
+}
+
+function contractorOpenRank() {
+  if (state.contractorFilter === "all") return null;
+  const rows = contractorPerformanceRows(districtFilteredFeatures())
+    .sort((a, b) => b.open - a.open || a.rate - b.rate);
+  const index = rows.findIndex((row) => row.organization === state.contractorFilter);
+  return index >= 0 ? index + 1 : null;
+}
+
+function printLegendHtml() {
+  const statuses = state.dataView === "current"
+    ? ["current_active", "request_only"]
+    : ["returned", "missing", "request_only"];
+  return statuses.map((status) => `
+    <div class="print-legend-row">
+      <span style="background:${statusColors[status]}"></span>
+      <strong>${escapeHtml(statusLabel(status))}</strong>
+    </div>
+  `).join("");
+}
+
+function statLine(label, value) {
+  return `<div class="print-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function buildPrintHtml(mapImage, stats, screenshotScale) {
+  const contractor = state.contractorFilter === "all" ? "All Contractors" : shortContractor(state.contractorFilter);
+  const district = state.districtFilter === "all" ? "All Districts" : `Council District ${state.districtFilter}`;
+  const month = state.dataView === "current" ? "Current portfolio" : state.selectedMonth;
+  const rank = contractorOpenRank();
+  const action = state.contractorFilter === "all"
+    ? `Review ${formatNumber(stats.open)} open active parcels before monthly close.`
+    : `Review ${formatNumber(stats.open)} open active parcels for ${contractor} before monthly close.`;
+  const generated = new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+  const filename = `landcare-survey-map-${slug(contractor)}-${slug(month)}.pdf`;
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${escapeHtml(filename)}</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+      @page { size: A3 landscape; margin: 10mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #e8eef2; color: #111820; font-family: Manrope, Segoe UI, Arial, sans-serif; }
+      .sheet { width: 400mm; height: 277mm; margin: 0 auto; background: #fff; border: 1px solid #b9c9d4; display: grid; grid-template-rows: 27mm 1fr 12mm; }
+      header { display: grid; grid-template-columns: 1fr auto; gap: 10mm; align-items: center; padding: 8mm 10mm 5mm; border-bottom: 1px solid #d8e4ea; }
+      h1 { margin: 0; color: #00334f; font-size: 19pt; line-height: 1.05; }
+      .subtitle { margin-top: 2mm; color: #586872; font-size: 9pt; font-weight: 700; }
+      .brand { color: #0098d3; font-size: 18pt; font-weight: 800; letter-spacing: .02em; }
+      main { display: grid; grid-template-columns: 1fr 82mm; gap: 6mm; padding: 6mm 8mm; min-height: 0; }
+      .map-frame { position: relative; border: 1px solid #b9c9d4; background: #eef4f7; overflow: hidden; }
+      .map-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .north { position: absolute; left: 8mm; bottom: 11mm; display: grid; place-items: center; color: #00334f; font-weight: 800; font-size: 18pt; }
+      .north::before { content: ""; width: 0; height: 0; border-left: 7mm solid transparent; border-right: 7mm solid transparent; border-bottom: 21mm solid #00334f; display: block; margin-bottom: 1mm; }
+      .scale { position: absolute; right: 8mm; bottom: 8mm; min-width: 46mm; color: #111820; font-size: 7pt; font-weight: 800; }
+      .scale-bar { height: 4mm; border-left: 1px solid #111820; border-right: 1px solid #111820; border-bottom: 3mm solid #111820; background: #fff; margin-bottom: 1mm; }
+      aside { display: grid; grid-template-rows: auto auto 1fr; gap: 4mm; min-width: 0; }
+      .box { border: 1px solid #d8e4ea; padding: 5mm; background: #f7fbfd; }
+      .box h2 { margin: 0 0 3mm; color: #00334f; font-size: 10pt; text-transform: uppercase; letter-spacing: .04em; }
+      .print-stat { display: grid; grid-template-columns: 1fr auto; gap: 5mm; padding: 2.3mm 0; border-bottom: 1px solid #d8e4ea; font-size: 8pt; }
+      .print-stat:last-child { border-bottom: 0; }
+      .print-stat span { color: #586872; font-weight: 700; }
+      .print-stat strong { color: #111820; font-size: 10pt; }
+      .print-legend-row { display: grid; grid-template-columns: 6mm 1fr; gap: 3mm; align-items: center; margin: 3mm 0; font-size: 8pt; }
+      .print-legend-row span { width: 6mm; height: 6mm; border: 1px solid rgba(17,24,32,.32); display: inline-block; }
+      .boundary { border-top: 1.4px solid #9a7419; width: 18mm; display: inline-block; vertical-align: middle; margin-right: 3mm; }
+      .action { color: #111820; font-size: 9pt; line-height: 1.45; font-weight: 700; }
+      footer { display: flex; align-items: center; justify-content: space-between; padding: 0 10mm; color: #586872; font-size: 7.5pt; border-top: 1px solid #d8e4ea; }
+      @media print { body { background: #fff; } .sheet { margin: 0; } }
+    </style>
+  </head>
+  <body>
+    <section class="sheet">
+      <header>
+        <div>
+          <h1>URA LandCare Survey Map</h1>
+          <div class="subtitle">Survey Month: ${escapeHtml(month)} &nbsp;|&nbsp; Contractor: ${escapeHtml(contractor)} &nbsp;|&nbsp; ${escapeHtml(district)}</div>
+        </div>
+        <div class="brand">URA</div>
+      </header>
+      <main>
+        <div class="map-frame">
+          <img src="${mapImage}" alt="LandCare survey map">
+          <div class="north">N</div>
+          <div class="scale"><div class="scale-bar"></div>Approx. scale 1:${formatNumber(Math.round(screenshotScale || state.view?.scale || 0))}</div>
+        </div>
+        <aside>
+          <div class="box">
+            <h2>Summary Stats</h2>
+            ${statLine("Assigned parcels", formatNumber(stats.assigned))}
+            ${statLine("Active assigned", formatNumber(stats.active))}
+            ${statLine("Surveys returned", formatNumber(stats.returned))}
+            ${statLine("Open active", formatNumber(stats.open))}
+            ${statLine("Request only", formatNumber(stats.requestOnly))}
+            ${statLine("Completion rate", stats.completionRate)}
+            ${statLine("Neighborhoods", formatNumber(stats.neighborhoods))}
+            ${rank ? statLine("Open parcel rank", `#${rank}`) : ""}
+          </div>
+          <div class="box">
+            <h2>Legend</h2>
+            ${printLegendHtml()}
+            <div class="print-legend-row"><span class="boundary"></span><strong>Council district boundary</strong></div>
+          </div>
+          <div class="box">
+            <h2>Action Focus</h2>
+            <div class="action">${escapeHtml(action)}</div>
+          </div>
+        </aside>
+      </main>
+      <footer>
+        <span>Generated: ${escapeHtml(generated)}</span>
+        <span>Source: LandCare Assurance Dashboard</span>
+      </footer>
+    </section>
+    <script>
+      window.addEventListener("load", () => setTimeout(() => window.print(), 450));
+    </script>
+  </body>
+</html>`;
+}
+
+async function exportPrintPdf() {
+  const button = document.getElementById("exportPdfButton");
+  const status = document.getElementById("exportStatus");
+  const priorLabel = button.textContent;
+  const priorViewpoint = state.view?.viewpoint?.clone();
+  button.disabled = true;
+  button.textContent = "Preparing PDF...";
+  status.textContent = "";
+  const printWindow = window.open("", "_blank");
+  try {
+    if (!printWindow) throw new Error("Popup blocked. Allow popups to open the print layout.");
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html><title>Preparing map export</title><body style="font-family:system-ui,sans-serif;padding:24px">Preparing map export...</body>`);
+    printWindow.document.close();
+    await zoomToActiveFilteredExtent({ expand: state.contractorFilter === "all" ? 1.08 : 1.22, duration: 350 });
+    await state.view.when();
+    const screenshotScale = state.view.scale;
+    const screenshot = await state.view.takeScreenshot({
+      width: 1700,
+      height: 1050,
+      format: "png"
+    });
+    const stats = exportStats(filteredFeatures());
+    printWindow.document.open();
+    printWindow.document.write(buildPrintHtml(screenshot.dataUrl, stats, screenshotScale));
+    printWindow.document.close();
+    status.textContent = "Print layout opened. Choose Save as PDF in the print dialog.";
+  } catch (error) {
+    console.error(error);
+    status.textContent = "PDF export failed. Try again after the map finishes loading.";
+  } finally {
+    if (priorViewpoint) await state.view.goTo(priorViewpoint, { duration: 250 }).catch(() => {});
+    button.disabled = false;
+    button.textContent = priorLabel;
+  }
 }
 
 async function loadData() {
