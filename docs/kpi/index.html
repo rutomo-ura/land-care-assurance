@@ -23,131 +23,168 @@
     </header>
 
     <main class="kpi-shell">
-      <nav class="report-tabs" aria-label="Power BI report sections">
-        <button class="is-active" type="button">Landing Page</button>
-        <button type="button" disabled>Land Care Budget</button>
-        <button type="button" disabled>Check Request History</button>
-        <button type="button" disabled>Survey Submission Rate</button>
-        <button type="button" disabled>Parcel Area Distribution</button>
-        <button type="button" disabled>Parcel Details</button>
-        <button type="button" disabled>Maintenance Expenses</button>
+      <nav class="report-tabs" aria-label="LandCare report sections">
+        <button class="is-active" type="button" data-tab="landing">Landing Page</button>
+        <button type="button" data-tab="budget">Land Care Budget</button>
+        <button type="button" data-tab="checkRequests">Check Request History</button>
+        <button type="button" data-tab="submissionRate">Survey Submission Rate</button>
+        <button type="button" data-tab="areaDistribution">Parcel Area Distribution</button>
+        <button type="button" data-tab="parcelDetails">Parcel Details</button>
+        <button type="button" data-tab="maintenanceExpenses">Maintenance Expenses</button>
       </nav>
 
       <section class="report-context" aria-label="Report context">
         <div>
-          <span class="eyebrow">Select Year And Quarter</span>
-          <strong id="periodKpi">Current</strong>
+          <span class="eyebrow">Reporting Window</span>
+          <strong id="periodKpi">Loading...</strong>
         </div>
         <div>
-          <span class="eyebrow">Power BI Reference</span>
-          <strong id="reportUpdatedKpi">Data updated 6/24/26</strong>
+          <span class="eyebrow">Source Refresh</span>
+          <strong id="reportUpdatedKpi">Loading sources...</strong>
         </div>
         <p id="liveUniverseNote">Loading current ArcGIS universe...</p>
       </section>
 
-      <section class="powerbi-grid" aria-label="Power BI landing metrics">
-        <article class="panel powerbi-panel budget-panel">
+      <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
+        <section class="metric-groups" aria-label="Source-backed LandCare metrics">
+          <article class="panel metric-group">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Live ArcGIS</span>
+                <h1>Current URA-Owned LandCare Universe</h1>
+              </div>
+            </div>
+            <div class="reference-card-grid four-up">
+              <div class="reference-card primary"><span>Current Parcels</span><strong id="currentParcelsKpi">--</strong></div>
+              <div class="reference-card"><span>Active</span><strong id="currentActiveKpi">--</strong></div>
+              <div class="reference-card"><span>Request Only</span><strong id="currentRequestOnlyKpi">--</strong></div>
+              <div class="reference-card"><span>Contractors</span><strong id="currentContractorsKpi">--</strong></div>
+            </div>
+          </article>
+
+          <article class="panel metric-group">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">PostgreSQL Export</span>
+                <h1>Latest Comparable Survey Month</h1>
+              </div>
+            </div>
+            <div class="reference-card-grid four-up">
+              <div class="reference-card primary"><span>Assigned Parcels</span><strong id="latestAssignedKpi">--</strong></div>
+              <div class="reference-card"><span>Active Assigned</span><strong id="latestActiveAssignedKpi">--</strong></div>
+              <div class="reference-card"><span>Surveys Returned</span><strong id="latestReturnedKpi">--</strong></div>
+              <div class="reference-card warning"><span>Completion Rate</span><strong id="latestCompletionKpi">--</strong></div>
+            </div>
+          </article>
+
+          <article class="panel metric-group">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Multi-Month View</span>
+                <h1>Historical Survey Coverage</h1>
+              </div>
+            </div>
+            <div class="reference-card-grid four-up">
+              <div class="reference-card"><span>Months Available</span><strong id="monthCountKpi">--</strong></div>
+              <div class="reference-card"><span>Assignment Rows</span><strong id="assignmentRowsKpi">--</strong></div>
+              <div class="reference-card"><span>YTD Returned</span><strong id="ytdReturnedKpi">--</strong></div>
+              <div class="reference-card"><span>Current Acres</span><strong id="currentAcresKpi">--</strong></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="powerbi-grid" aria-label="Landing charts">
+          <article class="panel powerbi-panel contractor-panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Contractor Comparison</span>
+                <h1>Latest Month Assigned vs Surveys Returned</h1>
+              </div>
+              <select id="contractorSelect" aria-label="Contractor filter">
+                <option value="all">All contractors</option>
+              </select>
+            </div>
+            <div class="chart-legend"><span class="legend-line assigned"></span> Assigned <span class="legend-line returned"></span> Returned</div>
+            <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
+          </article>
+
+          <article class="panel powerbi-panel trend-panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Survey Trend</span>
+                <h1>Monthly Completion Rate</h1>
+              </div>
+            </div>
+            <div class="line-chart compact" id="completionLineChart" aria-label="Monthly completion line chart"></div>
+            <div class="timeline-list" id="timelineBars"></div>
+          </article>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
+        <article class="panel source-required">
+          <span class="eyebrow">Budget Source Required</span>
+          <h1>Land Care Budget</h1>
+          <p>Budget and spending metrics are not present in the current ArcGIS parcel service or the PostgreSQL survey export used by this web dashboard.</p>
+          <div class="source-contract" id="budgetSourceContract"></div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
+        <article class="panel source-required">
+          <span class="eyebrow">Finance Source Required</span>
+          <h1>Check Request History</h1>
+          <p>This tab is ready for the NetSuite/check-request feed once it is published into PostgreSQL or a dashboard-ready JSON contract.</p>
+          <div class="source-contract" id="checkRequestSourceContract"></div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-panel="submissionRate" aria-label="Survey Submission Rate">
+        <article class="panel">
           <div class="panel-head">
             <div>
-              <span class="eyebrow">Budget</span>
-              <h1>Land Care Budget for the Current Year</h1>
+              <span class="eyebrow">PostgreSQL Export</span>
+              <h1>Survey Submission Rate by Month</h1>
             </div>
           </div>
-          <div class="reference-card-grid three-up">
-            <div class="reference-card">
-              <span>Projected Yearly Limit</span>
-              <strong id="yearlyLimitKpi">--</strong>
-            </div>
-            <div class="reference-card">
-              <span>Total Amount Spent</span>
-              <strong id="totalSpentKpi">--</strong>
-            </div>
-            <div class="reference-card">
-              <span>Quarterly Amount Spent</span>
-              <strong id="quarterlySpentKpi">--</strong>
-            </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="submissionRateTable"></table>
           </div>
         </article>
+      </section>
 
-        <article class="panel powerbi-panel">
+      <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
+        <article class="panel">
           <div class="panel-head">
             <div>
-              <span class="eyebrow">Assignments</span>
-              <h1>Quarterly Parcel Assignments</h1>
+              <span class="eyebrow">Live ArcGIS</span>
+              <h1>Current Parcel Area by Contractor</h1>
             </div>
           </div>
-          <div class="reference-card-grid two-up">
-            <div class="reference-card primary">
-              <span>Distinct Parcels Assigned</span>
-              <strong id="assignedKpi">--</strong>
+          <div class="grouped-chart" id="areaDistributionChart" aria-label="Current parcel acreage by contractor"></div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-panel="parcelDetails" aria-label="Parcel Details">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Operational Detail</span>
+              <h1>Contractor Detail</h1>
             </div>
-            <div class="reference-card primary">
-              <span>Total Surveys Returned</span>
-              <strong id="returnedKpi">--</strong>
-            </div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="parcelDetailsTable"></table>
           </div>
         </article>
+      </section>
 
-        <article class="panel powerbi-panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Ownership</span>
-              <h1>Quarterly Parcel Ownership</h1>
-            </div>
-          </div>
-          <div class="reference-card-grid two-up">
-            <div class="reference-card">
-              <span>PLB Owned Parcels</span>
-              <strong id="plbOwnedKpi">--</strong>
-            </div>
-            <div class="reference-card">
-              <span>URA Owned Parcels</span>
-              <strong id="uraOwnedKpi">--</strong>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel powerbi-panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Land Area</span>
-              <h1>Quarterly Budget Split by Land Area</h1>
-            </div>
-          </div>
-          <div class="reference-card-grid two-up">
-            <div class="reference-card">
-              <span>PLB Share</span>
-              <strong id="plbShareKpi">--</strong>
-            </div>
-            <div class="reference-card">
-              <span>URA Share</span>
-              <strong id="uraShareKpi">--</strong>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel powerbi-panel contractor-panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Contractor Comparison</span>
-              <h1>Parcels Assigned vs Surveys Returned</h1>
-            </div>
-            <select id="contractorSelect" aria-label="Contractor filter">
-              <option value="all">All contractors</option>
-            </select>
-          </div>
-          <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
-        </article>
-
-        <article class="panel powerbi-panel trend-panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Survey Trend</span>
-              <h1>Monthly Completion Rate</h1>
-            </div>
-          </div>
-          <div class="line-chart compact" id="completionLineChart" aria-label="Monthly completion line chart"></div>
-          <div class="timeline-list" id="timelineBars"></div>
+      <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
+        <article class="panel source-required">
+          <span class="eyebrow">Expense Source Required</span>
+          <h1>Maintenance Expenses</h1>
+          <p>Maintenance expenses need a real contracts, invoice, or NetSuite source before this dashboard should show dollar values.</p>
+          <div class="source-contract" id="maintenanceExpenseSourceContract"></div>
         </article>
       </section>
     </main>

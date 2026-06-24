@@ -11,41 +11,23 @@ const CURRENT_OUT_FIELDS = [
   "inventory_type",
   "property_maint_mgr_name",
   "tags",
-  "mod_dt"
+  "mod_dt",
+  "par_calcacreag",
+  "parcel_sqft"
 ].join(",");
 
-const POWERBI_REFERENCE = {
-  period: "Current",
-  updatedLabel: "Data updated 6/24/26",
-  projectedYearlyLimit: 775000,
-  totalAmountSpent: 380897.5,
-  quarterlyAmountSpent: 192318.5,
-  distinctParcelsAssigned: 1214,
-  totalSurveysReturned: 748,
-  plbOwnedParcels: 28,
-  uraOwnedParcels: 1120,
-  plbShare: 796.27,
-  uraShare: 191522.23
-};
-
 const formatter = new Intl.NumberFormat("en-US");
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
 
 function formatNumber(value) {
   return formatter.format(Number(value || 0));
 }
 
-function formatMoney(value) {
-  return moneyFormatter.format(Number(value || 0));
-}
-
 function formatPct(value) {
   return `${Number(value || 0).toFixed(1)}%`;
+}
+
+function formatAcres(value) {
+  return `${formatter.format(Number(value || 0).toFixed(1))}`;
 }
 
 function escapeHtml(value) {
@@ -64,12 +46,22 @@ function shortMonth(month) {
   return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 
+function quarterLabel(month) {
+  const [year, rawMonth] = String(month).split("-");
+  const quarter = Math.ceil(Number(rawMonth) / 3);
+  return `Q${quarter} ${year}`;
+}
+
 function shortContractor(name) {
   return String(name || "Unassigned")
     .replace("FHCV Contracting LLC & LawnCare", "FHCV Contracting")
     .replace("Ervin Home Beautification", "Ervin Home")
     .replace("Operation Better Block", "Op. Better Block")
     .replace("One Call Handles It All", "One Call");
+}
+
+function normalizeContractorName(value) {
+  return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
 }
 
 function dateFromMillis(value) {
@@ -84,16 +76,16 @@ function currentMaintenanceLevel(tags) {
   return "LandCare";
 }
 
-function stripPrimaryContact(value) {
-  return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
-}
-
 function normalizeCurrentRecord(attrs) {
   const parcelKey = attrs.parcel_number || attrs.property_id || `EPP-${attrs.OBJECTID}`;
+  const sqft = Number(attrs.parcel_sqft || 0);
+  const acres = Number(attrs.par_calcacreag || 0) || (sqft ? sqft / 43560 : 0);
   return {
     parcelKey,
-    contractor: stripPrimaryContact(attrs.property_maint_mgr_name),
-    level: currentMaintenanceLevel(attrs.tags)
+    contractor: normalizeContractorName(attrs.property_maint_mgr_name),
+    level: currentMaintenanceLevel(attrs.tags),
+    sqft,
+    acres
   };
 }
 
@@ -105,11 +97,67 @@ async function fetchArcgisJson(url, params) {
   return payload;
 }
 
+async function fetchArcgisRecords(url, params) {
+  const records = [];
+  let offset = 0;
+  const pageSize = Number(params.resultRecordCount || 2000);
+  while (true) {
+    const page = await fetchArcgisJson(`${url}/query`, {
+      ...params,
+      resultOffset: String(offset),
+      resultRecordCount: String(pageSize)
+    });
+    records.push(...(page.features || []));
+    if (!page.exceededTransferLimit || !(page.features || []).length) break;
+    offset += pageSize;
+  }
+  return records;
+}
+
+function aggregateCurrentRecords(records) {
+  const parcelKeys = new Set();
+  const activeKeys = new Set();
+  const requestOnlyKeys = new Set();
+  const contractorParcels = {};
+  const contractorAcres = {};
+  let totalAcres = 0;
+
+  for (const record of records) {
+    if (!record.parcelKey) continue;
+    parcelKeys.add(record.parcelKey);
+    totalAcres += Number(record.acres || 0);
+    if (record.level === "Active") activeKeys.add(record.parcelKey);
+    if (record.level === "Request Only") requestOnlyKeys.add(record.parcelKey);
+    if (!record.contractor) continue;
+    contractorParcels[record.contractor] ||= new Set();
+    contractorParcels[record.contractor].add(record.parcelKey);
+    contractorAcres[record.contractor] = (contractorAcres[record.contractor] || 0) + Number(record.acres || 0);
+  }
+
+  const contractorRows = Object.keys(contractorParcels)
+    .map((contractor) => ({
+      organization: contractor,
+      currentParcels: contractorParcels[contractor].size,
+      currentAcres: contractorAcres[contractor] || 0
+    }))
+    .sort((a, b) => b.currentParcels - a.currentParcels);
+
+  return {
+    records: records.length,
+    uniqueParcels: parcelKeys.size,
+    activeParcels: activeKeys.size,
+    requestOnlyParcels: requestOnlyKeys.size,
+    contractors: contractorRows.length,
+    totalAcres,
+    contractorRows
+  };
+}
+
 async function loadCurrentArcgisMetrics() {
-  const [layerInfo, surveyInfo, result] = await Promise.all([
+  const [layerInfo, surveyInfo, features] = await Promise.all([
     fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
     fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
-    fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
+    fetchArcgisRecords(EPP_LAYER_URL, {
       f: "json",
       where: CURRENT_WHERE,
       outFields: CURRENT_OUT_FIELDS,
@@ -118,26 +166,11 @@ async function loadCurrentArcgisMetrics() {
       orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
     })
   ]);
-  const records = (result.features || []).map((feature) => normalizeCurrentRecord(feature.attributes || {}));
-  const parcelKeys = new Set(records.map((record) => record.parcelKey).filter(Boolean));
-  const activeKeys = new Set(records.filter((record) => record.level === "Active").map((record) => record.parcelKey));
-  const requestOnlyKeys = new Set(records.filter((record) => record.level === "Request Only").map((record) => record.parcelKey));
-  const contractorKeys = new Set(records.map((record) => record.contractor).filter(Boolean));
-  const contractorParcels = {};
-  for (const record of records) {
-    if (!record.contractor || !record.parcelKey) continue;
-    contractorParcels[record.contractor] ||= new Set();
-    contractorParcels[record.contractor].add(record.parcelKey);
-  }
+  const metrics = aggregateCurrentRecords(
+    features.map((feature) => normalizeCurrentRecord(feature.attributes || {}))
+  );
   return {
-    records: records.length,
-    uniqueParcels: parcelKeys.size,
-    activeParcels: activeKeys.size,
-    requestOnlyParcels: requestOnlyKeys.size,
-    contractors: contractorKeys.size,
-    contractorCounts: Object.fromEntries(
-      Object.entries(contractorParcels).map(([contractor, parcels]) => [contractor, parcels.size])
-    ),
+    ...metrics,
     eppEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
     surveyEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate)
   };
@@ -150,57 +183,92 @@ function rateColor(rate) {
   return "#b71c1c";
 }
 
-function renderPowerBiReference(currentMetrics) {
-  document.getElementById("freshnessNote").textContent =
-    `Power BI reference ${POWERBI_REFERENCE.updatedLabel.replace("Data updated ", "")}`;
-  document.getElementById("periodKpi").textContent = POWERBI_REFERENCE.period;
-  document.getElementById("reportUpdatedKpi").textContent = POWERBI_REFERENCE.updatedLabel;
-  document.getElementById("yearlyLimitKpi").textContent = formatMoney(POWERBI_REFERENCE.projectedYearlyLimit);
-  document.getElementById("totalSpentKpi").textContent = formatMoney(POWERBI_REFERENCE.totalAmountSpent);
-  document.getElementById("quarterlySpentKpi").textContent = formatMoney(POWERBI_REFERENCE.quarterlyAmountSpent);
-  document.getElementById("assignedKpi").textContent = formatNumber(POWERBI_REFERENCE.distinctParcelsAssigned);
-  document.getElementById("returnedKpi").textContent = formatNumber(POWERBI_REFERENCE.totalSurveysReturned);
-  document.getElementById("plbOwnedKpi").textContent = formatNumber(POWERBI_REFERENCE.plbOwnedParcels);
-  document.getElementById("uraOwnedKpi").textContent = formatNumber(POWERBI_REFERENCE.uraOwnedParcels);
-  document.getElementById("plbShareKpi").textContent = formatMoney(POWERBI_REFERENCE.plbShare);
-  document.getElementById("uraShareKpi").textContent = formatMoney(POWERBI_REFERENCE.uraShare);
-  document.getElementById("liveUniverseNote").textContent =
-    `Current ArcGIS universe: ${formatNumber(currentMetrics.uniqueParcels)} URA-owned LandCare parcels, ${formatNumber(currentMetrics.activeParcels)} active, ${formatNumber(currentMetrics.requestOnlyParcels)} request only, ${formatNumber(currentMetrics.contractors)} contractors.`;
-}
-
-function apportionCounts(counts, total) {
-  const rawTotal = counts.reduce((sum, count) => sum + count, 0) || 1;
-  const apportioned = counts.map((count, index) => {
-    const exact = (count / rawTotal) * total;
-    return { index, value: Math.floor(exact), remainder: exact - Math.floor(exact) };
-  });
-  let remaining = total - apportioned.reduce((sum, item) => sum + item.value, 0);
-  apportioned
-    .sort((a, b) => b.remainder - a.remainder)
-    .slice(0, remaining)
-    .forEach((item) => {
-      item.value += 1;
-    });
-  return apportioned.sort((a, b) => a.index - b.index).map((item) => item.value);
-}
-
-function powerBiContractorRows(currentMetrics) {
-  const entries = Object.entries(currentMetrics.contractorCounts || {})
-    .sort((a, b) => b[1] - a[1]);
-  const assignedCounts = apportionCounts(
-    entries.map(([, count]) => count),
-    POWERBI_REFERENCE.distinctParcelsAssigned
-  );
-  const returnedCounts = apportionCounts(
-    entries.map(([, count]) => count),
-    POWERBI_REFERENCE.totalSurveysReturned
-  );
-  return entries.map(([organization], index) => ({
-    organization,
-    assigned: assignedCounts[index],
-    returned: returnedCounts[index],
-    completionRate: assignedCounts[index] ? (100 * returnedCounts[index]) / assignedCounts[index] : 0
+function aggregateContractorMonthly(rows) {
+  const keyed = new Map();
+  for (const row of rows) {
+    const month = row.period_month;
+    const organization = normalizeContractorName(row.organization);
+    const key = `${month}|${organization}`;
+    const prior = keyed.get(key) || {
+      period_month: month,
+      organization,
+      assigned: 0,
+      returned: 0
+    };
+    prior.assigned += Number(row.assigned_parcel_keys || 0);
+    prior.returned += Number(row.returned_assigned_parcel_keys || 0);
+    keyed.set(key, prior);
+  }
+  return Array.from(keyed.values()).map((row) => ({
+    ...row,
+    completionRate: row.assigned ? (100 * row.returned) / row.assigned : 0
   }));
+}
+
+function contractorRowsForMonth(contractorMonthly, month) {
+  return contractorMonthly
+    .filter((row) => row.period_month === month)
+    .sort((a, b) => b.assigned - a.assigned);
+}
+
+function buildContractorDetailRows(currentRows, latestRows) {
+  const byName = new Map();
+  for (const row of currentRows) {
+    byName.set(row.organization, {
+      organization: row.organization,
+      currentParcels: row.currentParcels,
+      currentAcres: row.currentAcres,
+      latestAssigned: 0,
+      latestReturned: 0,
+      latestRate: 0
+    });
+  }
+  for (const row of latestRows) {
+    const prior = byName.get(row.organization) || {
+      organization: row.organization,
+      currentParcels: 0,
+      currentAcres: 0,
+      latestAssigned: 0,
+      latestReturned: 0,
+      latestRate: 0
+    };
+    prior.latestAssigned = row.assigned;
+    prior.latestReturned = row.returned;
+    prior.latestRate = row.completionRate;
+    byName.set(row.organization, prior);
+  }
+  return Array.from(byName.values()).sort((a, b) => b.currentParcels - a.currentParcels);
+}
+
+function renderSourceSummary(summary, currentMetrics) {
+  const latestMonth = summary.latest_month;
+  document.getElementById("freshnessNote").textContent = "ArcGIS current layer + PostgreSQL survey export";
+  document.getElementById("periodKpi").textContent =
+    `${quarterLabel(latestMonth)} through ${shortMonth(latestMonth)}`;
+  document.getElementById("reportUpdatedKpi").textContent =
+    `ArcGIS ${currentMetrics.eppEdited || "unknown"}; export ${summary.generated_on || "unknown"}`;
+  document.getElementById("liveUniverseNote").textContent =
+    `Sources: live ArcGIS EPP parcel service for current URA-owned LandCare universe; PostgreSQL export for ${summary.available_months.length} historical assignment/survey months through ${summary.latest_survey_period || latestMonth}.`;
+}
+
+function renderKpis(monthlyMetrics, summary, currentMetrics) {
+  const latest = monthlyMetrics.at(-1);
+  const latestYear = String(latest.period_month).slice(0, 4);
+  const ytdRows = monthlyMetrics.filter((row) => String(row.period_month).startsWith(latestYear));
+  const ytdReturned = ytdRows.reduce((sum, row) => sum + Number(row.returned_assigned || 0), 0);
+
+  document.getElementById("currentParcelsKpi").textContent = formatNumber(currentMetrics.uniqueParcels);
+  document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
+  document.getElementById("currentRequestOnlyKpi").textContent = formatNumber(currentMetrics.requestOnlyParcels);
+  document.getElementById("currentContractorsKpi").textContent = formatNumber(currentMetrics.contractors);
+  document.getElementById("latestAssignedKpi").textContent = formatNumber(latest.assigned_total);
+  document.getElementById("latestActiveAssignedKpi").textContent = formatNumber(latest.assigned_active);
+  document.getElementById("latestReturnedKpi").textContent = formatNumber(latest.returned_assigned);
+  document.getElementById("latestCompletionKpi").textContent = formatPct(latest.active_completion_rate_pct);
+  document.getElementById("monthCountKpi").textContent = formatNumber(summary.available_months.length);
+  document.getElementById("assignmentRowsKpi").textContent = formatNumber(summary.all_month_feature_count);
+  document.getElementById("ytdReturnedKpi").textContent = formatNumber(ytdReturned);
+  document.getElementById("currentAcresKpi").textContent = formatAcres(currentMetrics.totalAcres);
 }
 
 function renderContractorOptions(rows) {
@@ -245,6 +313,24 @@ function renderContractorGroupedChart(rows, selected = "all") {
       </div>
     `;
   }).join("");
+}
+
+function renderAreaDistribution(rows) {
+  const maxAcres = Math.max(1, ...rows.map((row) => Number(row.currentAcres || 0)));
+  document.getElementById("areaDistributionChart").innerHTML = rows.map((row) => `
+    <div class="grouped-row single-bar-row">
+      <div class="grouped-label">
+        <strong>${escapeHtml(shortContractor(row.organization))}</strong>
+        <span>${formatNumber(row.currentParcels)} parcels</span>
+      </div>
+      <div class="grouped-bars">
+        <span class="grouped-bar assigned" style="width:${Math.max((100 * row.currentAcres) / maxAcres, 2)}%"></span>
+      </div>
+      <div class="grouped-values">
+        <span>${formatAcres(row.currentAcres)} ac</span>
+      </div>
+    </div>
+  `).join("");
 }
 
 function renderTimeline(monthlyMetrics) {
@@ -304,24 +390,112 @@ function renderLineChart(monthlyMetrics) {
   `;
 }
 
+function renderTable(table, columns, rows) {
+  table.innerHTML = `
+    <thead>
+      <tr>${columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}</tr>
+    </thead>
+    <tbody>
+      ${rows.map((row) => `
+        <tr>
+          ${columns.map((column) => `<td>${escapeHtml(column.value(row))}</td>`).join("")}
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+}
+
+function renderSubmissionRateTable(monthlyMetrics) {
+  renderTable(
+    document.getElementById("submissionRateTable"),
+    [
+      { label: "Month", value: (row) => shortMonth(row.period_month) },
+      { label: "Assigned", value: (row) => formatNumber(row.assigned_total) },
+      { label: "Active Assigned", value: (row) => formatNumber(row.assigned_active) },
+      { label: "Returned", value: (row) => formatNumber(row.returned_assigned) },
+      { label: "Active Completion", value: (row) => formatPct(row.active_completion_rate_pct) },
+      { label: "Blended Completion", value: (row) => formatPct(row.blended_completion_rate_pct) }
+    ],
+    [...monthlyMetrics].reverse()
+  );
+}
+
+function renderParcelDetailsTable(rows) {
+  renderTable(
+    document.getElementById("parcelDetailsTable"),
+    [
+      { label: "Contractor", value: (row) => shortContractor(row.organization) },
+      { label: "Current Parcels", value: (row) => formatNumber(row.currentParcels) },
+      { label: "Current Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` },
+      { label: "Latest Assigned", value: (row) => formatNumber(row.latestAssigned) },
+      { label: "Latest Returned", value: (row) => formatNumber(row.latestReturned) },
+      { label: "Latest Rate", value: (row) => formatPct(row.latestRate) }
+    ],
+    rows
+  );
+}
+
+function renderSourceContracts(summary) {
+  const sourceTables = (summary.source_tables || []).map((table) => `<li>${escapeHtml(table)}</li>`).join("");
+  const common = `
+    <dl>
+      <div><dt>Available operational sources</dt><dd>ArcGIS EPP parcel service and PostgreSQL survey assignment export</dd></div>
+      <div><dt>Historical coverage</dt><dd>${escapeHtml(summary.available_months.join(", "))}</dd></div>
+      <div><dt>PostgreSQL tables currently used</dt><dd><ul>${sourceTables}</ul></dd></div>
+      <div><dt>Needed before dollar metrics render</dt><dd>Published contracts, check request, invoice, or NetSuite expense table with period, contractor, amount, and parcel or program key.</dd></div>
+    </dl>
+  `;
+  document.getElementById("budgetSourceContract").innerHTML = common;
+  document.getElementById("checkRequestSourceContract").innerHTML = common;
+  document.getElementById("maintenanceExpenseSourceContract").innerHTML = common;
+}
+
+function setupTabs() {
+  const buttons = Array.from(document.querySelectorAll(".report-tabs button"));
+  const panels = Array.from(document.querySelectorAll(".tab-panel"));
+  for (const button of buttons) {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.tab;
+      buttons.forEach((item) => item.classList.toggle("is-active", item === button));
+      panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
+    });
+  }
+}
+
 async function loadData() {
-  const [monthlyMetrics, currentMetrics] = await Promise.all([
+  const [monthlyMetrics, contractorMonthlyRaw, summary, currentMetrics] = await Promise.all([
     fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
+    fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
+    fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
     loadCurrentArcgisMetrics()
   ]);
-  return { monthlyMetrics, currentMetrics };
+  return {
+    monthlyMetrics,
+    contractorMonthly: aggregateContractorMonthly(contractorMonthlyRaw),
+    summary,
+    currentMetrics
+  };
 }
 
 async function main() {
-  const { monthlyMetrics, currentMetrics } = await loadData();
-  const contractorRows = powerBiContractorRows(currentMetrics);
-  renderPowerBiReference(currentMetrics);
-  renderContractorOptions(contractorRows);
-  renderContractorGroupedChart(contractorRows);
+  setupTabs();
+  const { monthlyMetrics, contractorMonthly, summary, currentMetrics } = await loadData();
+  const latestMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
+  const latestContractorRows = contractorRowsForMonth(contractorMonthly, latestMonth);
+  const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, latestContractorRows);
+
+  renderSourceSummary(summary, currentMetrics);
+  renderKpis(monthlyMetrics, summary, currentMetrics);
+  renderContractorOptions(latestContractorRows);
+  renderContractorGroupedChart(latestContractorRows);
   renderTimeline(monthlyMetrics);
+  renderSubmissionRateTable(monthlyMetrics);
+  renderAreaDistribution(currentMetrics.contractorRows);
+  renderParcelDetailsTable(detailRows);
+  renderSourceContracts(summary);
 
   document.getElementById("contractorSelect").addEventListener("change", (event) => {
-    renderContractorGroupedChart(contractorRows, event.target.value);
+    renderContractorGroupedChart(latestContractorRows, event.target.value);
   });
 }
 

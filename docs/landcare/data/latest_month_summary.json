@@ -16,7 +16,7 @@
   "latest_assignment_period": "2026-05-15",
   "latest_survey_period": "2026-04-15",
   "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-05-15; survey completion shown through 2026-04-15.",
-  "generated_on": "2026-06-23",
+  "generated_on": "2026-06-24",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",

@@ -11,15 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT / "prototype" / "source" / "app_ready_parcels_monthly.geojson"
 DEFAULT_OUTPUT = ROOT / "docs" / "landcare" / "data"
 
-POWERBI_ASSIGNED = 1214
-POWERBI_RETURNED = 142
-POWERBI_URA_OWNED = 1120
-POWERBI_PLB_OWNED = 28
-POWERBI_YEARLY_LIMIT = 775000.00
-POWERBI_TOTAL_SPENT = 343523.44
-POWERBI_QUARTER_SPENT = 154944.44
-
-
 def write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8", newline="\n")
@@ -203,19 +194,11 @@ def build_data(source: Path, output_dir: Path) -> None:
     }
     kpi_summary = {
         **common_summary,
-        "powerbi_comparison": {
-            "dashboard_assigned_count": POWERBI_ASSIGNED,
-            "dashboard_returned_count": POWERBI_RETURNED,
-            "dashboard_ura_owned_count": POWERBI_URA_OWNED,
-            "dashboard_plb_owned_count": POWERBI_PLB_OWNED,
-            "projected_yearly_limit": POWERBI_YEARLY_LIMIT,
-            "total_amount_spent": POWERBI_TOTAL_SPENT,
-            "quarterly_amount_spent": POWERBI_QUARTER_SPENT,
-            "sql_export_assigned_count": latest_metric["assigned_total"],
-            "sql_export_returned_count": latest_metric["returned_assigned"],
-            "assigned_difference": latest_metric["assigned_total"] - POWERBI_ASSIGNED,
-            "returned_difference": latest_metric["returned_assigned"] - POWERBI_RETURNED,
-            "filter_note": "Power BI landing page values captured June 9, 2026; web app is URA-owned scope only.",
+        "latest_month_metrics": latest_metric,
+        "source_contract": {
+            "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
+            "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to survey submissions and parcel ownership tables.",
+            "budget_expenses": "Not included in this export. Publish contracts, check request, invoice, or NetSuite expense records before rendering dollar metrics.",
         },
     }
 

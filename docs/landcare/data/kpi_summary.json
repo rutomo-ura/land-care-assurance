@@ -16,7 +16,7 @@
   "latest_assignment_period": "2026-05-15",
   "latest_survey_period": "2026-04-15",
   "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-05-15; survey completion shown through 2026-04-15.",
-  "generated_on": "2026-06-23",
+  "generated_on": "2026-06-24",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -32,18 +32,18 @@
   "latest_comparable_month": "2026-04-01",
   "ownership_scope": "URA owned only",
   "all_month_feature_count": 2415,
-  "powerbi_comparison": {
-    "dashboard_assigned_count": 1214,
-    "dashboard_returned_count": 142,
-    "dashboard_ura_owned_count": 1120,
-    "dashboard_plb_owned_count": 28,
-    "projected_yearly_limit": 775000.0,
-    "total_amount_spent": 343523.44,
-    "quarterly_amount_spent": 154944.44,
-    "sql_export_assigned_count": 218,
-    "sql_export_returned_count": 14,
-    "assigned_difference": -996,
-    "returned_difference": -128,
-    "filter_note": "Power BI landing page values captured June 9, 2026; web app is URA-owned scope only."
+  "latest_month_metrics": {
+    "period_month": "2026-04",
+    "assigned_active": 181,
+    "assigned_total": 218,
+    "returned_assigned": 14,
+    "active_completion_rate_pct": 7.7,
+    "blended_completion_rate_pct": 6.4,
+    "survey_rows_raw": 14
+  },
+  "source_contract": {
+    "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
+    "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to survey submissions and parcel ownership tables.",
+    "budget_expenses": "Not included in this export. Publish contracts, check request, invoice, or NetSuite expense records before rendering dollar metrics."
   }
 }

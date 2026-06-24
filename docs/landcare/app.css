@@ -485,10 +485,8 @@ textarea {
   border-color: var(--ura-blue-dark);
 }
 
-.report-tabs button:disabled {
-  color: var(--muted);
-  cursor: default;
-  opacity: 0.72;
+.report-tabs button:hover {
+  border-color: var(--ura-blue);
 }
 
 .report-context {
@@ -574,8 +572,22 @@ textarea {
   gap: 14px;
 }
 
-.dashboard-grid.lower {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-active {
+  display: grid;
+  gap: 14px;
+}
+
+.metric-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.metric-group {
+  padding-bottom: 18px;
 }
 
 .powerbi-grid {
@@ -588,7 +600,6 @@ textarea {
   min-width: 0;
 }
 
-.budget-panel,
 .contractor-panel {
   grid-column: 1 / -1;
 }
@@ -638,6 +649,10 @@ select {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.reference-card-grid.four-up {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .reference-card {
   min-height: 104px;
   padding: 14px 15px;
@@ -648,6 +663,10 @@ select {
 
 .reference-card.primary {
   border-top-color: var(--ura-blue);
+}
+
+.reference-card.warning {
+  border-top-color: var(--orange);
 }
 
 .reference-card span {
@@ -838,6 +857,133 @@ select {
   text-align: right;
 }
 
+.single-bar-row .grouped-values {
+  align-self: center;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.legend-line {
+  display: inline-block;
+  width: 24px;
+  height: 4px;
+}
+
+.legend-line.assigned {
+  background: var(--ura-blue);
+}
+
+.legend-line.returned {
+  background: var(--gold);
+}
+
+.source-required {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+  align-content: start;
+  border-top: 4px solid var(--gold);
+}
+
+.source-required h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.source-required p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.source-contract {
+  padding: 14px;
+  background: #f7fbfd;
+  border: 1px solid var(--line);
+}
+
+.source-contract dl {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+}
+
+.source-contract div {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.3fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.source-contract dt {
+  color: var(--ura-blue-dark);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.source-contract dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.source-contract ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.data-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table th {
+  color: var(--ura-deep);
+  background: #eaf5fa;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
 @media (max-width: 1180px) {
   .monitoring-shell {
     grid-template-columns: 292px minmax(0, 1fr);
@@ -858,7 +1004,8 @@ select {
   }
 
   .kpi-grid,
-  .reference-card-grid.three-up {
+  .reference-card-grid.three-up,
+  .reference-card-grid.four-up {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -888,7 +1035,6 @@ select {
 
   .monitoring-shell,
   .dashboard-grid,
-  .dashboard-grid.lower,
   .report-context {
     grid-template-columns: 1fr;
   }
@@ -923,7 +1069,9 @@ select {
   .mini-kpis,
   .kpi-grid,
   .reference-card-grid.two-up,
-  .reference-card-grid.three-up {
+  .reference-card-grid.three-up,
+  .reference-card-grid.four-up,
+  .source-contract div {
     grid-template-columns: 1fr;
   }
 
