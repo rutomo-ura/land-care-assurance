@@ -45,6 +45,6 @@
   "source_contract": {
     "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
     "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to survey submissions and parcel ownership tables.",
-    "budget_expenses": "Not included in this export. Publish contracts, check request, invoice, or NetSuite expense records before rendering dollar metrics."
+    "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json."
   }
 }

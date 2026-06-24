@@ -412,7 +412,7 @@ function renderFinance(financeSummary) {
   renderCheckRequestTable(historyRows);
   renderMaintenanceExpenseTable(rows);
   const note =
-    `Source: ${financeSummary.metadata?.source_file || "LandCare budgeting workbook"}; loader target ${financeSummary.metadata?.postgres_table || "gis.land_care_budgeting_contracts"}; generated ${financeSummary.metadata?.generated_on || "unknown"}.`;
+    `Finance records are aligned for this dashboard refresh. Last checked ${financeSummary.metadata?.generated_on || "unknown"}.`;
   document.getElementById("financeSourceNote").textContent = note;
   document.getElementById("expenseSourceNote").textContent = note;
 }

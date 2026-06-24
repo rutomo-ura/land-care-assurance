@@ -198,7 +198,7 @@ def build_data(source: Path, output_dir: Path) -> None:
         "source_contract": {
             "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
             "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to survey submissions and parcel ownership tables.",
-            "budget_expenses": "Not included in this export. Publish contracts, check request, invoice, or NetSuite expense records before rendering dollar metrics.",
+            "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json.",
         },
     }
 
@@ -232,7 +232,10 @@ def build_data(source: Path, output_dir: Path) -> None:
             "latest_month_feature_count": len(latest_features),
             "latest_assignment_period": metadata.get("latest_assignment_period"),
             "latest_survey_period": metadata.get("latest_survey_period"),
-            "note": metadata.get("source_note") or "Generated from app-ready PostgreSQL export artifact.",
+            "note": (
+                f"Dashboard data refreshed for assignments through {metadata.get('latest_assignment_period')} "
+                f"and survey completion through {metadata.get('latest_survey_period')}."
+            ),
         },
     )
 

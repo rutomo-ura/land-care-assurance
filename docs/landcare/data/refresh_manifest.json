@@ -22,5 +22,5 @@
   "latest_month_feature_count": 222,
   "latest_assignment_period": "2026-06-15",
   "latest_survey_period": "2026-05-15",
-  "note": "PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026."
+  "note": "Dashboard data refreshed for assignments through 2026-06-15 and survey completion through 2026-05-15."
 }
