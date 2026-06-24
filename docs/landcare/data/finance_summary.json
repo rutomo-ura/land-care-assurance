@@ -1,0 +1,297 @@
+{
+  "metadata": {
+    "generated_on": "2026-06-24",
+    "source_kind": "landcare_budget_workbook",
+    "source_file": "\\\\ura-fs\\share\\Public\\LandCare\\Land Care Annual Budgeting and Contracting.xlsx",
+    "workbook_sheets": [
+      "2025 - 2027 Cycle",
+      "Sheet1"
+    ],
+    "postgres_table": "gis.land_care_budgeting_contracts",
+    "loader_script": "URA-Data-Repository/ContractsDriveToSQL.py",
+    "postgres_export_sql": "prototype/sql/export_landcare_finance_readonly.sql",
+    "note": "Workbook source is the same finance source loaded into PostgreSQL by ContractsDriveToSQL.py."
+  },
+  "summary": {
+    "cycle_start_date": "2025-11-01",
+    "cycle_end_date": "2027-10-31",
+    "organization_count": 9,
+    "parcel_count": 1237,
+    "sq_footage": 20686322.0,
+    "acres": 474.892,
+    "monthly_invoice_total": 64583.32,
+    "annual_invoice_run_rate": 775000.0,
+    "total_contract_amount": 1550000.0,
+    "twelve_month_contract_total": 775000.0,
+    "monthly_cost_per_parcel": 52.21,
+    "annual_cost_per_acre": 1631.95
+  },
+  "current_contracts": [
+    {
+      "organization": "Amani Christian CDC",
+      "parcels": 37,
+      "sq_footage": 78546.0,
+      "acres": 1.803,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 1666.67,
+      "annual_invoice_run_rate": 20000.0,
+      "original_contract_amount": 40000.0,
+      "total_contract_amount": 40000.0,
+      "twelve_month_contract_amount": 20000.0,
+      "monthly_cost_per_parcel": 45.05,
+      "annual_cost_per_acre": 11091.59,
+      "owed_for_2025": 1592.83
+    },
+    {
+      "organization": "Center That CARES",
+      "parcels": 26,
+      "sq_footage": 66409.0,
+      "acres": 1.525,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 1500.0,
+      "annual_invoice_run_rate": 18000.0,
+      "original_contract_amount": 36000.0,
+      "total_contract_amount": 36000.0,
+      "twelve_month_contract_amount": 18000.0,
+      "monthly_cost_per_parcel": 57.69,
+      "annual_cost_per_acre": 11806.83,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "Chatman Properties",
+      "parcels": 234,
+      "sq_footage": 2019758.0,
+      "acres": 46.367,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 16125.0,
+      "annual_invoice_run_rate": 193500.0,
+      "original_contract_amount": 387000.0,
+      "total_contract_amount": 387000.0,
+      "twelve_month_contract_amount": 193500.0,
+      "monthly_cost_per_parcel": 68.91,
+      "annual_cost_per_acre": 4173.2,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "Ervin Home Beautification",
+      "parcels": 125,
+      "sq_footage": 263423.0,
+      "acres": 6.047,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 4083.33,
+      "annual_invoice_run_rate": 49000.0,
+      "original_contract_amount": 98000.0,
+      "total_contract_amount": 98000.0,
+      "twelve_month_contract_amount": 49000.0,
+      "monthly_cost_per_parcel": 32.67,
+      "annual_cost_per_acre": 8102.71,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "FHCV Contracting LLC & LawnCare",
+      "parcels": 37,
+      "sq_footage": 124083.0,
+      "acres": 2.849,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 1583.33,
+      "annual_invoice_run_rate": 19000.0,
+      "original_contract_amount": 38000.0,
+      "total_contract_amount": 38000.0,
+      "twelve_month_contract_amount": 19000.0,
+      "monthly_cost_per_parcel": 42.79,
+      "annual_cost_per_acre": 6670.05,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "Hilltop Rising",
+      "parcels": 324,
+      "sq_footage": 4024872.0,
+      "acres": 92.398,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 15750.0,
+      "annual_invoice_run_rate": 189000.0,
+      "original_contract_amount": 378000.0,
+      "total_contract_amount": 378000.0,
+      "twelve_month_contract_amount": 189000.0,
+      "monthly_cost_per_parcel": 48.61,
+      "annual_cost_per_acre": 2045.49,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "KRJ Enterprises",
+      "parcels": 413,
+      "sq_footage": 13885869.0,
+      "acres": 318.776,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 17833.33,
+      "annual_invoice_run_rate": 214000.0,
+      "original_contract_amount": 428000.0,
+      "total_contract_amount": 428000.0,
+      "twelve_month_contract_amount": 214000.0,
+      "monthly_cost_per_parcel": 43.18,
+      "annual_cost_per_acre": 671.32,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "One Call Handles It All",
+      "parcels": 19,
+      "sq_footage": 152905.0,
+      "acres": 3.51,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 4583.33,
+      "annual_invoice_run_rate": 55000.0,
+      "original_contract_amount": 110000.0,
+      "total_contract_amount": 110000.0,
+      "twelve_month_contract_amount": 55000.0,
+      "monthly_cost_per_parcel": 241.23,
+      "annual_cost_per_acre": 15668.55,
+      "owed_for_2025": 0
+    },
+    {
+      "organization": "Operation Better Block",
+      "parcels": 22,
+      "sq_footage": 70457.0,
+      "acres": 1.617,
+      "start_date": "2025-11-01",
+      "end_date": "2027-10-31",
+      "monthly_invoice_amount": 1458.33,
+      "annual_invoice_run_rate": 17500.0,
+      "original_contract_amount": 35000.0,
+      "total_contract_amount": 35000.0,
+      "twelve_month_contract_amount": 17500.0,
+      "monthly_cost_per_parcel": 66.29,
+      "annual_cost_per_acre": 10819.37,
+      "owed_for_2025": 0
+    }
+  ],
+  "check_request_history": [
+    {
+      "organization": "Amani Christian CDC",
+      "parcels": 28,
+      "start_date": "2021-05-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 1592.83,
+      "mr_check_note": "OK"
+    },
+    {
+      "organization": "Center That CARES",
+      "parcels": 43,
+      "start_date": "2021-05-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 3506.93,
+      "mr_check_note": "OK"
+    },
+    {
+      "organization": "Chatman Properties",
+      "parcels": 161,
+      "start_date": "2021-05-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 11625.27,
+      "mr_check_note": "OK"
+    },
+    {
+      "organization": "Concrete Rose Construction",
+      "parcels": 36,
+      "start_date": "2021-05-01",
+      "end_date": "2023-12-31",
+      "invoice_amount": 12625.5,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "Concrete Rose Construction",
+      "parcels": 36,
+      "start_date": "2024-01-01",
+      "end_date": "2024-02-28",
+      "invoice_amount": 25000.0,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "Concrete Rose Construction",
+      "parcels": 36,
+      "start_date": "2024-03-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 19000.0,
+      "mr_check_note": "Current amount OK; was $12,625.50 from Nov 23 - Dec 23, $25,000.00 for Jan 24 - Feb 24, and $19,000 from Mar 24 on"
+    },
+    {
+      "organization": "Ervin Home Beautification",
+      "parcels": 48,
+      "start_date": "2021-05-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 2398.23,
+      "mr_check_note": "OK"
+    },
+    {
+      "organization": "Hilltop Rising",
+      "parcels": 229,
+      "start_date": "2021-05-01",
+      "end_date": "2024-02-28",
+      "invoice_amount": 4440.4,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "Hilltop Rising",
+      "parcels": 229,
+      "start_date": "2024-03-01",
+      "end_date": "2025-04-30",
+      "invoice_amount": 8011.95,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "Hilltop Rising",
+      "parcels": 229,
+      "start_date": "2025-05-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 8808.72,
+      "mr_check_note": "$4,440.40 for Nov 23 - Feb 24, $8,011.95 ($4,440.40 + $3,571.55) for Mar 24 - Apr 25, $8,808.72 ($4,440.40 + $4,368.32) for May 25 - Oct 25 (originally incorrect at $3,571.55)"
+    },
+    {
+      "organization": "KRJ Enterprises",
+      "parcels": 596,
+      "start_date": "2021-05-01",
+      "end_date": "2024-02-28",
+      "invoice_amount": 11500.0,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "KRJ Enterprises",
+      "parcels": 596,
+      "start_date": "2024-03-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 21950.0,
+      "mr_check_note": "$11,500.00 for Nov 23 - Feb 24, $21,950.00 ($11,500.00 + $10,450) for Mar 24 - Oct 25 (originally incorrect at $15,500.00)"
+    },
+    {
+      "organization": "One Call Handles It All",
+      "parcels": 90,
+      "start_date": "2021-05-01",
+      "end_date": "2024-07-31",
+      "invoice_amount": 5821.68,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "One Call Handles It All",
+      "parcels": 90,
+      "start_date": "2024-08-01",
+      "end_date": "2024-08-31",
+      "invoice_amount": 5758.4,
+      "mr_check_note": ""
+    },
+    {
+      "organization": "One Call Handles It All",
+      "parcels": 90,
+      "start_date": "2024-09-01",
+      "end_date": "2025-10-01",
+      "invoice_amount": 5695.12,
+      "mr_check_note": "Current amount OK; was $5,821.68 from Nov 23 - Jul 24, $5,758.40 for Aug 24, and $5,695.12 from Sep 24 on)"
+    }
+  ]
+}

@@ -122,20 +122,47 @@
       </section>
 
       <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
-        <article class="panel source-required">
-          <span class="eyebrow">Budget Source Required</span>
-          <h1>Land Care Budget</h1>
-          <p>Budget and spending metrics are not present in the current ArcGIS parcel service or the PostgreSQL survey export used by this web dashboard.</p>
-          <div class="source-contract" id="budgetSourceContract"></div>
+        <article class="panel metric-group">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Budget Workbook / PostgreSQL Loader</span>
+              <h1>Land Care Budget</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid four-up">
+            <div class="reference-card primary"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong></div>
+            <div class="reference-card"><span>Monthly Invoice Total</span><strong id="monthlyInvoiceKpi">--</strong></div>
+            <div class="reference-card"><span>Total Contract Amount</span><strong id="totalContractKpi">--</strong></div>
+            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Current Cycle</span>
+              <h1>Annual Contract Amount by Contractor</h1>
+            </div>
+          </div>
+          <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
         </article>
       </section>
 
       <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
-        <article class="panel source-required">
-          <span class="eyebrow">Finance Source Required</span>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Workbook History</span>
+              <h1>Check Request History</h1>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="checkRequestTable"></table>
+          </div>
+        </article>
+        <article class="panel source-note-panel">
+          <span class="eyebrow">Source Note</span>
           <h1>Check Request History</h1>
-          <p>This tab is ready for the NetSuite/check-request feed once it is published into PostgreSQL or a dashboard-ready JSON contract.</p>
-          <div class="source-contract" id="checkRequestSourceContract"></div>
+          <p id="financeSourceNote">Loading finance source...</p>
         </article>
       </section>
 
@@ -180,11 +207,44 @@
       </section>
 
       <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
-        <article class="panel source-required">
-          <span class="eyebrow">Expense Source Required</span>
+        <article class="panel metric-group">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Maintenance Expenses</span>
+              <h1>Current Cycle Cost Distribution</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid four-up">
+            <div class="reference-card primary"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong></div>
+            <div class="reference-card"><span>Monthly Cost / Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong></div>
+            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong></div>
+            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Cost Intensity</span>
+              <h1>Annual Cost per Acre by Contractor</h1>
+            </div>
+          </div>
+          <div class="grouped-chart" id="expenseIntensityChart" aria-label="Annual cost per acre by contractor"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Contract Detail</span>
+              <h1>Maintenance Expense Detail</h1>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="maintenanceExpenseTable"></table>
+          </div>
+        </article>
+        <article class="panel source-note-panel">
+          <span class="eyebrow">Source Note</span>
           <h1>Maintenance Expenses</h1>
-          <p>Maintenance expenses need a real contracts, invoice, or NetSuite source before this dashboard should show dollar values.</p>
-          <div class="source-contract" id="maintenanceExpenseSourceContract"></div>
+          <p id="expenseSourceNote">Loading finance source...</p>
         </article>
       </section>
     </main>

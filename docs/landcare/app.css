@@ -908,6 +908,25 @@ select {
   line-height: 1.55;
 }
 
+.source-note-panel {
+  display: grid;
+  gap: 8px;
+  border-left: 4px solid var(--ura-blue);
+}
+
+.source-note-panel h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.source-note-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .source-contract {
   padding: 14px;
   background: #f7fbfd;
@@ -978,6 +997,11 @@ select {
 .data-table td {
   color: var(--ink);
   font-weight: 700;
+}
+
+.data-table td:last-child {
+  max-width: 520px;
+  white-space: normal;
 }
 
 .data-table tr:last-child td {

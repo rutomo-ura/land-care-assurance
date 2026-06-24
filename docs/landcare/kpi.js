@@ -17,6 +17,12 @@ const CURRENT_OUT_FIELDS = [
 ].join(",");
 
 const formatter = new Intl.NumberFormat("en-US");
+const moneyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 function formatNumber(value) {
   return formatter.format(Number(value || 0));
@@ -24,6 +30,10 @@ function formatNumber(value) {
 
 function formatPct(value) {
   return `${Number(value || 0).toFixed(1)}%`;
+}
+
+function formatMoney(value) {
+  return moneyFormatter.format(Number(value || 0));
 }
 
 function formatAcres(value) {
@@ -251,6 +261,12 @@ function renderSourceSummary(summary, currentMetrics) {
     `Sources: live ArcGIS EPP parcel service for current URA-owned LandCare universe; PostgreSQL export for ${summary.available_months.length} historical assignment/survey months through ${summary.latest_survey_period || latestMonth}.`;
 }
 
+function appendFinanceSourceToSummary(financeSummary) {
+  if (!financeSummary?.metadata) return;
+  document.getElementById("liveUniverseNote").textContent +=
+    ` Finance source: LandCare budgeting workbook loaded to ${financeSummary.metadata.postgres_table}.`;
+}
+
 function renderKpis(monthlyMetrics, summary, currentMetrics) {
   const latest = monthlyMetrics.at(-1);
   const latestYear = String(latest.period_month).slice(0, 4);
@@ -331,6 +347,50 @@ function renderAreaDistribution(rows) {
       </div>
     </div>
   `).join("");
+}
+
+function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = formatMoney) {
+  const sortedRows = [...rows].sort((a, b) => Number(b[valueKey] || 0) - Number(a[valueKey] || 0));
+  const maxValue = Math.max(1, ...sortedRows.map((row) => Number(row[valueKey] || 0)));
+  document.getElementById(containerId).innerHTML = sortedRows.map((row) => {
+    const value = Number(row[valueKey] || 0);
+    return `
+      <div class="grouped-row single-bar-row">
+        <div class="grouped-label">
+          <strong>${escapeHtml(shortContractor(row.organization))}</strong>
+          <span>${formatNumber(row.parcels)} parcels / ${formatAcres(row.acres)} ac</span>
+        </div>
+        <div class="grouped-bars">
+          <span class="grouped-bar assigned" style="width:${Math.max((100 * value) / maxValue, 2)}%"></span>
+        </div>
+        <div class="grouped-values">
+          <span>${valueFormatter(value)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderFinance(financeSummary) {
+  const summary = financeSummary.summary || {};
+  const rows = financeSummary.current_contracts || [];
+  const historyRows = financeSummary.check_request_history || [];
+  document.getElementById("annualRunRateKpi").textContent = formatMoney(summary.annual_invoice_run_rate);
+  document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(summary.monthly_invoice_total);
+  document.getElementById("totalContractKpi").textContent = formatMoney(summary.total_contract_amount);
+  document.getElementById("financeContractorsKpi").textContent = formatNumber(summary.organization_count);
+  document.getElementById("annualCostPerAcreKpi").textContent = formatMoney(summary.annual_cost_per_acre);
+  document.getElementById("monthlyCostPerParcelKpi").textContent = formatMoney(summary.monthly_cost_per_parcel);
+  document.getElementById("contractAcresKpi").textContent = `${formatAcres(summary.acres)} ac`;
+  document.getElementById("contractParcelsKpi").textContent = formatNumber(summary.parcel_count);
+  renderMoneyBarChart("budgetContractChart", rows, "annual_invoice_run_rate");
+  renderMoneyBarChart("expenseIntensityChart", rows, "annual_cost_per_acre");
+  renderCheckRequestTable(historyRows);
+  renderMaintenanceExpenseTable(rows);
+  const note =
+    `Source: ${financeSummary.metadata?.source_file || "LandCare budgeting workbook"}; loader target ${financeSummary.metadata?.postgres_table || "gis.land_care_budgeting_contracts"}; generated ${financeSummary.metadata?.generated_on || "unknown"}.`;
+  document.getElementById("financeSourceNote").textContent = note;
+  document.getElementById("expenseSourceNote").textContent = note;
 }
 
 function renderTimeline(monthlyMetrics) {
@@ -435,19 +495,35 @@ function renderParcelDetailsTable(rows) {
   );
 }
 
-function renderSourceContracts(summary) {
-  const sourceTables = (summary.source_tables || []).map((table) => `<li>${escapeHtml(table)}</li>`).join("");
-  const common = `
-    <dl>
-      <div><dt>Available operational sources</dt><dd>ArcGIS EPP parcel service and PostgreSQL survey assignment export</dd></div>
-      <div><dt>Historical coverage</dt><dd>${escapeHtml(summary.available_months.join(", "))}</dd></div>
-      <div><dt>PostgreSQL tables currently used</dt><dd><ul>${sourceTables}</ul></dd></div>
-      <div><dt>Needed before dollar metrics render</dt><dd>Published contracts, check request, invoice, or NetSuite expense table with period, contractor, amount, and parcel or program key.</dd></div>
-    </dl>
-  `;
-  document.getElementById("budgetSourceContract").innerHTML = common;
-  document.getElementById("checkRequestSourceContract").innerHTML = common;
-  document.getElementById("maintenanceExpenseSourceContract").innerHTML = common;
+function renderCheckRequestTable(rows) {
+  renderTable(
+    document.getElementById("checkRequestTable"),
+    [
+      { label: "Organization", value: (row) => shortContractor(row.organization) },
+      { label: "Start", value: (row) => row.start_date },
+      { label: "End", value: (row) => row.end_date },
+      { label: "Parcels", value: (row) => formatNumber(row.parcels) },
+      { label: "Invoice Amount", value: (row) => formatMoney(row.invoice_amount) },
+      { label: "MR Check Note", value: (row) => row.mr_check_note || "" }
+    ],
+    rows
+  );
+}
+
+function renderMaintenanceExpenseTable(rows) {
+  renderTable(
+    document.getElementById("maintenanceExpenseTable"),
+    [
+      { label: "Organization", value: (row) => shortContractor(row.organization) },
+      { label: "Parcels", value: (row) => formatNumber(row.parcels) },
+      { label: "Acres", value: (row) => formatAcres(row.acres) },
+      { label: "Monthly Invoice", value: (row) => formatMoney(row.monthly_invoice_amount) },
+      { label: "Annual Run Rate", value: (row) => formatMoney(row.annual_invoice_run_rate) },
+      { label: "Monthly / Parcel", value: (row) => formatMoney(row.monthly_cost_per_parcel) },
+      { label: "Annual / Acre", value: (row) => formatMoney(row.annual_cost_per_acre) }
+    ],
+    rows
+  );
 }
 
 function setupTabs() {
@@ -463,15 +539,17 @@ function setupTabs() {
 }
 
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, currentMetrics] = await Promise.all([
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics] = await Promise.all([
     fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
+    fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
     loadCurrentArcgisMetrics()
   ]);
   return {
     monthlyMetrics,
     contractorMonthly: aggregateContractorMonthly(contractorMonthlyRaw),
+    financeSummary,
     summary,
     currentMetrics
   };
@@ -479,12 +557,13 @@ async function loadData() {
 
 async function main() {
   setupTabs();
-  const { monthlyMetrics, contractorMonthly, summary, currentMetrics } = await loadData();
+  const { monthlyMetrics, contractorMonthly, financeSummary, summary, currentMetrics } = await loadData();
   const latestMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   const latestContractorRows = contractorRowsForMonth(contractorMonthly, latestMonth);
   const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, latestContractorRows);
 
   renderSourceSummary(summary, currentMetrics);
+  appendFinanceSourceToSummary(financeSummary);
   renderKpis(monthlyMetrics, summary, currentMetrics);
   renderContractorOptions(latestContractorRows);
   renderContractorGroupedChart(latestContractorRows);
@@ -492,7 +571,7 @@ async function main() {
   renderSubmissionRateTable(monthlyMetrics);
   renderAreaDistribution(currentMetrics.contractorRows);
   renderParcelDetailsTable(detailRows);
-  renderSourceContracts(summary);
+  renderFinance(financeSummary);
 
   document.getElementById("contractorSelect").addEventListener("change", (event) => {
     renderContractorGroupedChart(latestContractorRows, event.target.value);
