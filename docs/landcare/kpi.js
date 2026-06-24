@@ -258,7 +258,7 @@ function renderSourceSummary(summary, currentMetrics) {
   document.getElementById("reportUpdatedKpi").textContent =
     `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}`;
   document.getElementById("liveUniverseNote").textContent =
-    `Current URA-owned LandCare parcels, monthly assignments, returned surveys, and budget records are aligned for executive review. Latest survey month: ${shortMonth(latestMonth)}.`;
+    `Full LandCare inventory is shown separately from monthly survey assignments so totals do not look duplicated. Latest survey month: ${shortMonth(latestMonth)}.`;
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
@@ -509,7 +509,7 @@ function renderParcelDetailsTable(rows) {
     document.getElementById("parcelDetailsTable"),
     [
       { label: "Contractor", value: (row) => shortContractor(row.organization) },
-      { label: "Current Parcels", value: (row) => formatNumber(row.currentParcels) },
+      { label: "Inventory Parcels", value: (row) => formatNumber(row.currentParcels) },
       { label: "Current Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` },
       { label: "Latest Assigned", value: (row) => formatNumber(row.latestAssigned) },
       { label: "Latest Returned", value: (row) => formatNumber(row.latestReturned) },
