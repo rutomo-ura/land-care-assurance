@@ -34,10 +34,10 @@ const CURRENT_OUT_FIELDS = [
 ].join(",");
 
 const statusColors = {
-  current_active: "#0098d3",
-  returned: "#0098d3",
-  missing: "#f0c24b",
-  request_only: "#aab8c2",
+  current_active: "#2f80ed",
+  returned: "#2e7d32",
+  missing: "#d97706",
+  request_only: "#6b7280",
   ownership_risk: "#c2410c"
 };
 
@@ -91,11 +91,11 @@ function escapeHtml(value) {
 
 function statusLabel(status) {
   return {
-    current_active: "Active LandCare",
-    returned: "Returned",
-    missing: "Open / not returned",
-    request_only: "Request Only",
-    ownership_risk: "Ownership risk"
+    current_active: "Active assignment",
+    returned: "Survey complete",
+    missing: "Open active assignment",
+    request_only: "Request only",
+    ownership_risk: "Ownership issue"
   }[status] || status || "Unknown";
 }
 
@@ -419,6 +419,40 @@ function renderContractors() {
   }).join("");
 }
 
+function statusSummaryFeatures() {
+  return districtFilteredFeatures();
+}
+
+function renderStatusSummary() {
+  const container = document.getElementById("statusSummaryList");
+  if (!container) return;
+  const counts = statusSummaryFeatures().reduce((acc, feature) => {
+    const status = feature.properties.completion_status || "missing";
+    const parcelKey = feature.properties.parcel_key;
+    if (!parcelKey) return acc;
+    acc[status] ||= new Set();
+    acc[status].add(parcelKey);
+    return acc;
+  }, {});
+  const orderedStatuses =
+    state.dataView === "current"
+      ? ["current_active", "request_only"]
+      : ["returned", "missing", "request_only", "ownership_risk"];
+  container.innerHTML = `
+    <div class="status-summary-title">LandCare Status</div>
+    ${orderedStatuses
+      .filter((status) => counts[status]?.size || ["returned", "missing", "request_only"].includes(status))
+      .map((status) => `
+        <div class="status-summary-row">
+          <span class="legend-swatch" style="background:${statusColors[status]}"></span>
+          <strong>${escapeHtml(statusLabel(status))}</strong>
+          <em>${formatNumber(counts[status]?.size || 0)}</em>
+        </div>
+      `)
+      .join("")}
+  `;
+}
+
 function renderLegend() {
   const heading = document.getElementById("legendHeading");
   const list = document.getElementById("legendList");
@@ -465,14 +499,24 @@ function renderActionFocus() {
     const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
     const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
     const neighborhoods = new Set(features.map((feature) => feature.properties.neighborhood).filter(Boolean)).size;
+    const label = state.contractorFilter === "all" ? "all contractors" : shortContractor(state.contractorFilter);
+    const districtText = state.districtFilter === "all" ? "citywide" : `Council District ${state.districtFilter}`;
     document.getElementById("actionFocus").innerHTML = `
-      <div><strong>${formatNumber(features.length)}</strong><span>Current URA-owned LandCare records</span></div>
-      <div><strong>${formatNumber(active)}</strong><span>Active LandCare records in the current parcel inventory</span></div>
-      <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only records separated from compliance metrics</span></div>
-      <div><strong>${formatNumber(neighborhoods)}</strong><span>Neighborhoods represented in the current layer</span></div>
+      <div class="action-directive"><strong>Focus</strong><span>${escapeHtml(label)}: confirm active workload coverage for ${escapeHtml(districtText)} before the next survey review.</span></div>
+      <div><strong>${formatNumber(active)}</strong><span>Active assignments requiring recurring survey follow-up</span></div>
+      <div><strong>${formatNumber(requestOnly)}</strong><span>Request-only records separated from compliance scoring</span></div>
+      <div><strong>${formatNumber(neighborhoods)}</strong><span>Neighborhoods represented in the current filter</span></div>
     `;
     return;
   }
+  const monthFeatures = districtFilteredFeatures();
+  const rows = contractorPerformanceRows(monthFeatures);
+  const selectedRow = rows.find((row) => row.organization === state.contractorFilter);
+  const worstRow = [...rows].sort((a, b) => b.open - a.open || a.rate - b.rate)[0];
+  const focusRow = selectedRow || worstRow;
+  const overallActive = uniqueCount(monthFeatures, (feature) => feature.properties.maintenance_level === "Active");
+  const overallReturned = uniqueCount(monthFeatures, (feature) => feature.properties.returned_flag);
+  const overallRate = overallActive ? (100 * overallReturned) / overallActive : 0;
   const activeOpen = uniqueCount(
     features,
     (feature) =>
@@ -481,12 +525,41 @@ function renderActionFocus() {
   );
   const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
   const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
+  const directive = focusRow
+    ? state.contractorFilter === "all"
+      ? `Start with ${shortContractor(focusRow.organization)}: ${formatNumber(focusRow.open)} open active parcels in ${state.selectedMonth}, ${pct(focusRow.returned, focusRow.assigned)} complete versus ${overallRate.toFixed(1)}% overall.`
+      : `${shortContractor(focusRow.organization)} has ${formatNumber(focusRow.open)} open active parcels in ${state.selectedMonth}; review missing survey evidence before monthly close.`
+    : `No contractor issue detected for ${state.selectedMonth}.`;
   document.getElementById("actionFocus").innerHTML = `
-    <div><strong>${formatNumber(features.length)}</strong><span>URA-owned parcels in current filter</span></div>
-    <div><strong>${formatNumber(activeOpen)}</strong><span>Active URA-owned parcels still open</span></div>
+    <div class="action-directive"><strong>Action</strong><span>${escapeHtml(directive)}</span></div>
+    <div><strong>${formatNumber(activeOpen)}</strong><span>Open active parcels in current filter</span></div>
     <div><strong>${formatNumber(returned)}</strong><span>Returned surveys matched to URA-owned parcels</span></div>
-    <div><strong>${formatNumber(requestOnly)}</strong><span>Request Only URA-owned assignments separated from Active compliance</span></div>
+    <div><strong>${formatNumber(requestOnly)}</strong><span>Request-only assignments excluded from active compliance</span></div>
   `;
+}
+
+function contractorPerformanceRows(features) {
+  const rows = {};
+  for (const feature of features) {
+    const props = feature.properties || {};
+    const org = props.organization || "Unassigned";
+    const parcelKey = props.parcel_key;
+    if (!parcelKey || props.maintenance_level !== "Active") continue;
+    rows[org] ||= { organization: org, assignedKeys: new Set(), returnedKeys: new Set() };
+    rows[org].assignedKeys.add(parcelKey);
+    if (props.returned_flag) rows[org].returnedKeys.add(parcelKey);
+  }
+  return Object.values(rows).map((row) => {
+    const assigned = row.assignedKeys.size;
+    const returned = row.returnedKeys.size;
+    return {
+      organization: row.organization,
+      assigned,
+      returned,
+      open: Math.max(assigned - returned, 0),
+      rate: assigned ? (100 * returned) / assigned : 0
+    };
+  });
 }
 
 function renderFreshness() {
@@ -680,6 +753,7 @@ function renderAll() {
   renderMonthOptions();
   renderDistrictOptions();
   renderKpis();
+  renderStatusSummary();
   renderContractors();
   renderLegend();
   renderActionFocus();

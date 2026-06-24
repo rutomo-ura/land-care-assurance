@@ -292,6 +292,45 @@ textarea {
   margin-top: 9px;
 }
 
+.status-summary-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+  margin-bottom: 10px;
+  padding: 9px;
+  background: #f7fbfd;
+  border: 1px solid var(--line);
+}
+
+.status-summary-title {
+  color: var(--ura-deep);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.status-summary-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-summary-row strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-summary-row em {
+  color: var(--ink);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+}
+
 .contractor-row {
   display: grid;
   grid-template-columns: 11px minmax(0, 1fr) auto;
@@ -448,6 +487,25 @@ textarea {
   border-left: 4px solid var(--ura-blue);
 }
 
+.focus-list .action-directive {
+  padding: 10px 11px;
+  background: #f7fbfd;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--orange);
+}
+
+.focus-list .action-directive strong {
+  color: var(--orange);
+  font-size: 14px;
+}
+
+.focus-list .action-directive span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .focus-list strong {
   color: var(--ink);
   font-size: 19px;
@@ -594,6 +652,44 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.insight-card {
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--ura-blue);
+}
+
+.insight-card.warning {
+  border-top-color: var(--orange);
+}
+
+.insight-card strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 850;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .powerbi-panel {
@@ -1034,6 +1130,10 @@ select {
   }
 
   .powerbi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-grid {
     grid-template-columns: 1fr;
   }
 }

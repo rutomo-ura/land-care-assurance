@@ -39,10 +39,10 @@
           <strong id="periodKpi">Loading...</strong>
         </div>
         <div>
-          <span class="eyebrow">Source Refresh</span>
+          <span class="eyebrow">Data Quality</span>
           <strong id="reportUpdatedKpi">Loading sources...</strong>
         </div>
-        <p id="liveUniverseNote">Loading current ArcGIS universe...</p>
+        <p id="liveUniverseNote">Preparing dashboard summary...</p>
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
@@ -90,6 +90,24 @@
               <div class="reference-card"><span>YTD Returned</span><strong id="ytdReturnedKpi">--</strong></div>
               <div class="reference-card"><span>Current Acres</span><strong id="currentAcresKpi">--</strong></div>
             </div>
+          </article>
+        </section>
+
+        <section class="insight-grid" aria-label="Leadership insights">
+          <article class="insight-card">
+            <span class="eyebrow">Monthly Signal</span>
+            <strong id="completionReadoutInsight">--</strong>
+            <p id="completionReadoutCopy">Loading completion trend...</p>
+          </article>
+          <article class="insight-card warning">
+            <span class="eyebrow">Needs Attention</span>
+            <strong id="problemContractorInsight">--</strong>
+            <p id="problemContractorCopy">Loading contractor review...</p>
+          </article>
+          <article class="insight-card">
+            <span class="eyebrow">Open Work</span>
+            <strong id="openParcelInsight">--</strong>
+            <p id="openParcelCopy">Loading open parcel count...</p>
           </article>
         </section>
 

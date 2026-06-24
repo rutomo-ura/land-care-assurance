@@ -232,7 +232,7 @@ def build_data(source: Path, output_dir: Path) -> None:
             "latest_month_feature_count": len(latest_features),
             "latest_assignment_period": metadata.get("latest_assignment_period"),
             "latest_survey_period": metadata.get("latest_survey_period"),
-            "note": "Generated from existing PostgreSQL export artifact; not a direct database pull.",
+            "note": metadata.get("source_note") or "Generated from app-ready PostgreSQL export artifact.",
         },
     )
 

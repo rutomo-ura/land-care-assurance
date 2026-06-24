@@ -8,6 +8,7 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.codex-pg/
 
 # Local data extracts and generated outputs
 data/raw/

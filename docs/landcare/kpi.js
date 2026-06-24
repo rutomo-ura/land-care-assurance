@@ -252,19 +252,17 @@ function buildContractorDetailRows(currentRows, latestRows) {
 
 function renderSourceSummary(summary, currentMetrics) {
   const latestMonth = summary.latest_month;
-  document.getElementById("freshnessNote").textContent = "ArcGIS current layer + PostgreSQL survey export";
+  document.getElementById("freshnessNote").textContent = "Data quality checked";
   document.getElementById("periodKpi").textContent =
     `${quarterLabel(latestMonth)} through ${shortMonth(latestMonth)}`;
   document.getElementById("reportUpdatedKpi").textContent =
-    `ArcGIS ${currentMetrics.eppEdited || "unknown"}; export ${summary.generated_on || "unknown"}`;
+    `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}`;
   document.getElementById("liveUniverseNote").textContent =
-    `Sources: live ArcGIS EPP parcel service for current URA-owned LandCare universe; PostgreSQL export for ${summary.available_months.length} historical assignment/survey months through ${summary.latest_survey_period || latestMonth}.`;
+    `Current URA-owned LandCare parcels, monthly assignments, returned surveys, and budget records are aligned for executive review. Latest survey month: ${shortMonth(latestMonth)}.`;
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
   if (!financeSummary?.metadata) return;
-  document.getElementById("liveUniverseNote").textContent +=
-    ` Finance source: LandCare budgeting workbook loaded to ${financeSummary.metadata.postgres_table}.`;
 }
 
 function renderKpis(monthlyMetrics, summary, currentMetrics) {
@@ -299,7 +297,33 @@ function renderContractorOptions(rows) {
 function contractorChartRows(rows, selected = "all") {
   return rows
     .filter((row) => selected === "all" || row.organization === selected)
-    .sort((a, b) => b.assigned - a.assigned);
+    .sort((a, b) => (b.assigned - b.returned) - (a.assigned - a.returned) || b.assigned - a.assigned);
+}
+
+function renderLeadershipInsights(monthlyMetrics, latestContractorRows) {
+  const latest = monthlyMetrics.at(-1);
+  const prior = monthlyMetrics.at(-2);
+  const latestRate = Number(latest.active_completion_rate_pct || 0);
+  const priorRate = Number(prior?.active_completion_rate_pct || 0);
+  const delta = latestRate - priorRate;
+  const contractorRows = [...latestContractorRows].map((row) => ({
+    ...row,
+    open: Math.max(Number(row.assigned || 0) - Number(row.returned || 0), 0)
+  }));
+  const largestOpen = contractorRows.sort((a, b) => b.open - a.open || a.completionRate - b.completionRate)[0];
+  const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
+  document.getElementById("completionReadoutInsight").textContent = formatPct(latestRate);
+  document.getElementById("completionReadoutCopy").textContent =
+    `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts versus ${prior ? shortMonth(prior.period_month) : "prior month"} across active assignments.`;
+  document.getElementById("problemContractorInsight").textContent = largestOpen
+    ? shortContractor(largestOpen.organization)
+    : "On track";
+  document.getElementById("problemContractorCopy").textContent = largestOpen
+    ? `${formatNumber(largestOpen.open)} active parcels remain open in ${shortMonth(latest.period_month)}; returned ${formatNumber(largestOpen.returned)} of ${formatNumber(largestOpen.assigned)}.`
+    : "No open active parcels in the latest reporting month.";
+  document.getElementById("openParcelInsight").textContent = formatNumber(openTotal);
+  document.getElementById("openParcelCopy").textContent =
+    `Open active assignments after ${formatNumber(latest.returned_assigned)} returned surveys in ${shortMonth(latest.period_month)}.`;
 }
 
 function renderContractorGroupedChart(rows, selected = "all") {
@@ -316,15 +340,15 @@ function renderContractorGroupedChart(rows, selected = "all") {
       <div class="grouped-row">
         <div class="grouped-label">
           <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-          <span>${formatPct(rate)} returned</span>
+          <span>${formatPct(rate)} complete - ${formatNumber(Math.max(assigned - returned, 0))} open</span>
         </div>
         <div class="grouped-bars">
           <span class="grouped-bar assigned" style="width:${Math.max((100 * assigned) / maxValue, 2)}%"></span>
           <span class="grouped-bar returned" style="width:${returned ? Math.max((100 * returned) / maxValue, 2) : 0}%"></span>
         </div>
         <div class="grouped-values">
-          <span>${formatNumber(assigned)}</span>
-          <span>${formatNumber(returned)}</span>
+          <span>${formatNumber(assigned)} assigned</span>
+          <span>${formatNumber(returned)} returned</span>
         </div>
       </div>
     `;
@@ -565,6 +589,7 @@ async function main() {
   renderSourceSummary(summary, currentMetrics);
   appendFinanceSourceToSummary(financeSummary);
   renderKpis(monthlyMetrics, summary, currentMetrics);
+  renderLeadershipInsights(monthlyMetrics, latestContractorRows);
   renderContractorOptions(latestContractorRows);
   renderContractorGroupedChart(latestContractorRows);
   renderTimeline(monthlyMetrics);

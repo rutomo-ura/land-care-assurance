@@ -14,12 +14,13 @@
     "2026-01",
     "2026-02",
     "2026-03",
-    "2026-04"
+    "2026-04",
+    "2026-05"
   ],
-  "latest_month": "2026-04",
-  "all_month_feature_count": 2415,
-  "latest_month_feature_count": 218,
-  "latest_assignment_period": "2026-05-15",
-  "latest_survey_period": "2026-04-15",
-  "note": "Generated from existing PostgreSQL export artifact; not a direct database pull."
+  "latest_month": "2026-05",
+  "all_month_feature_count": 2660,
+  "latest_month_feature_count": 222,
+  "latest_assignment_period": "2026-06-15",
+  "latest_survey_period": "2026-05-15",
+  "note": "PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026."
 }
