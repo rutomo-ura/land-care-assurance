@@ -65,7 +65,7 @@ const state = {
   districtFilter: "all",
   colorMode: "status",
   selectedMonth: null,
-  dataView: "current",
+  dataView: "history",
   mapFocusLabel: ""
 };
 
@@ -1017,8 +1017,8 @@ async function initMap() {
       type: "simple",
       symbol: {
         type: "simple-fill",
-        color: [240, 194, 75, 0.03],
-        outline: { color: [124, 86, 8, 0.82], width: 1.4 }
+        color: [240, 194, 75, 0.02],
+        outline: { color: [124, 86, 8, 0.55], width: 0.85 }
       }
     },
     labelingInfo: [
@@ -1045,8 +1045,8 @@ async function initMap() {
       type: "simple",
       symbol: {
         type: "simple-fill",
-        color: [240, 194, 75, 0.12],
-        outline: { color: [0, 108, 159, 0.95], width: 2.6 }
+        color: [240, 194, 75, 0.08],
+        outline: { color: [0, 108, 159, 0.82], width: 1.6 }
       }
     },
     popupEnabled: false
