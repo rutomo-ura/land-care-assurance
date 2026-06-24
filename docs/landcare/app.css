@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
   --ura-blue: #0098d3;
@@ -29,7 +29,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--panel);
-  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
@@ -87,7 +87,7 @@ textarea {
   overflow: hidden;
   color: #ffffff;
   font-size: 22px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -230,7 +230,7 @@ textarea {
   display: block;
   color: var(--ura-blue);
   font-size: 25px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -305,7 +305,7 @@ textarea {
 .status-summary-title {
   color: var(--ura-deep);
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -328,7 +328,7 @@ textarea {
   color: var(--ink);
   font-size: 11px;
   font-style: normal;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 .contractor-row {
@@ -620,7 +620,7 @@ textarea {
   margin: 9px 0 6px;
   color: var(--ink);
   font-size: 31px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.05;
 }
 
@@ -678,7 +678,7 @@ textarea {
   overflow: hidden;
   color: var(--ink);
   font-size: clamp(22px, 3vw, 30px);
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -779,7 +779,7 @@ select {
   margin-top: 10px;
   color: var(--ink);
   font-size: clamp(23px, 3.2vw, 32px);
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.05;
 }
 
@@ -831,14 +831,14 @@ select {
 .chart-label,
 .chart-tick {
   fill: var(--muted);
-  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
   font-size: 12px;
   font-weight: 700;
 }
 
 .chart-value-label {
   fill: var(--ink);
-  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
   font-size: 12px;
   font-weight: 800;
 }
@@ -1044,7 +1044,7 @@ select {
 .source-contract dt {
   color: var(--ura-blue-dark);
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
@@ -1085,7 +1085,7 @@ select {
   color: var(--ura-deep);
   background: #eaf5fa;
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
