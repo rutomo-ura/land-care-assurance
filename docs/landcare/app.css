@@ -460,6 +460,67 @@ textarea {
   padding: 14px;
 }
 
+.report-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.report-tabs button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 13px;
+  color: var(--ura-deep);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-bottom: 3px solid transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.report-tabs button.is-active {
+  color: #ffffff;
+  background: var(--ura-blue-dark);
+  border-color: var(--ura-blue-dark);
+}
+
+.report-tabs button:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.72;
+}
+
+.report-context {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) minmax(190px, 0.45fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.report-context div,
+.report-context p {
+  margin: 0;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+
+.report-context strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.report-context p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -517,6 +578,25 @@ textarea {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
 }
 
+.powerbi-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.powerbi-panel {
+  min-width: 0;
+}
+
+.budget-panel,
+.contractor-panel {
+  grid-column: 1 / -1;
+}
+
+.trend-panel {
+  min-height: 420px;
+}
+
 .panel {
   padding: 16px 18px;
 }
@@ -545,9 +625,52 @@ select {
   font-weight: 700;
 }
 
+.reference-card-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.reference-card-grid.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reference-card-grid.three-up {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reference-card {
+  min-height: 104px;
+  padding: 14px 15px;
+  background: #f7fbfd;
+  border: 1px solid var(--line);
+  border-top: 4px solid #aab8c2;
+}
+
+.reference-card.primary {
+  border-top-color: var(--ura-blue);
+}
+
+.reference-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.reference-card strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--ink);
+  font-size: clamp(23px, 3.2vw, 32px);
+  font-weight: 850;
+  line-height: 1.05;
+}
+
 .bar-list,
 .timeline-list,
-.reconcile-grid {
+.grouped-chart {
   display: grid;
   gap: 10px;
 }
@@ -657,59 +780,62 @@ select {
   height: 14px;
 }
 
-.reconcile-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.reconcile-card {
-  padding: 11px;
-  background: #f7fbfd;
-  border: 1px solid var(--line);
-}
-
-.reconcile-card span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.reconcile-card strong {
-  display: block;
-  margin-top: 6px;
-  font-size: 22px;
-}
-
-.pipeline-list {
+.grouped-row {
   display: grid;
-  gap: 9px;
-}
-
-.pipeline-list div {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr) 72px;
+  gap: 12px;
   align-items: center;
-  padding: 9px;
-  background: #f7fbfd;
-  border: 1px solid var(--line);
 }
 
-.pipeline-list strong {
+.grouped-label {
   display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  color: #ffffff;
-  background: var(--ura-blue-dark);
+  gap: 3px;
+  min-width: 0;
+}
+
+.grouped-label strong,
+.grouped-label span,
+.grouped-values span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grouped-label strong {
   font-size: 12px;
 }
 
-.pipeline-list span {
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 1.35;
+.grouped-label span,
+.grouped-values span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.grouped-bars {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.grouped-bar {
+  display: block;
+  height: 11px;
+  min-width: 0;
+}
+
+.grouped-bar.assigned {
+  background: var(--ura-blue);
+}
+
+.grouped-bar.returned {
+  background: var(--gold);
+}
+
+.grouped-values {
+  display: grid;
+  gap: 3px;
+  text-align: right;
 }
 
 @media (max-width: 1180px) {
@@ -731,8 +857,13 @@ select {
     border-top: 1px solid var(--line);
   }
 
-  .kpi-grid {
+  .kpi-grid,
+  .reference-card-grid.three-up {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .powerbi-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -757,7 +888,8 @@ select {
 
   .monitoring-shell,
   .dashboard-grid,
-  .dashboard-grid.lower {
+  .dashboard-grid.lower,
+  .report-context {
     grid-template-columns: 1fr;
   }
 
@@ -790,8 +922,19 @@ select {
 
   .mini-kpis,
   .kpi-grid,
-  .reconcile-grid {
+  .reference-card-grid.two-up,
+  .reference-card-grid.three-up {
     grid-template-columns: 1fr;
+  }
+
+  .grouped-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .grouped-values {
+    grid-template-columns: 1fr 1fr;
+    text-align: left;
   }
 
   .map-stage {

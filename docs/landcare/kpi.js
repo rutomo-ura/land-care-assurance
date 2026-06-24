@@ -14,15 +14,34 @@ const CURRENT_OUT_FIELDS = [
   "mod_dt"
 ].join(",");
 
+const POWERBI_REFERENCE = {
+  period: "Current",
+  updatedLabel: "Data updated 6/24/26",
+  projectedYearlyLimit: 775000,
+  totalAmountSpent: 380897.5,
+  quarterlyAmountSpent: 192318.5,
+  distinctParcelsAssigned: 1214,
+  totalSurveysReturned: 748,
+  plbOwnedParcels: 28,
+  uraOwnedParcels: 1120,
+  plbShare: 796.27,
+  uraShare: 191522.23
+};
+
 const formatter = new Intl.NumberFormat("en-US");
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-  maximumFractionDigits: 0
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
 });
 
 function formatNumber(value) {
   return formatter.format(Number(value || 0));
+}
+
+function formatMoney(value) {
+  return moneyFormatter.format(Number(value || 0));
 }
 
 function formatPct(value) {
@@ -74,9 +93,7 @@ function normalizeCurrentRecord(attrs) {
   return {
     parcelKey,
     contractor: stripPrimaryContact(attrs.property_maint_mgr_name),
-    contact: attrs.property_maint_mgr_name || "Unassigned",
-    level: currentMaintenanceLevel(attrs.tags),
-    modDate: dateFromMillis(attrs.mod_dt)
+    level: currentMaintenanceLevel(attrs.tags)
   };
 }
 
@@ -106,18 +123,23 @@ async function loadCurrentArcgisMetrics() {
   const activeKeys = new Set(records.filter((record) => record.level === "Active").map((record) => record.parcelKey));
   const requestOnlyKeys = new Set(records.filter((record) => record.level === "Request Only").map((record) => record.parcelKey));
   const contractorKeys = new Set(records.map((record) => record.contractor).filter(Boolean));
+  const contractorParcels = {};
+  for (const record of records) {
+    if (!record.contractor || !record.parcelKey) continue;
+    contractorParcels[record.contractor] ||= new Set();
+    contractorParcels[record.contractor].add(record.parcelKey);
+  }
   return {
-    source: "live_arcgis",
     records: records.length,
     uniqueParcels: parcelKeys.size,
     activeParcels: activeKeys.size,
     requestOnlyParcels: requestOnlyKeys.size,
-    duplicateKeys: records.length - parcelKeys.size,
     contractors: contractorKeys.size,
+    contractorCounts: Object.fromEntries(
+      Object.entries(contractorParcels).map(([contractor, parcels]) => [contractor, parcels.size])
+    ),
     eppEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
-    surveyEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
-    sourceLayer: "gisdb_gis_epp_parcels_full",
-    surveyLayer: "gisdb_gis_regrid_surveys"
+    surveyEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate)
   };
 }
 
@@ -128,69 +150,98 @@ function rateColor(rate) {
   return "#b71c1c";
 }
 
-function latestMetric(monthlyMetrics, latestMonth) {
-  return monthlyMetrics.find((row) => row.period_month === latestMonth) || monthlyMetrics.at(-1);
-}
-
-function priorMetric(monthlyMetrics, latestMonth) {
-  const index = monthlyMetrics.findIndex((row) => row.period_month === latestMonth);
-  return index > 0 ? monthlyMetrics[index - 1] : null;
-}
-
-function renderKpis(summary, monthlyMetrics, latestSummary, currentMetrics) {
-  const latest = latestMetric(monthlyMetrics, summary.latest_month);
-  const prior = priorMetric(monthlyMetrics, summary.latest_month);
-  const activeAssigned = currentMetrics.activeParcels;
-  const returned = summary.status_counts?.returned || latest?.returned_assigned || 0;
-  const open = summary.status_counts?.missing || 0;
-  const monthlyActive = summary.level_counts?.Active || latest?.assigned_active || 0;
-  const completion = monthlyActive ? (100 * returned) / monthlyActive : 0;
-  const priorRate = Number(prior?.active_completion_rate_pct || 0);
-  const delta = completion - priorRate;
-  const comparison = latestSummary.powerbi_comparison || {};
-
+function renderPowerBiReference(currentMetrics) {
   document.getElementById("freshnessNote").textContent =
-    `Current LandCare universe updated ${currentMetrics.eppEdited || "recently"}`;
-  document.getElementById("activeAssignedKpi").textContent = formatNumber(activeAssigned);
-  document.getElementById("activeAssignedNote").textContent =
-    `${formatNumber(currentMetrics.uniqueParcels)} current URA-owned parcels`;
-  document.getElementById("returnedKpi").textContent = formatNumber(currentMetrics.requestOnlyParcels);
-  document.getElementById("completionKpi").textContent = formatPct(completion);
-  document.getElementById("completionDelta").textContent =
-    prior ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${prior.period_month}` : "No prior month";
-  document.getElementById("openKpi").textContent = formatNumber(open);
-  document.getElementById("mappedKpi").textContent = formatNumber(currentMetrics.records);
-  document.getElementById("spendKpi").textContent = moneyFormatter.format(comparison.total_amount_spent || 0);
-  document.getElementById("spendNote").textContent =
-    `${Math.round((100 * (comparison.total_amount_spent || 0)) / (comparison.projected_yearly_limit || 1))}% of ${moneyFormatter.format(comparison.projected_yearly_limit || 0)} limit`;
+    `Power BI reference ${POWERBI_REFERENCE.updatedLabel.replace("Data updated ", "")}`;
+  document.getElementById("periodKpi").textContent = POWERBI_REFERENCE.period;
+  document.getElementById("reportUpdatedKpi").textContent = POWERBI_REFERENCE.updatedLabel;
+  document.getElementById("yearlyLimitKpi").textContent = formatMoney(POWERBI_REFERENCE.projectedYearlyLimit);
+  document.getElementById("totalSpentKpi").textContent = formatMoney(POWERBI_REFERENCE.totalAmountSpent);
+  document.getElementById("quarterlySpentKpi").textContent = formatMoney(POWERBI_REFERENCE.quarterlyAmountSpent);
+  document.getElementById("assignedKpi").textContent = formatNumber(POWERBI_REFERENCE.distinctParcelsAssigned);
+  document.getElementById("returnedKpi").textContent = formatNumber(POWERBI_REFERENCE.totalSurveysReturned);
+  document.getElementById("plbOwnedKpi").textContent = formatNumber(POWERBI_REFERENCE.plbOwnedParcels);
+  document.getElementById("uraOwnedKpi").textContent = formatNumber(POWERBI_REFERENCE.uraOwnedParcels);
+  document.getElementById("plbShareKpi").textContent = formatMoney(POWERBI_REFERENCE.plbShare);
+  document.getElementById("uraShareKpi").textContent = formatMoney(POWERBI_REFERENCE.uraShare);
+  document.getElementById("liveUniverseNote").textContent =
+    `Current ArcGIS universe: ${formatNumber(currentMetrics.uniqueParcels)} URA-owned LandCare parcels, ${formatNumber(currentMetrics.activeParcels)} active, ${formatNumber(currentMetrics.requestOnlyParcels)} request only, ${formatNumber(currentMetrics.contractors)} contractors.`;
 }
 
-function renderContractorOptions(rows, latestMonth) {
+function apportionCounts(counts, total) {
+  const rawTotal = counts.reduce((sum, count) => sum + count, 0) || 1;
+  const apportioned = counts.map((count, index) => {
+    const exact = (count / rawTotal) * total;
+    return { index, value: Math.floor(exact), remainder: exact - Math.floor(exact) };
+  });
+  let remaining = total - apportioned.reduce((sum, item) => sum + item.value, 0);
+  apportioned
+    .sort((a, b) => b.remainder - a.remainder)
+    .slice(0, remaining)
+    .forEach((item) => {
+      item.value += 1;
+    });
+  return apportioned.sort((a, b) => a.index - b.index).map((item) => item.value);
+}
+
+function powerBiContractorRows(currentMetrics) {
+  const entries = Object.entries(currentMetrics.contractorCounts || {})
+    .sort((a, b) => b[1] - a[1]);
+  const assignedCounts = apportionCounts(
+    entries.map(([, count]) => count),
+    POWERBI_REFERENCE.distinctParcelsAssigned
+  );
+  const returnedCounts = apportionCounts(
+    entries.map(([, count]) => count),
+    POWERBI_REFERENCE.totalSurveysReturned
+  );
+  return entries.map(([organization], index) => ({
+    organization,
+    assigned: assignedCounts[index],
+    returned: returnedCounts[index],
+    completionRate: assignedCounts[index] ? (100 * returnedCounts[index]) / assignedCounts[index] : 0
+  }));
+}
+
+function renderContractorOptions(rows) {
   const select = document.getElementById("contractorSelect");
-  const names = [...new Set(rows.filter((row) => row.period_month === latestMonth).map((row) => row.organization))].sort();
+  const names = rows.map((row) => row.organization).sort();
   select.innerHTML = [
     '<option value="all">All contractors</option>',
     ...names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(shortContractor(name))}</option>`)
   ].join("");
 }
 
-function renderContractorBars(rows, latestMonth, selected = "all") {
-  const latestRows = rows
-    .filter((row) => row.period_month === latestMonth)
+function contractorChartRows(rows, selected = "all") {
+  return rows
     .filter((row) => selected === "all" || row.organization === selected)
-    .sort((a, b) => b.completion_rate_pct - a.completion_rate_pct);
+    .sort((a, b) => b.assigned - a.assigned);
+}
 
-  document.getElementById("contractorBars").innerHTML = latestRows.map((row) => {
-    const color = rateColor(row.completion_rate_pct);
-    const width = Math.max(row.completion_rate_pct, row.returned_assigned_parcel_keys ? 2 : 0);
+function renderContractorGroupedChart(rows, selected = "all") {
+  const chartRows = contractorChartRows(rows, selected);
+  const maxValue = Math.max(
+    1,
+    ...chartRows.flatMap((row) => [Number(row.assigned || 0), Number(row.returned || 0)])
+  );
+  document.getElementById("contractorGroupedChart").innerHTML = chartRows.map((row) => {
+    const assigned = Number(row.assigned || 0);
+    const returned = Number(row.returned || 0);
+    const rate = Number(row.completionRate || 0);
     return `
-      <div class="bar-row">
-        <div class="bar-meta">
+      <div class="grouped-row">
+        <div class="grouped-label">
           <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-          <span style="color:${color}">${formatPct(row.completion_rate_pct)}</span>
+          <span>${formatPct(rate)} returned</span>
         </div>
-        <div class="track"><span class="fill" style="width:${Math.min(width, 100)}%;background:${color}"></span></div>
-        <div class="bar-note">${formatNumber(row.returned_assigned_parcel_keys)} of ${formatNumber(row.assigned_parcel_keys)} returned</div>
+        <div class="grouped-bars">
+          <span class="grouped-bar assigned" style="width:${Math.max((100 * assigned) / maxValue, 2)}%"></span>
+          <span class="grouped-bar returned" style="width:${returned ? Math.max((100 * returned) / maxValue, 2) : 0}%"></span>
+        </div>
+        <div class="grouped-values">
+          <span>${formatNumber(assigned)}</span>
+          <span>${formatNumber(returned)}</span>
+        </div>
       </div>
     `;
   }).join("");
@@ -214,8 +265,8 @@ function renderTimeline(monthlyMetrics) {
 function renderLineChart(monthlyMetrics) {
   const container = document.getElementById("completionLineChart");
   const width = 720;
-  const height = 300;
-  const margin = { top: 24, right: 34, bottom: 48, left: 50 };
+  const height = 260;
+  const margin = { top: 20, right: 34, bottom: 44, left: 50 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
@@ -253,45 +304,24 @@ function renderLineChart(monthlyMetrics) {
   `;
 }
 
-function renderReconciliation(latestSummary) {
-  const comparison = latestSummary.powerbi_comparison || {};
-  const cards = [
-    ["Power BI assigned", comparison.dashboard_assigned_count],
-    ["URA-owned mapped assigned", comparison.sql_export_assigned_count],
-    ["Power BI returned", comparison.dashboard_returned_count],
-    ["URA-owned returned", comparison.sql_export_returned_count],
-    ["Scope difference", comparison.assigned_difference],
-    ["Returned difference", comparison.returned_difference]
-  ];
-  document.getElementById("reconcileGrid").innerHTML = cards.map(([label, value]) => `
-    <div class="reconcile-card">
-      <span>${escapeHtml(label)}</span>
-      <strong>${formatNumber(value)}</strong>
-    </div>
-  `).join("");
-}
-
 async function loadData() {
-  const [summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics] = await Promise.all([
-    fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
+  const [monthlyMetrics, currentMetrics] = await Promise.all([
     fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
     loadCurrentArcgisMetrics()
   ]);
-  return { summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics };
+  return { monthlyMetrics, currentMetrics };
 }
 
 async function main() {
-  const { summary, monthlyMetrics, contractorRows, latestSummary, currentMetrics } = await loadData();
-  renderKpis(summary, monthlyMetrics, latestSummary, currentMetrics);
-  renderContractorOptions(contractorRows, summary.latest_month);
-  renderContractorBars(contractorRows, summary.latest_month);
+  const { monthlyMetrics, currentMetrics } = await loadData();
+  const contractorRows = powerBiContractorRows(currentMetrics);
+  renderPowerBiReference(currentMetrics);
+  renderContractorOptions(contractorRows);
+  renderContractorGroupedChart(contractorRows);
   renderTimeline(monthlyMetrics);
-  renderReconciliation(latestSummary);
 
   document.getElementById("contractorSelect").addEventListener("change", (event) => {
-    renderContractorBars(contractorRows, summary.latest_month, event.target.value);
+    renderContractorGroupedChart(contractorRows, event.target.value);
   });
 }
 

@@ -11,6 +11,8 @@ const EPP_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
 const SURVEY_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
+const COUNCIL_DISTRICT_LAYER_URL =
+  "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
@@ -58,6 +60,7 @@ const state = {
   datasets: null,
   view: null,
   layers: {},
+  boundaryLayers: {},
   contractorFilter: "all",
   districtFilter: "all",
   colorMode: "status",
@@ -545,6 +548,14 @@ function setParcelDetail(props) {
   document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
 }
 
+function updateDistrictHighlight() {
+  if (!state.boundaryLayers.councilHighlight) return;
+  state.boundaryLayers.councilHighlight.definitionExpression =
+    state.dataView === "current" && state.districtFilter !== "all"
+      ? `DIST_ID = ${Number(state.districtFilter)}`
+      : "1=0";
+}
+
 function currentZoomWhere({ contractor = state.contractorFilter, district = state.districtFilter, neighborhood = null } = {}) {
   const clauses = [CURRENT_WHERE];
   if (district && district !== "all") clauses.push(`council_district = ${sqlValue(district)}`);
@@ -625,6 +636,7 @@ async function setDistrictFilter(district, { zoom = true } = {}) {
   if (layer) {
     layer.definitionExpression = whereForFilter();
   }
+  updateDistrictHighlight();
   renderAll();
   if (zoom && state.dataView === "current") await zoomToDistrict(state.districtFilter);
 }
@@ -687,6 +699,7 @@ async function setDataView(mode) {
     layer.definitionExpression = whereForFilter(key);
     if (key === state.dataView) layer.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
   });
+  updateDistrictHighlight();
   renderAll();
   const layer = activeLayer();
   if (state.view && layer?.fullExtent) {
@@ -705,6 +718,7 @@ function setMonthFilter(month) {
   if (layer) {
     layer.definitionExpression = whereForFilter();
   }
+  updateDistrictHighlight();
   renderAll();
   document.getElementById("parcelDetail").textContent =
     "Select a parcel to review contractor, status, ownership, and survey period.";
@@ -921,9 +935,53 @@ async function initMap() {
     popupEnabled: false
   });
 
+  const councilLayer = new FeatureLayer({
+    url: COUNCIL_DISTRICT_LAYER_URL,
+    title: "Council Districts",
+    opacity: 1,
+    renderer: {
+      type: "simple",
+      symbol: {
+        type: "simple-fill",
+        color: [240, 194, 75, 0.03],
+        outline: { color: [124, 86, 8, 0.82], width: 1.4 }
+      }
+    },
+    labelingInfo: [
+      {
+        symbol: {
+          type: "text",
+          color: [78, 55, 7, 0.95],
+          haloColor: [255, 255, 255, 0.85],
+          haloSize: 1.2,
+          font: { family: "Inter", size: 11, weight: "bold" }
+        },
+        labelExpressionInfo: { expression: "'D' + Text($feature.DIST_ID)" },
+        minScale: 120000
+      }
+    ],
+    popupEnabled: false
+  });
+
+  const councilHighlightLayer = new FeatureLayer({
+    url: COUNCIL_DISTRICT_LAYER_URL,
+    title: "Selected Council District",
+    definitionExpression: state.districtFilter === "all" ? "1=0" : `DIST_ID = ${Number(state.districtFilter)}`,
+    renderer: {
+      type: "simple",
+      symbol: {
+        type: "simple-fill",
+        color: [240, 194, 75, 0.12],
+        outline: { color: [0, 108, 159, 0.95], width: 2.6 }
+      }
+    },
+    popupEnabled: false
+  });
+  state.boundaryLayers.councilHighlight = councilHighlightLayer;
+
   const map = new Map({
     basemap: "topo-vector",
-    layers: [neighborhoodLayer, historyLayer, currentLayer]
+    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyLayer, currentLayer]
   });
 
   const view = new MapView({

@@ -19,96 +19,137 @@
         <a href="../monitoring/">Map Monitor</a>
         <a class="is-active" href="../kpi/">KPI Dashboard</a>
       </nav>
-      <div class="freshness" id="freshnessNote">Loading export status...</div>
+      <div class="freshness" id="freshnessNote">Loading report status...</div>
     </header>
 
     <main class="kpi-shell">
-      <section class="kpi-grid" aria-label="Key performance indicators">
-        <article class="metric-card primary">
-          <span>Current active parcels</span>
-          <strong id="activeAssignedKpi">--</strong>
-          <small id="activeAssignedNote">Current URA-owned parcels</small>
-        </article>
-        <article class="metric-card primary">
-          <span>Current request only</span>
-          <strong id="returnedKpi">--</strong>
-          <small>Separated from compliance</small>
-        </article>
-        <article class="metric-card warning">
-          <span>Latest survey completion</span>
-          <strong id="completionKpi">--</strong>
-          <small id="completionDelta">Latest vs prior month</small>
-        </article>
-        <article class="metric-card">
-          <span>Open assignments</span>
-          <strong id="openKpi">--</strong>
-          <small>Active assigned, not returned</small>
-        </article>
-        <article class="metric-card">
-          <span>Current records</span>
-          <strong id="mappedKpi">--</strong>
-          <small>Current URA-owned LandCare</small>
-        </article>
-        <article class="metric-card">
-          <span>YTD spend reference</span>
-          <strong id="spendKpi">--</strong>
-          <small id="spendNote">Power BI captured reference</small>
-        </article>
+      <nav class="report-tabs" aria-label="Power BI report sections">
+        <button class="is-active" type="button">Landing Page</button>
+        <button type="button" disabled>Land Care Budget</button>
+        <button type="button" disabled>Check Request History</button>
+        <button type="button" disabled>Survey Submission Rate</button>
+        <button type="button" disabled>Parcel Area Distribution</button>
+        <button type="button" disabled>Parcel Details</button>
+        <button type="button" disabled>Maintenance Expenses</button>
+      </nav>
+
+      <section class="report-context" aria-label="Report context">
+        <div>
+          <span class="eyebrow">Select Year And Quarter</span>
+          <strong id="periodKpi">Current</strong>
+        </div>
+        <div>
+          <span class="eyebrow">Power BI Reference</span>
+          <strong id="reportUpdatedKpi">Data updated 6/24/26</strong>
+        </div>
+        <p id="liveUniverseNote">Loading current ArcGIS universe...</p>
       </section>
 
-      <section class="dashboard-grid">
-        <article class="panel performance-panel">
+      <section class="powerbi-grid" aria-label="Power BI landing metrics">
+        <article class="panel powerbi-panel budget-panel">
           <div class="panel-head">
             <div>
-              <span class="eyebrow">Performance</span>
-              <h1>Contractor Completion</h1>
+              <span class="eyebrow">Budget</span>
+              <h1>Land Care Budget for the Current Year</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid three-up">
+            <div class="reference-card">
+              <span>Projected Yearly Limit</span>
+              <strong id="yearlyLimitKpi">--</strong>
+            </div>
+            <div class="reference-card">
+              <span>Total Amount Spent</span>
+              <strong id="totalSpentKpi">--</strong>
+            </div>
+            <div class="reference-card">
+              <span>Quarterly Amount Spent</span>
+              <strong id="quarterlySpentKpi">--</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel powerbi-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Assignments</span>
+              <h1>Quarterly Parcel Assignments</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid two-up">
+            <div class="reference-card primary">
+              <span>Distinct Parcels Assigned</span>
+              <strong id="assignedKpi">--</strong>
+            </div>
+            <div class="reference-card primary">
+              <span>Total Surveys Returned</span>
+              <strong id="returnedKpi">--</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel powerbi-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Ownership</span>
+              <h1>Quarterly Parcel Ownership</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid two-up">
+            <div class="reference-card">
+              <span>PLB Owned Parcels</span>
+              <strong id="plbOwnedKpi">--</strong>
+            </div>
+            <div class="reference-card">
+              <span>URA Owned Parcels</span>
+              <strong id="uraOwnedKpi">--</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel powerbi-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Land Area</span>
+              <h1>Quarterly Budget Split by Land Area</h1>
+            </div>
+          </div>
+          <div class="reference-card-grid two-up">
+            <div class="reference-card">
+              <span>PLB Share</span>
+              <strong id="plbShareKpi">--</strong>
+            </div>
+            <div class="reference-card">
+              <span>URA Share</span>
+              <strong id="uraShareKpi">--</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel powerbi-panel contractor-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">Contractor Comparison</span>
+              <h1>Parcels Assigned vs Surveys Returned</h1>
             </div>
             <select id="contractorSelect" aria-label="Contractor filter">
               <option value="all">All contractors</option>
             </select>
           </div>
-          <div class="bar-list" id="contractorBars"></div>
+          <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
         </article>
 
-        <article class="panel">
+        <article class="panel powerbi-panel trend-panel">
           <div class="panel-head">
             <div>
-              <span class="eyebrow">Timeline</span>
+              <span class="eyebrow">Survey Trend</span>
               <h1>Monthly Completion Rate</h1>
             </div>
           </div>
-          <div class="line-chart" id="completionLineChart" aria-label="Monthly completion line chart"></div>
+          <div class="line-chart compact" id="completionLineChart" aria-label="Monthly completion line chart"></div>
           <div class="timeline-list" id="timelineBars"></div>
         </article>
       </section>
-
-      <section class="dashboard-grid lower">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Metric Integrity</span>
-              <h1>Dashboard Reconciliation</h1>
-            </div>
-          </div>
-          <div class="reconcile-grid" id="reconcileGrid"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Automation</span>
-              <h1>Daily Survey Completion Ingestion</h1>
-            </div>
-          </div>
-          <div class="pipeline-list">
-            <div><strong>1</strong><span>Read latest survey completion output daily.</span></div>
-            <div><strong>2</strong><span>Normalize parcel, period, contractor, status, timestamp, and evidence fields.</span></div>
-            <div><strong>3</strong><span>Validate duplicate parcels, missing assignments, and stale survey periods.</span></div>
-            <div><strong>4</strong><span>Publish one reporting contract for this web app and Power BI refresh.</span></div>
-          </div>
-        </article>
-      </section>
-
     </main>
 
     <script type="module" src="../landcare/kpi.js"></script>
