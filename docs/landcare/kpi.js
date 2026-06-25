@@ -130,19 +130,30 @@ function aggregateCurrentRecords(records) {
   const requestOnlyKeys = new Set();
   const contractorParcels = {};
   const contractorAcres = {};
-  let totalAcres = 0;
+  const parcelArea = new Map();
 
   for (const record of records) {
     if (!record.parcelKey) continue;
     parcelKeys.add(record.parcelKey);
-    totalAcres += Number(record.acres || 0);
+    if (!parcelArea.has(record.parcelKey)) {
+      parcelArea.set(record.parcelKey, {
+        contractor: record.contractor,
+        acres: Number(record.acres || 0)
+      });
+    }
     if (record.level === "Active") activeKeys.add(record.parcelKey);
     if (record.level === "Request Only") requestOnlyKeys.add(record.parcelKey);
     if (!record.contractor) continue;
     contractorParcels[record.contractor] ||= new Set();
     contractorParcels[record.contractor].add(record.parcelKey);
-    contractorAcres[record.contractor] = (contractorAcres[record.contractor] || 0) + Number(record.acres || 0);
   }
+
+  for (const area of parcelArea.values()) {
+    const contractor = area.contractor || "Unassigned";
+    contractorAcres[contractor] = (contractorAcres[contractor] || 0) + area.acres;
+  }
+
+  const totalAcres = [...parcelArea.values()].reduce((sum, area) => sum + area.acres, 0);
 
   const contractorRows = Object.keys(contractorParcels)
     .map((contractor) => ({

@@ -82,6 +82,10 @@ function pct(numerator, denominator) {
   return denominator ? `${((100 * numerator) / denominator).toFixed(1)}%` : "0.0%";
 }
 
+function formatAcres(value) {
+  return `${Number(value || 0).toFixed(2)} ac`;
+}
+
 function slug(value) {
   return String(value || "all")
     .toLowerCase()
@@ -205,6 +209,8 @@ function currentMaintenanceLevel(tags) {
 }
 
 function normalizeCurrentAttributes(attrs) {
+  const parcelSqft = Number(attrs.parcel_sqft || 0);
+  const acreage = Number(attrs.par_calcacreag || 0);
   const maintenanceLevel = currentMaintenanceLevel(attrs.tags);
   const parcelKey = attrs.parcel_number || attrs.property_id || `EPP-${attrs.OBJECTID}`;
   return {
@@ -226,9 +232,10 @@ function normalizeCurrentAttributes(attrs) {
     neighborhood: attrs.neighborhood,
     project_name: attrs.project_name,
     property_class: attrs.property_class,
-    acreage: attrs.par_calcacreag,
+    acreage,
     zoning: attrs.zoned_as,
-    parcel_sqft: attrs.parcel_sqft,
+    parcel_sqft: parcelSqft,
+    area_source: acreage ? "ArcGIS par_calcacreag" : "ArcGIS parcel_sqft fallback",
     tags: attrs.tags,
     mod_dt: dateFromMillis(attrs.mod_dt),
     source_layer: "gisdb_gis_epp_parcels_full"
@@ -260,6 +267,23 @@ function uniqueCount(features, predicate = () => true) {
       .map((feature) => feature.properties.parcel_key)
       .filter(Boolean)
   ).size;
+}
+
+function uniqueParcelRows(features) {
+  const rows = new globalThis.Map();
+  for (const feature of features) {
+    const props = feature.properties || {};
+    if (!props.parcel_key) continue;
+    if (!rows.has(props.parcel_key)) rows.set(props.parcel_key, props);
+  }
+  return [...rows.values()];
+}
+
+function totalAcres(features) {
+  return uniqueParcelRows(features).reduce((sum, props) => {
+    const acres = Number(props.acreage || 0) || (Number(props.parcel_sqft || 0) ? Number(props.parcel_sqft) / 43560 : 0);
+    return sum + acres;
+  }, 0);
 }
 
 function fillSymbol(color, outline = "#ffffff") {
@@ -610,7 +634,8 @@ function parcelDetail(props) {
       Inventory: ${escapeHtml(props.inventory_type || "Unknown")}<br>
       Property class: ${escapeHtml(props.property_class || "Unknown")}<br>
       Zoning: ${escapeHtml(props.zoning || "Unknown")}<br>
-      Area: ${formatNumber(props.parcel_sqft)} sq ft${props.acreage ? ` / ${Number(props.acreage).toFixed(2)} ac` : ""}<br>
+      Area: ${formatAcres(props.acreage || (props.parcel_sqft ? props.parcel_sqft / 43560 : 0))} <span class="muted">(${escapeHtml(props.area_source || "ArcGIS area field")})</span><br>
+      Parcel sq ft: ${formatNumber(props.parcel_sqft)}<br>
       Tags: ${escapeHtml(props.tags || "None")}<br>
       Modified: ${escapeHtml(props.mod_dt || "Unknown")}
     `;
@@ -685,6 +710,28 @@ async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}
   await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
 }
 
+async function zoomToSelectedExtent({ duration = 650 } = {}) {
+  if (!state.view) return;
+  const contractorSelected = state.contractorFilter !== "all";
+  const districtSelected = state.districtFilter !== "all";
+  const expand = contractorSelected ? 1.22 : districtSelected ? 1.14 : 1.08;
+  if (state.dataView === "current") {
+    if (!contractorSelected && !districtSelected) {
+      await zoomToDefaultCurrent();
+      return;
+    }
+    await zoomToCurrentWhere(
+      currentZoomWhere({
+        contractor: state.contractorFilter,
+        district: state.districtFilter
+      }),
+      { expand, duration }
+    );
+    return;
+  }
+  await zoomToActiveFilteredExtent({ expand, duration });
+}
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -730,15 +777,11 @@ function dominantNeighborhoodForContractor(name) {
 
 async function zoomToContractorCluster(name) {
   if (!name || name === "all") {
-    await zoomToDistrict();
+    await zoomToSelectedExtent();
     return;
   }
-  const neighborhood = dominantNeighborhoodForContractor(name);
-  state.mapFocusLabel = neighborhood ? `largest cluster: ${neighborhood}` : "";
-  await zoomToCurrentWhere(
-    currentZoomWhere({ contractor: name, district: state.districtFilter, neighborhood }),
-    { expand: 1.28 }
-  );
+  state.mapFocusLabel = "contractor selection";
+  await zoomToSelectedExtent();
 }
 
 function setColorMode(mode) {
@@ -764,7 +807,7 @@ async function setDistrictFilter(district, { zoom = true } = {}) {
   }
   updateDistrictHighlight();
   renderAll();
-  if (zoom && state.dataView === "current") await zoomToDistrict(state.districtFilter);
+  if (zoom) await zoomToSelectedExtent();
 }
 
 async function setContractorFilter(name, { zoom = false } = {}) {
@@ -781,11 +824,7 @@ async function setContractorFilter(name, { zoom = false } = {}) {
   renderActionFocus();
   renderFreshness();
   if (zoom) {
-    if (state.dataView === "current") {
-      await zoomToContractorCluster(state.contractorFilter);
-    } else {
-      await zoomToActiveFilteredExtent({ expand: state.contractorFilter === "all" ? 1.08 : 1.22 });
-    }
+    await zoomToSelectedExtent();
     renderFreshness();
   }
 }
@@ -832,13 +871,10 @@ async function setDataView(mode) {
   });
   updateDistrictHighlight();
   renderAll();
-  const layer = activeLayer();
-  if (state.view && layer?.fullExtent) {
-    await state.view.goTo(layer.fullExtent.expand(1.08), { duration: 450 }).catch(() => {});
-  }
+  await zoomToSelectedExtent({ duration: 450 });
 }
 
-function setMonthFilter(month) {
+async function setMonthFilter(month) {
   state.dataView = "history";
   setActiveDataset();
   state.selectedMonth = month || state.summary.latest_month;
@@ -853,6 +889,7 @@ function setMonthFilter(month) {
   renderAll();
   document.getElementById("parcelDetail").textContent =
     "Select a parcel to review contractor, status, ownership, and survey period.";
+  await zoomToSelectedExtent({ duration: 450 });
 }
 
 function wireControls() {
@@ -884,7 +921,7 @@ function exportStats(features) {
   const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
   const assigned = uniqueCount(features);
   const neighborhoods = new Set(features.map((feature) => feature.properties.neighborhood).filter(Boolean)).size;
-  return { active, returned, requestOnly, open, assigned, neighborhoods, completionRate: pct(returned, active) };
+  return { active, returned, requestOnly, open, assigned, neighborhoods, acres: totalAcres(features), completionRate: pct(returned, active) };
 }
 
 function contractorOpenRank() {
@@ -909,6 +946,44 @@ function printLegendHtml() {
 
 function statLine(label, value) {
   return `<div class="print-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function buildPreparingPrintHtml() {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Preparing map export</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f8fb; color: #111820; font-family: Manrope, Segoe UI, Arial, sans-serif; }
+      .loader { width: min(420px, calc(100vw - 40px)); border: 1px solid #cfe0e9; background: #fff; padding: 22px; box-shadow: 0 16px 40px rgba(0, 51, 79, .10); }
+      .eyebrow { color: #0071a8; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      h1 { margin: 8px 0 10px; color: #00334f; font-size: 21px; line-height: 1.15; }
+      p { margin: 0 0 18px; color: #586872; font-size: 13px; line-height: 1.45; }
+      .track { height: 9px; overflow: hidden; background: #e8eff4; border: 1px solid #d4e2ea; }
+      .bar { width: 8%; height: 100%; background: #0098d3; transition: width .35s ease; }
+      .step { margin-top: 10px; color: #00334f; font-size: 12px; font-weight: 800; }
+    </style>
+  </head>
+  <body>
+    <main class="loader">
+      <span class="eyebrow">Export PDF</span>
+      <h1>Preparing map export</h1>
+      <p>The selected parcels are being zoomed, rendered, and captured for the print layout.</p>
+      <div class="track" aria-label="Export progress"><div class="bar" id="progressBar"></div></div>
+      <div class="step" id="progressStep">Starting export...</div>
+    </main>
+  </body>
+</html>`;
+}
+
+function updatePrintProgress(printWindow, percent, label) {
+  const doc = printWindow?.document;
+  if (!doc) return;
+  const bar = doc.getElementById("progressBar");
+  const step = doc.getElementById("progressStep");
+  if (bar) bar.style.width = `${Math.max(8, Math.min(100, percent))}%`;
+  if (step) step.textContent = label;
 }
 
 function buildPrintHtml(mapImage, stats, screenshotScale) {
@@ -981,6 +1056,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
             ${statLine("Surveys returned", formatNumber(stats.returned))}
             ${statLine("Open active", formatNumber(stats.open))}
             ${statLine("Request only", formatNumber(stats.requestOnly))}
+            ${stats.acres ? statLine("Selected acres", formatAcres(stats.acres)) : ""}
             ${statLine("Completion rate", stats.completionRate)}
             ${statLine("Neighborhoods", formatNumber(stats.neighborhoods))}
             ${rank ? statLine("Open parcel rank", `#${rank}`) : ""}
@@ -1027,16 +1103,20 @@ async function exportPrintPdf() {
   try {
     if (!printWindow) throw new Error("Popup blocked. Allow popups to open the print layout.");
     printWindow.document.open();
-    printWindow.document.write(`<!doctype html><title>Preparing map export</title><body style="font-family:system-ui,sans-serif;padding:24px">Preparing map export...</body>`);
+    printWindow.document.write(buildPreparingPrintHtml());
     printWindow.document.close();
-    await zoomToActiveFilteredExtent({ expand: state.contractorFilter === "all" ? 1.08 : 1.22, duration: 350 });
+    updatePrintProgress(printWindow, 18, "Zooming to selected parcels...");
+    await zoomToSelectedExtent({ duration: 350 });
+    updatePrintProgress(printWindow, 42, "Waiting for map layers to finish drawing...");
     await waitForMapRenderReady();
+    updatePrintProgress(printWindow, 68, "Capturing high-resolution map image...");
     const screenshotScale = state.view.scale;
     const screenshot = await state.view.takeScreenshot({
       width: 2200,
       height: 1450,
       format: "png"
     });
+    updatePrintProgress(printWindow, 86, "Building print layout...");
     const stats = exportStats(filteredFeatures());
     printWindow.document.open();
     printWindow.document.write(buildPrintHtml(screenshot.dataUrl, stats, screenshotScale));
