@@ -61,6 +61,7 @@ const state = {
   summary: null,
   geojson: null,
   datasets: null,
+  finance: null,
   view: null,
   layers: {},
   boundaryLayers: {},
@@ -84,6 +85,15 @@ function pct(numerator, denominator) {
 
 function formatAcres(value) {
   return `${Number(value || 0).toFixed(2)} ac`;
+}
+
+function formatMoney(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
 }
 
 function slug(value) {
@@ -123,6 +133,10 @@ function shortContractor(name) {
     .replace("Ervin Home Beautification", "Ervin Home")
     .replace("Operation Better Block", "Op. Better Block")
     .replace("One Call Handles It All", "One Call");
+}
+
+function financeContractorName(name) {
+  return String(name || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
 }
 
 function contractorItems() {
@@ -950,6 +964,24 @@ function exportStats(features) {
   return { active, returned, requestOnly, open, assigned, neighborhoods, acres: totalAcres(features), completionRate: pct(returned, active) };
 }
 
+function exportBudgetStats() {
+  const finance = state.finance || {};
+  const summary = finance.summary || {};
+  const rows = finance.current_contracts || [];
+  if (state.contractorFilter === "all") {
+    return {
+      monthlyRunRate: Number(summary.monthly_invoice_total || 0),
+      annualRunRate: Number(summary.annual_invoice_run_rate || 0)
+    };
+  }
+  const selected = rows.find((row) => financeContractorName(row.organization) === state.contractorFilter);
+  if (!selected) return null;
+  return {
+    monthlyRunRate: Number(selected.monthly_invoice_amount || 0),
+    annualRunRate: Number(selected.annual_invoice_run_rate || selected.twelve_month_contract_amount || 0)
+  };
+}
+
 function contractorOpenRank() {
   if (state.contractorFilter === "all") return null;
   const rows = contractorPerformanceRows(districtFilteredFeatures())
@@ -1018,6 +1050,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
   const contractor = state.contractorFilter === "all" ? "All Contractors" : shortContractor(state.contractorFilter);
   const district = state.districtFilter === "all" ? "All Districts" : `Council District ${state.districtFilter}`;
   const month = state.dataView === "current" ? "Current portfolio" : state.selectedMonth;
+  const budget = exportBudgetStats();
   const rank = contractorOpenRank();
   const action = state.contractorFilter === "all"
     ? `Review ${formatNumber(stats.open)} open active parcels before monthly close.`
@@ -1086,6 +1119,8 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
             ${statLine("Open active", formatNumber(stats.open))}
             ${statLine("Request only", formatNumber(stats.requestOnly))}
             ${stats.acres ? statLine("Selected acres", formatAcres(stats.acres)) : ""}
+            ${budget ? statLine("Monthly budget spend", formatMoney(budget.monthlyRunRate)) : ""}
+            ${budget ? statLine("Annual budget plan", formatMoney(budget.annualRunRate)) : ""}
             ${statLine("Completion rate", stats.completionRate)}
             ${statLine("Neighborhoods", formatNumber(stats.neighborhoods))}
             ${rank ? statLine("Open parcel rank", `#${rank}`) : ""}
@@ -1199,15 +1234,17 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
 }
 
 async function loadData() {
-  const [historySummary, historyGeojson, currentDataset] = await Promise.all([
+  const [historySummary, historyGeojson, currentDataset, financeSummary] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-    loadCurrentArcgisDataset()
+    loadCurrentArcgisDataset(),
+    fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json())
   ]);
   state.datasets = {
     history: { summary: historySummary, geojson: alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) },
     current: currentDataset
   };
+  state.finance = financeSummary;
   state.selectedMonth = historySummary.latest_month;
   setActiveDataset();
 }
