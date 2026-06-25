@@ -434,7 +434,7 @@ function renderKpis() {
   if (state.dataView === "current") {
     const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
     const contractors = new Set(features.map((feature) => feature.properties.organization).filter(Boolean)).size;
-    document.getElementById("latestMonthLabel").textContent = "Current URA-owned LandCare parcels";
+    document.getElementById("latestMonthLabel").textContent = "Current portfolio";
     document.getElementById("assignedKpiLabel").textContent = "Parcels";
     document.getElementById("returnedKpiLabel").textContent = "Active";
     document.getElementById("completionKpiLabel").textContent = "Request Only";
@@ -445,7 +445,7 @@ function renderKpis() {
     document.getElementById("openKpi").textContent = formatNumber(contractors);
     return;
   }
-  document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} URA-owned survey month`;
+  document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} monthly survey status`;
   document.getElementById("assignedKpiLabel").textContent = "Assigned";
   document.getElementById("returnedKpiLabel").textContent = "Returned";
   document.getElementById("completionKpiLabel").textContent = "Completion";
@@ -638,10 +638,10 @@ function renderFreshness() {
     return;
   }
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(currentMonthFeatures().length)} current LandCare parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
+    `${formatNumber(currentMonthFeatures().length)} monthly survey parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
   document.getElementById("mapCallout").innerHTML = `
     <strong>URA-owned ${state.selectedMonth} LandCare parcels</strong>
-    <span>Filtered to parcels still tagged LandCare in the live ArcGIS EPP layer; colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
+    <span>Monthly survey subset for Power BI-style completion review; colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
   `;
 }
 
