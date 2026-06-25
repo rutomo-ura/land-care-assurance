@@ -93,6 +93,10 @@ function slug(value) {
     .replace(/^-+|-+$/g, "") || "all";
 }
 
+function parcelDigits(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -216,6 +220,7 @@ function normalizeCurrentAttributes(attrs) {
   return {
     objectid: attrs.OBJECTID,
     parcel_key: parcelKey,
+    parcel_digits: parcelDigits(parcelKey),
     parcel_number: attrs.parcel_number,
     property_id: attrs.property_id,
     period_month: "Current",
@@ -242,10 +247,31 @@ function normalizeCurrentAttributes(attrs) {
   };
 }
 
+function esriPolygonToGeoJson(geometry) {
+  const rings = geometry?.rings;
+  if (!Array.isArray(rings) || !rings.length) return null;
+  return {
+    type: "Polygon",
+    coordinates: rings.map((ring) => ring.map((point) => [point[0], point[1]]))
+  };
+}
+
 function currentMonthFeatures() {
   const features = state.geojson?.features || [];
   if (state.dataView === "current") return features;
-  return features.filter((feature) => feature.properties.period_month === state.selectedMonth);
+  const currentKeys = currentLandCareParcelDigits();
+  return features.filter((feature) => (
+    feature.properties.period_month === state.selectedMonth &&
+    (!currentKeys.size || currentKeys.has(parcelDigits(feature.properties.parcel_key)))
+  ));
+}
+
+function currentLandCareParcelDigits() {
+  return new Set(
+    (state.datasets?.current?.geojson?.features || [])
+      .map((feature) => feature.properties.parcel_digits || parcelDigits(feature.properties.parcel_key))
+      .filter(Boolean)
+  );
 }
 
 function districtFilteredFeatures() {
@@ -612,10 +638,10 @@ function renderFreshness() {
     return;
   }
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(currentMonthFeatures().length)} parcels - ${state.selectedMonth} - ${formatNumber(state.summary.all_month_feature_count || state.geojson.features.length)} records total`;
+    `${formatNumber(currentMonthFeatures().length)} current LandCare parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
   document.getElementById("mapCallout").innerHTML = `
     <strong>URA-owned ${state.selectedMonth} LandCare parcels</strong>
-    <span>Colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}; current contractor filter: ${state.contractorFilter === "all" ? "all" : escapeHtml(shortContractor(state.contractorFilter))}.</span>
+    <span>Filtered to parcels still tagged LandCare in the live ArcGIS EPP layer; colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
   `;
 }
 
@@ -1095,7 +1121,6 @@ async function exportPrintPdf() {
   const button = document.getElementById("exportPdfButton");
   const status = document.getElementById("exportStatus");
   const priorLabel = button.textContent;
-  const priorViewpoint = state.view?.viewpoint?.clone();
   button.disabled = true;
   button.textContent = "Preparing PDF...";
   status.textContent = "";
@@ -1105,8 +1130,7 @@ async function exportPrintPdf() {
     printWindow.document.open();
     printWindow.document.write(buildPreparingPrintHtml());
     printWindow.document.close();
-    updatePrintProgress(printWindow, 18, "Zooming to selected parcels...");
-    await zoomToSelectedExtent({ duration: 350 });
+    updatePrintProgress(printWindow, 18, "Using current map view...");
     updatePrintProgress(printWindow, 42, "Waiting for map layers to finish drawing...");
     await waitForMapRenderReady();
     updatePrintProgress(printWindow, 68, "Capturing high-resolution map image...");
@@ -1126,10 +1150,49 @@ async function exportPrintPdf() {
     console.error(error);
     status.textContent = "PDF export failed. Try again after the map finishes loading.";
   } finally {
-    if (priorViewpoint) await state.view.goTo(priorViewpoint, { duration: 250 }).catch(() => {});
     button.disabled = false;
     button.textContent = priorLabel;
   }
+}
+
+function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
+  const currentByDigits = new globalThis.Map();
+  for (const feature of currentDataset?.geojson?.features || []) {
+    const key = feature.properties.parcel_digits || parcelDigits(feature.properties.parcel_key);
+    if (!key || !feature.geometry || currentByDigits.has(key)) continue;
+    currentByDigits.set(key, feature);
+  }
+  if (!currentByDigits.size) return historyGeojson;
+  const features = [];
+  for (const feature of historyGeojson.features || []) {
+    const currentFeature = currentByDigits.get(parcelDigits(feature.properties?.parcel_key));
+    if (!currentFeature) continue;
+    features.push({
+      ...feature,
+      geometry: currentFeature.geometry,
+      properties: {
+        ...feature.properties,
+        parcel_key: currentFeature.properties.parcel_key || feature.properties.parcel_key,
+        parcel_digits: currentFeature.properties.parcel_digits,
+        parcel_number: currentFeature.properties.parcel_number,
+        current_status: currentFeature.properties.current_status,
+        property_class: currentFeature.properties.property_class,
+        project_name: currentFeature.properties.project_name,
+        tags: currentFeature.properties.tags,
+        geometry_source: "ArcGIS current LandCare parcel geometry"
+      }
+    });
+  }
+  return {
+    ...historyGeojson,
+    metadata: {
+      ...(historyGeojson.metadata || {}),
+      current_landcare_filter: "Monthly survey status aligned at runtime to live ArcGIS LandCare parcel geometries.",
+      source_feature_count: historyGeojson.features?.length || 0,
+      eligible_feature_count: features.length
+    },
+    features
+  };
 }
 
 async function loadData() {
@@ -1139,7 +1202,7 @@ async function loadData() {
     loadCurrentArcgisDataset()
   ]);
   state.datasets = {
-    history: { summary: historySummary, geojson: historyGeojson },
+    history: { summary: historySummary, geojson: alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) },
     current: currentDataset
   };
   state.selectedMonth = historySummary.latest_month;
@@ -1162,14 +1225,15 @@ async function loadCurrentArcgisDataset() {
       f: "json",
       where: CURRENT_WHERE,
       outFields: CURRENT_OUT_FIELDS,
-      returnGeometry: "false",
+      returnGeometry: "true",
+      outSR: "4326",
       resultRecordCount: "2000",
       orderByFields: "property_maint_mgr_name ASC, parcel_number ASC"
     })
   ]);
   const features = (result.features || []).map((feature) => ({
     type: "Feature",
-    geometry: null,
+    geometry: esriPolygonToGeoJson(feature.geometry),
     properties: normalizeCurrentAttributes(feature.attributes || {})
   }));
   return summarizeCurrentDataset(features, {
@@ -1310,8 +1374,12 @@ function buildCartoLightBasemap() {
 }
 
 async function initMap() {
+  const historyUrl = URL.createObjectURL(new Blob(
+    [JSON.stringify(state.datasets.history.geojson)],
+    { type: "application/geo+json" }
+  ));
   const historyLayer = buildHistoryLayer({
-    url: `${DATA_ROOT}/all_months.geojson`,
+    url: historyUrl,
     title: "LandCare URA-Owned Parcel Months",
     mode: "history",
     visible: state.dataView === "history"
