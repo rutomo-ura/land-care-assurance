@@ -68,7 +68,7 @@ const state = {
   districtFilter: "all",
   colorMode: "status",
   selectedMonth: null,
-  dataView: "history",
+  dataView: "current",
   mapFocusLabel: ""
 };
 
