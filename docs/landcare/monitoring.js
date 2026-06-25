@@ -964,7 +964,9 @@ function printLegendHtml() {
     : ["returned", "missing", "request_only"];
   return statuses.map((status) => `
     <div class="print-legend-row">
-      <span style="background:${statusColors[status]}"></span>
+      <svg class="legend-chip" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${statusColors[status]}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
+      </svg>
       <strong>${escapeHtml(statusLabel(status))}</strong>
     </div>
   `).join("");
@@ -1030,7 +1032,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
       @page { size: A3 landscape; margin: 10mm; }
-      * { box-sizing: border-box; }
+      * { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       body { margin: 0; background: #e8eef2; color: #111820; font-family: Manrope, Segoe UI, Arial, sans-serif; }
       .sheet { width: 400mm; height: 277mm; margin: 0 auto; background: #fff; border: 1px solid #b9c9d4; display: grid; grid-template-rows: 27mm 1fr 12mm; }
       header { display: grid; grid-template-columns: 1fr auto; gap: 10mm; align-items: center; padding: 8mm 10mm 5mm; border-bottom: 1px solid #d8e4ea; }
@@ -1053,7 +1055,8 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
       .print-stat strong { color: #111820; font-size: 10pt; }
       .print-legend-row { display: grid; grid-template-columns: 6mm 1fr; gap: 3mm; align-items: center; margin: 3mm 0; font-size: 8pt; }
       .print-legend-row span { width: 6mm; height: 6mm; border: 1px solid rgba(17,24,32,.32); display: inline-block; }
-      .boundary { border-top: 1.4px solid #9a7419; width: 18mm; display: inline-block; vertical-align: middle; margin-right: 3mm; }
+      .legend-chip { width: 6mm; height: 6mm; display: block; }
+      .boundary { width: 18mm; height: 0; border-top: 1.4px solid #9a7419; display: inline-block; vertical-align: middle; margin-right: 3mm; }
       .action { color: #111820; font-size: 9pt; line-height: 1.45; font-weight: 700; }
       footer { display: flex; align-items: center; justify-content: space-between; padding: 0 10mm; color: #586872; font-size: 7.5pt; border-top: 1px solid #d8e4ea; }
       @media print { body { background: #fff; } .sheet { margin: 0; } }
