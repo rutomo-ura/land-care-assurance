@@ -682,6 +682,38 @@ async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}
   await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function waitForViewPredicate(predicate, timeout = 8000) {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const tick = () => {
+      if (predicate() || Date.now() - started > timeout) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
+}
+
+async function waitForMapRenderReady() {
+  if (!state.view) return;
+  await state.view.when();
+  await waitForViewPredicate(() => state.view.stationary && !state.view.updating, 10000);
+  const layer = activeLayer();
+  if (layer) {
+    const layerView = await state.view.whenLayerView(layer).catch(() => null);
+    if (layerView) {
+      await waitForViewPredicate(() => !layerView.updating, 10000);
+    }
+  }
+  await delay(900);
+}
+
 function dominantNeighborhoodForContractor(name) {
   const counts = {};
   const features = districtFilteredFeatures().filter((feature) => feature.properties.organization === name);
@@ -903,7 +935,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
       .brand { color: #0098d3; font-size: 18pt; font-weight: 800; letter-spacing: .02em; }
       main { display: grid; grid-template-columns: 1fr 82mm; gap: 6mm; padding: 6mm 8mm; min-height: 0; }
       .map-frame { position: relative; border: 1px solid #b9c9d4; background: #eef4f7; overflow: hidden; }
-      .map-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .map-frame img { width: 100%; height: 100%; object-fit: contain; display: block; background: #eef4f7; }
       .north { position: absolute; left: 8mm; bottom: 11mm; display: grid; place-items: center; color: #00334f; font-weight: 800; font-size: 18pt; }
       .north::before { content: ""; width: 0; height: 0; border-left: 7mm solid transparent; border-right: 7mm solid transparent; border-bottom: 21mm solid #00334f; display: block; margin-bottom: 1mm; }
       .scale { position: absolute; right: 8mm; bottom: 8mm; min-width: 46mm; color: #111820; font-size: 7pt; font-weight: 800; }
@@ -967,7 +999,14 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
       </footer>
     </section>
     <script>
-      window.addEventListener("load", () => setTimeout(() => window.print(), 450));
+      async function printWhenMapImageIsReady() {
+        const image = document.querySelector(".map-frame img");
+        if (image && image.decode) {
+          await image.decode().catch(() => {});
+        }
+        setTimeout(() => window.print(), 650);
+      }
+      window.addEventListener("load", printWhenMapImageIsReady);
     </script>
   </body>
 </html>`;
@@ -988,11 +1027,11 @@ async function exportPrintPdf() {
     printWindow.document.write(`<!doctype html><title>Preparing map export</title><body style="font-family:system-ui,sans-serif;padding:24px">Preparing map export...</body>`);
     printWindow.document.close();
     await zoomToActiveFilteredExtent({ expand: state.contractorFilter === "all" ? 1.08 : 1.22, duration: 350 });
-    await state.view.when();
+    await waitForMapRenderReady();
     const screenshotScale = state.view.scale;
     const screenshot = await state.view.takeScreenshot({
-      width: 1700,
-      height: 1050,
+      width: 2200,
+      height: 1450,
       format: "png"
     });
     const stats = exportStats(filteredFeatures());
