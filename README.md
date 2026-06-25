@@ -40,6 +40,7 @@ The first phase focuses on work the GIS and analyst team controls:
 - `docs/week-1-prototype-status-2026-06-09.md`: Week 1 prototype status, current stack, data notes, and next steps.
 - `docs/project-scope.md`: scoped project definition for GIS and analyst-controlled work.
 - `docs/modular-work-plan.md`: module-level work plan tied to scripts, tables, dashboard pages, and metrics.
+- `docs/landcare-data-engineering-flow.md`: Mermaid data engineering flow and implementation plan for the monitoring pipeline.
 - `docs/north-star-vision.md`: longer-term vision for a parcel-state assurance system.
 - `docs/concept-prioritization-model.md`: completion-propensity prioritization concept for a later phase.
 - `plan/Kickoff-rizaldy-assignment.md`: 2-week kickoff plan.
