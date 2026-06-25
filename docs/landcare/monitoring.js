@@ -1,7 +1,9 @@
 import Map from "https://js.arcgis.com/4.30/@arcgis/core/Map.js";
 import MapView from "https://js.arcgis.com/4.30/@arcgis/core/views/MapView.js";
+import Basemap from "https://js.arcgis.com/4.30/@arcgis/core/Basemap.js";
 import GeoJSONLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/GeoJSONLayer.js";
 import FeatureLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/FeatureLayer.js";
+import WebTileLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/WebTileLayer.js";
 import Home from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Home.js";
 import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
@@ -14,6 +16,7 @@ const SURVEY_LAYER_URL =
 const COUNCIL_DISTRICT_LAYER_URL =
   "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
+const CARTO_LIGHT_ATTRIBUTION = "© OpenStreetMap contributors © CARTO";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
   "parcel_number",
@@ -262,8 +265,8 @@ function uniqueCount(features, predicate = () => true) {
 function fillSymbol(color, outline = "#ffffff") {
   return {
     type: "simple-fill",
-    color: `${color}bd`,
-    outline: { color: outline, width: 0.65 }
+    color: `${color}cc`,
+    outline: { color: outline, width: 0.75 }
   };
 }
 
@@ -1212,6 +1215,20 @@ function buildCurrentLayer({ visible }) {
   });
 }
 
+function buildCartoLightBasemap() {
+  const baseLayer = new WebTileLayer({
+    urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}.png",
+    subDomains: ["a", "b", "c", "d"],
+    copyright: CARTO_LIGHT_ATTRIBUTION,
+    title: "Carto Light"
+  });
+  return new Basemap({
+    baseLayers: [baseLayer],
+    title: "Carto Light",
+    id: "carto-light"
+  });
+}
+
 async function initMap() {
   const historyLayer = buildHistoryLayer({
     url: `${DATA_ROOT}/all_months.geojson`,
@@ -1227,13 +1244,13 @@ async function initMap() {
   const neighborhoodLayer = new FeatureLayer({
     url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
     title: "City Neighborhoods",
-    opacity: 0.18,
+    opacity: 0.12,
     renderer: {
       type: "simple",
       symbol: {
         type: "simple-fill",
-        color: [0, 152, 211, 0.04],
-        outline: { color: [0, 108, 159, 0.45], width: 0.7 }
+        color: [0, 152, 211, 0.025],
+        outline: { color: [0, 108, 159, 0.32], width: 0.55 }
       }
     },
     popupEnabled: false
@@ -1247,8 +1264,8 @@ async function initMap() {
       type: "simple",
       symbol: {
         type: "simple-fill",
-        color: [240, 194, 75, 0.02],
-        outline: { color: [124, 86, 8, 0.55], width: 0.85 }
+        color: [240, 194, 75, 0.015],
+        outline: { color: [124, 86, 8, 0.42], width: 0.7 }
       }
     },
     labelingInfo: [
@@ -1284,7 +1301,7 @@ async function initMap() {
   state.boundaryLayers.councilHighlight = councilHighlightLayer;
 
   const map = new Map({
-    basemap: "topo-vector",
+    basemap: buildCartoLightBasemap(),
     layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyLayer, currentLayer]
   });
 
