@@ -22,13 +22,6 @@ Copy this extracted folder to the VM, then run PowerShell from the bundle folder
 
 This credential-included bundle defaults to:
 
-```text
-PG_HOST=10.0.101.57
-PG_PORT=5432
-PG_DB=gisdb
-PG_USER=rutomo
-PG_PASSWORD=rutomo_pg2026
-```
 
 Run this to install/update the repo and write the VM-local `.env`:
 
@@ -53,12 +46,6 @@ Fast path, if command history exposure is acceptable:
 ```powershell
 .\install_landcare_daily_refresh.ps1 `
   -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
-  -PgHost 10.0.101.57 `
-  -PgPort 5432 `
-  -PgDb gisdb `
-  -PgUser rutomo `
-  -PgPassword "YOUR_POSTGRES_PASSWORD"
-```
 
 When a password is supplied, the installer writes VM-local credentials to:
 
