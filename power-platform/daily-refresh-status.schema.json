@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer"
+    },
+    "app": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "run_date": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "repo_root": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "commit_before": {
+      "type": "string"
+    },
+    "commit_after": {
+      "type": "string"
+    },
+    "data_path": {
+      "type": "string"
+    },
+    "published_data_changes": {
+      "type": "boolean"
+    },
+    "log_path": {
+      "type": "string"
+    },
+    "failed_stage": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "app",
+    "status",
+    "outcome",
+    "run_date",
+    "started_at",
+    "finished_at",
+    "duration_seconds",
+    "repo_root",
+    "branch",
+    "commit_before",
+    "commit_after",
+    "data_path",
+    "published_data_changes",
+    "log_path",
+    "failed_stage",
+    "message"
+  ]
+}

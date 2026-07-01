@@ -64,6 +64,14 @@ Power Automate alert conditions:
 | `status = success` and `outcome = unchanged` | Info | Record successful daily check; no data publication needed |
 | `status = success` and `outcome = published` | Info | Record successful publication and include `commit_after` |
 
+Build artifacts for the monitor flow are stored under `power-platform/`:
+
+| Artifact | Purpose |
+|---|---|
+| `power-platform/landcare-daily-refresh-monitor.md` | Exact flow build steps, expressions, and alert templates |
+| `power-platform/daily-refresh-status.schema.json` | Parse JSON schema for the VM status artifact |
+| `power-platform/sharepoint-run-history-columns.csv` | Optional SharePoint run-history list columns |
+
 ## Source Ownership Rules
 
 | Question | Primary source | Reason |
