@@ -2,7 +2,8 @@ param(
   [string]$RepoRoot = "C:\srv\land-care-assurance",
   [string]$Python = "$RepoRoot\.venv\Scripts\python.exe",
   [string]$LogRoot = "C:\srv\logs\land-care-assurance",
-  [string]$Branch = "master"
+  [string]$Branch = "master",
+  [string]$StatusPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,9 +13,69 @@ Set-Location -LiteralPath $RepoRoot
 New-Item -ItemType Directory -Force -Path $LogRoot | Out-Null
 $runDate = Get-Date -Format "yyyy-MM-dd"
 $logPath = Join-Path $LogRoot "daily-refresh-$runDate.log"
+$datedStatusPath = Join-Path $LogRoot "daily-refresh-status-$runDate.json"
+if (-not $StatusPath) {
+  $StatusPath = Join-Path $LogRoot "daily-refresh-status.json"
+}
 $tempDir = Join-Path $env:TEMP "landcare-refresh-$runDate"
 $dataPathSpec = "docs/landcare/data"
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+
+$startedAt = Get-Date
+$currentStage = "initializing"
+$outcome = "failed"
+$message = ""
+$commitBefore = ""
+$commitAfter = ""
+$publishedDataChanges = $false
+
+function Get-GitCommit {
+  try {
+    $commit = git rev-parse HEAD 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      return ($commit | Select-Object -First 1)
+    }
+  } catch {
+    return ""
+  }
+  return ""
+}
+
+function Write-RunStatus {
+  param(
+    [Parameter(Mandatory=$true)]
+    [string]$Status,
+    [Parameter(Mandatory=$true)]
+    [string]$Outcome,
+    [string]$Message = "",
+    [string]$FailedStage = ""
+  )
+
+  $finishedAt = Get-Date
+  $statusPayload = [ordered]@{
+    schema_version = 1
+    app = "land-care-assurance"
+    status = $Status
+    outcome = $Outcome
+    run_date = $runDate
+    started_at = $startedAt.ToString("o")
+    finished_at = $finishedAt.ToString("o")
+    duration_seconds = [math]::Round(($finishedAt - $startedAt).TotalSeconds, 3)
+    repo_root = $RepoRoot
+    branch = $Branch
+    commit_before = $commitBefore
+    commit_after = $commitAfter
+    data_path = $dataPathSpec
+    published_data_changes = $publishedDataChanges
+    log_path = $logPath
+    failed_stage = $FailedStage
+    message = $Message
+  }
+
+  $statusJson = $statusPayload | ConvertTo-Json -Depth 4
+  Set-Content -LiteralPath $StatusPath -Value $statusJson -Encoding UTF8
+  Set-Content -LiteralPath $datedStatusPath -Value $statusJson -Encoding UTF8
+}
 
 function Invoke-Checked {
   param(
@@ -24,6 +85,7 @@ function Invoke-Checked {
     [scriptblock]$Command
   )
 
+  $script:currentStage = $Label
   Write-Host "[$(Get-Date -Format o)] Starting: $Label"
   & $Command
   if ($LASTEXITCODE -ne 0) {
@@ -36,6 +98,7 @@ Start-Transcript -Path $logPath -Append | Out-Null
 
 try {
   Write-Host "LandCare daily refresh started at $(Get-Date -Format o)"
+  $commitBefore = Get-GitCommit
 
   if (Test-Path ".env") {
     Get-Content ".env" | ForEach-Object {
@@ -108,7 +171,11 @@ try {
   git diff --cached --quiet -- $dataPathSpec
   if ($LASTEXITCODE -eq 0) {
     Write-Host "No dashboard data changes to publish."
-    exit 0
+    $commitAfter = Get-GitCommit
+    $outcome = "unchanged"
+    $message = "Daily refresh validated successfully; generated dashboard data matched the checked-in data."
+    Write-RunStatus -Status "success" -Outcome $outcome -Message $message
+    return
   }
   if ($LASTEXITCODE -gt 1) {
     throw "git diff failed with exit code $LASTEXITCODE"
@@ -121,6 +188,17 @@ try {
   Invoke-Checked "Push refreshed dashboard data" {
     git push origin master
   }
+  $publishedDataChanges = $true
+  $commitAfter = Get-GitCommit
+  $outcome = "published"
+  $message = "Daily refresh validated successfully and published changed dashboard data."
+  Write-RunStatus -Status "success" -Outcome $outcome -Message $message
+}
+catch {
+  $commitAfter = Get-GitCommit
+  $message = $_.Exception.Message
+  Write-RunStatus -Status "failed" -Outcome "failed" -Message $message -FailedStage $currentStage
+  throw
 }
 finally {
   Write-Host "LandCare daily refresh finished at $(Get-Date -Format o)"

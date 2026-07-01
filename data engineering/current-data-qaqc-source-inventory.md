@@ -23,6 +23,7 @@ The LandCare dashboard data must be checked and refreshed every day. The product
 | Daily command | `.\scripts\refresh_landcare_dashboard.ps1 -RepoRoot C:\srv\GISWebApp\land-care-assurance` |
 | Task Scheduler setup | `.\scripts\register_landcare_daily_refresh_task.ps1 -RepoRoot C:\srv\GISWebApp\land-care-assurance`; registers under `Task Scheduler Library\GIS Automations` by default |
 | Run log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` |
+| Power Automate status artifact | `C:\srv\logs\land-care-assurance\daily-refresh-status.json`; dated copies are written as `daily-refresh-status-YYYY-MM-DD.json` |
 | QA runner | `scripts\validate_landcare_daily_refresh.py` |
 | Publish policy | Commit and push `docs\landcare\data` only when generated dashboard data changes |
 | Success with no data changes | Log successful validation and exit without a commit |
@@ -38,6 +39,8 @@ Daily QA/QC fails the run when:
 - Duplicate `(period_month, parcel_key)` records appear in `all_months.geojson`.
 - Latest-month status counts do not sum to the latest feature count.
 - Missing geometry rows increase by more than the configured tolerance, currently 25 rows compared with the prior KPI summary.
+
+For the broader ESRI + Codex + Power Platform operating model, see `data engineering/platform-architecture-esri-codex-power-platform.md`.
 
 ## Source Lineage
 
