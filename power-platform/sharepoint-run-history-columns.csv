@@ -1,0 +1,16 @@
+ColumnName,Type,Required,Notes
+Title,Single line of text,Yes,Use run_date or run_date + outcome
+RunDate,Date and Time,Yes,Date from daily-refresh-status.json run_date
+Status,Choice,Yes,success; failed
+Outcome,Choice,Yes,published; unchanged; failed
+StartedAt,Date and Time,No,started_at ISO timestamp
+FinishedAt,Date and Time,No,finished_at ISO timestamp
+DurationSeconds,Number,No,duration_seconds
+Branch,Single line of text,No,Git branch
+CommitBefore,Single line of text,No,commit_before
+CommitAfter,Single line of text,No,commit_after
+PublishedDataChanges,Yes/No,No,published_data_changes
+FailedStage,Single line of text,No,failed_stage
+Message,Multiple lines of text,No,message
+LogPath,Single line of text,No,log_path
+RepoRoot,Single line of text,No,repo_root
