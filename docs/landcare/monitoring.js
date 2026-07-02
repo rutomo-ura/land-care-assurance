@@ -70,7 +70,8 @@ const state = {
   colorMode: "status",
   selectedMonth: null,
   dataView: "current",
-  mapFocusLabel: ""
+  mapFocusLabel: "",
+  currentDataWarning: ""
 };
 
 const formatter = new Intl.NumberFormat("en-US");
@@ -219,6 +220,10 @@ function stripPrimaryContact(value) {
   return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
 }
 
+function isLiveCurrentDataset() {
+  return state.datasets?.current?.summary?.view_source === "live_arcgis";
+}
+
 function currentMaintenanceLevel(tags) {
   const text = String(tags || "");
   if (text.includes("LandCare - Request Only")) return "Request Only";
@@ -335,7 +340,7 @@ function fillSymbol(color, outline = "#ffffff") {
 }
 
 function statusRenderer(mode = state.dataView) {
-  if (mode === "current") {
+  if (mode === "current" && isLiveCurrentDataset()) {
     return {
       type: "unique-value",
       valueExpression: "IIF(Find('LandCare - Request Only', $feature.tags) > -1, 'request_only', 'current_active')",
@@ -360,7 +365,7 @@ function statusRenderer(mode = state.dataView) {
 }
 
 function contractorRenderer(mode = state.dataView) {
-  if (mode === "current") {
+  if (mode === "current" && isLiveCurrentDataset()) {
     return {
       type: "unique-value",
       valueExpression:
@@ -388,7 +393,7 @@ function contractorRenderer(mode = state.dataView) {
 function whereForFilter(mode = state.dataView) {
   const clauses = [];
   if (mode === "current") {
-    clauses.push(CURRENT_WHERE);
+    if (isLiveCurrentDataset()) clauses.push(CURRENT_WHERE);
     if (state.districtFilter !== "all") {
       clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
     }
@@ -647,7 +652,7 @@ function renderFreshness() {
       `${formatNumber(visibleFeatures.length)} records / ${formatNumber(uniqueCount(visibleFeatures))} parcels`;
     document.getElementById("mapCallout").innerHTML = `
       <strong>Current URA-owned LandCare universe</strong>
-      <span>${escapeHtml(districtText)} - ${escapeHtml(contractorText)}${state.mapFocusLabel ? ` - ${escapeHtml(state.mapFocusLabel)}` : ""}</span>
+      <span>${escapeHtml(districtText)} - ${escapeHtml(contractorText)}${state.mapFocusLabel ? ` - ${escapeHtml(state.mapFocusLabel)}` : ""}${state.currentDataWarning ? ` - ${escapeHtml(state.currentDataWarning)}` : ""}</span>
     `;
     return;
   }
@@ -705,12 +710,13 @@ function updateDistrictHighlight() {
 }
 
 function currentZoomWhere({ contractor = state.contractorFilter, district = state.districtFilter, neighborhood = null } = {}) {
-  const clauses = [CURRENT_WHERE];
+  const clauses = isLiveCurrentDataset() ? [CURRENT_WHERE] : [];
   if (district && district !== "all") clauses.push(`council_district = ${sqlValue(district)}`);
   const contactClause = contractorContactClause(contractor);
   if (contactClause) clauses.push(contactClause);
+  if (!isLiveCurrentDataset() && contractor && contractor !== "all") clauses.push(`organization = ${sqlValue(contractor)}`);
   if (neighborhood) clauses.push(`neighborhood = ${sqlValue(neighborhood)}`);
-  return clauses.join(" AND ");
+  return clauses.length ? clauses.join(" AND ") : "1=1";
 }
 
 async function zoomToCurrentWhere(where, { expand = 1.18, duration = 650 } = {}) {
@@ -1234,14 +1240,27 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
 }
 
 async function loadData() {
-  const [historySummary, historyGeojson, currentDataset, financeSummary] = await Promise.all([
+  const [historySummary, historyGeojson, currentDatasetResult, financeSummary] = await Promise.all([
     fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
     fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-    loadCurrentArcgisDataset(),
+    loadCurrentArcgisDataset().then(
+      (dataset) => ({ dataset }),
+      (error) => ({ error })
+    ),
     fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json())
   ]);
+  const currentDataset = currentDatasetResult.dataset || buildCurrentFallbackDataset(historySummary, historyGeojson);
+  state.currentDataWarning = currentDatasetResult.error ? "live ArcGIS fallback" : "";
+  if (currentDatasetResult.error) {
+    console.warn("Live ArcGIS current inventory unavailable; using latest published dashboard data.", currentDatasetResult.error);
+  }
   state.datasets = {
-    history: { summary: historySummary, geojson: alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) },
+    history: {
+      summary: historySummary,
+      geojson: currentDatasetResult.dataset
+        ? alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset)
+        : historyGeojson
+    },
     current: currentDataset
   };
   state.finance = financeSummary;
@@ -1286,6 +1305,28 @@ async function loadCurrentArcgisDataset() {
   });
 }
 
+function buildCurrentFallbackDataset(historySummary, historyGeojson) {
+  const latestMonth = historySummary.latest_month;
+  const features = (historyGeojson.features || [])
+    .filter((feature) => feature.properties?.period_month === latestMonth)
+    .map((feature) => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        parcel_digits: feature.properties?.parcel_digits || parcelDigits(feature.properties?.parcel_key),
+        source_layer: feature.properties?.source_layer || "published_monthly_assurance_geojson"
+      }
+    }));
+  return summarizeCurrentDataset(features, {
+    sourceKind: "published_latest_month_fallback",
+    generatedOn: historySummary.generated_on || historySummary.latest_updated || "published",
+    eppLayerEdited: null,
+    surveyLayerEdited: null,
+    eppRecordCount: null,
+    surveyRecordCount: null
+  });
+}
+
 function summarizeCurrentDataset(features, options) {
   const parcelKeys = new Set();
   const levelCounts = {};
@@ -1300,7 +1341,9 @@ function summarizeCurrentDataset(features, options) {
     statusCounts[props.completion_status] = (statusCounts[props.completion_status] || 0) + 1;
     contractorCounts[props.organization] = (contractorCounts[props.organization] || 0) + 1;
   }
-  const sourceNote = "Current URA-owned LandCare parcel inventory.";
+  const sourceNote = options.sourceKind === "live_arcgis"
+    ? "Current URA-owned LandCare parcel inventory."
+    : "Published latest-month LandCare assurance data used when live ArcGIS current inventory is unavailable.";
   return {
     summary: {
       generated_on: options.generatedOn,
@@ -1364,6 +1407,18 @@ function buildHistoryLayer({ url, title, mode, visible }) {
 }
 
 function buildCurrentLayer({ visible }) {
+  if (!isLiveCurrentDataset()) {
+    const currentUrl = URL.createObjectURL(new Blob(
+      [JSON.stringify(state.datasets.current.geojson)],
+      { type: "application/geo+json" }
+    ));
+    return buildHistoryLayer({
+      url: currentUrl,
+      title: "Published Latest LandCare Parcels",
+      mode: "current",
+      visible
+    });
+  }
   return new FeatureLayer({
     url: EPP_LAYER_URL,
     title: "Current URA-Owned LandCare Parcels",
@@ -1531,5 +1586,6 @@ async function main() {
 
 main().catch((error) => {
   console.error(error);
-  document.getElementById("mapBadge").textContent = "Monitoring map failed to initialize.";
+  const message = error?.message ? `Monitoring map failed: ${error.message}` : "Monitoring map failed to initialize.";
+  document.getElementById("mapBadge").textContent = message;
 });
