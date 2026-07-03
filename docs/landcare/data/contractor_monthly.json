@@ -296,9 +296,9 @@
   {
     "period_month": "2025-11",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 26,
-    "returned_assigned_parcel_keys": 3,
-    "completion_rate_pct": 11.5
+    "assigned_parcel_keys": 27,
+    "returned_assigned_parcel_keys": 4,
+    "completion_rate_pct": 14.8
   },
   {
     "period_month": "2025-11",
@@ -394,9 +394,9 @@
   {
     "period_month": "2026-01",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
-    "returned_assigned_parcel_keys": 6,
-    "completion_rate_pct": 22.2
+    "assigned_parcel_keys": 26,
+    "returned_assigned_parcel_keys": 5,
+    "completion_rate_pct": 19.2
   },
   {
     "period_month": "2026-01",
@@ -621,5 +621,54 @@
     "assigned_parcel_keys": 5,
     "returned_assigned_parcel_keys": 1,
     "completion_rate_pct": 20.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 11,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 11,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 27,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 16,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 6.2
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Hilltop Rising",
+    "assigned_parcel_keys": 54,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 59,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 5,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
   }
 ]

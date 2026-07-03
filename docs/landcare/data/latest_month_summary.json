@@ -1,5 +1,5 @@
 {
-  "latest_month": "2026-05",
+  "latest_month": "2026-06",
   "available_months": [
     "2025-05",
     "2025-06",
@@ -12,12 +12,13 @@
     "2026-02",
     "2026-03",
     "2026-04",
-    "2026-05"
+    "2026-05",
+    "2026-06"
   ],
   "latest_assignment_period": "2026-06-15",
-  "latest_survey_period": "2026-05-15",
-  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-05-15.",
-  "generated_on": "2026-07-02",
+  "latest_survey_period": "2026-06-15",
+  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
+  "generated_on": "2026-07-03",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -29,15 +30,15 @@
     "analysis.assessment_snapshot"
   ],
   "owner_match_note": "Owner names are normalized before matching URA and Pittsburgh Land Bank variants.",
-  "missing_geometry_rows": 103,
-  "latest_comparable_month": "2026-05-01",
+  "missing_geometry_rows": 106,
+  "latest_comparable_month": "2026-06-01",
   "ownership_scope": "URA owned only",
-  "all_month_feature_count": 2660,
-  "feature_count": 222,
+  "all_month_feature_count": 2877,
+  "feature_count": 217,
   "status_counts": {
-    "missing": 90,
-    "request_only": 36,
-    "returned": 96
+    "missing": 182,
+    "request_only": 34,
+    "returned": 1
   },
   "contractor_counts": {
     "Amani Christian CDC": 11,
@@ -45,23 +46,18 @@
     "Chatman Properties": 31,
     "Ervin Home Beautification": 16,
     "FHCV Contracting LLC & LawnCare": 1,
-    "Hilltop Rising": 85,
-    "KRJ Enterprises": 62,
+    "Hilltop Rising": 82,
+    "KRJ Enterprises": 60,
     "One Call Handles It All": 5
   },
   "contractor_returned": {
-    "Amani Christian CDC": 11,
-    "Center That CARES": 1,
-    "Chatman Properties": 21,
-    "Ervin Home Beautification": 13,
-    "KRJ Enterprises": 49,
-    "One Call Handles It All": 1
+    "Ervin Home Beautification": 1
   },
   "level_counts": {
-    "Active": 186,
-    "Request Only": 36
+    "Active": 183,
+    "Request Only": 34
   },
   "ownership_counts": {
-    "URA": 222
+    "URA": 217
   }
 }

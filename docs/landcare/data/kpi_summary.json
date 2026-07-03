@@ -1,5 +1,5 @@
 {
-  "latest_month": "2026-05",
+  "latest_month": "2026-06",
   "available_months": [
     "2025-05",
     "2025-06",
@@ -12,12 +12,13 @@
     "2026-02",
     "2026-03",
     "2026-04",
-    "2026-05"
+    "2026-05",
+    "2026-06"
   ],
   "latest_assignment_period": "2026-06-15",
-  "latest_survey_period": "2026-05-15",
-  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-05-15.",
-  "generated_on": "2026-07-02",
+  "latest_survey_period": "2026-06-15",
+  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
+  "generated_on": "2026-07-03",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -29,18 +30,18 @@
     "analysis.assessment_snapshot"
   ],
   "owner_match_note": "Owner names are normalized before matching URA and Pittsburgh Land Bank variants.",
-  "missing_geometry_rows": 103,
-  "latest_comparable_month": "2026-05-01",
+  "missing_geometry_rows": 106,
+  "latest_comparable_month": "2026-06-01",
   "ownership_scope": "URA owned only",
-  "all_month_feature_count": 2660,
+  "all_month_feature_count": 2877,
   "latest_month_metrics": {
-    "period_month": "2026-05",
-    "assigned_active": 186,
-    "assigned_total": 222,
-    "returned_assigned": 96,
-    "active_completion_rate_pct": 51.6,
-    "blended_completion_rate_pct": 43.2,
-    "survey_rows_raw": 96
+    "period_month": "2026-06",
+    "assigned_active": 183,
+    "assigned_total": 217,
+    "returned_assigned": 1,
+    "active_completion_rate_pct": 0.5,
+    "blended_completion_rate_pct": 0.5,
+    "survey_rows_raw": 1
   },
   "source_contract": {
     "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
