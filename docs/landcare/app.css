@@ -812,7 +812,77 @@ textarea {
   content: attr(data-icon-label);
 }
 
-.insight-card strong {
+.insight-card.has-gauge {
+  gap: 6px;
+}
+
+.gauge-kpi {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.gauge-kpi-compact {
+  margin-top: 2px;
+}
+
+.gauge-svg {
+  display: block;
+  width: 100%;
+  max-width: 132px;
+  height: auto;
+}
+
+.gauge-svg.compact {
+  max-width: 96px;
+}
+
+.gauge-track {
+  stroke: #e2eaef;
+}
+
+.gauge-fill {
+  stroke: var(--ura-blue);
+}
+
+.gauge-value {
+  fill: var(--ink);
+  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+  font-weight: 800;
+}
+
+.gauge-label {
+  fill: var(--muted);
+  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+  font-weight: 600;
+}
+
+.gauge-svg.featured .gauge-track {
+  stroke: rgba(255, 255, 255, 0.28);
+}
+
+.gauge-svg.featured .gauge-fill {
+  stroke: #ffffff;
+}
+
+.gauge-svg.featured .gauge-value {
+  fill: #ffffff;
+}
+
+.gauge-svg.featured .gauge-label {
+  fill: rgba(255, 255, 255, 0.82);
+}
+
+.reference-card.has-gauge {
+  justify-items: center;
+  text-align: center;
+}
+
+.reference-card.has-gauge span {
+  width: 100%;
+}
+
+.insight-card:not(.has-gauge) strong {
   overflow: hidden;
   color: var(--ink);
   font-size: clamp(28px, 3.2vw, 36px);
@@ -821,7 +891,6 @@ textarea {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .insight-card p,
 .card-trend {
   margin: 0;
@@ -903,17 +972,20 @@ textarea {
   flex: 0 0 auto;
 }
 
+.powerbi-grid.landing-charts .bar-chart,
 .powerbi-grid.landing-charts .line-chart,
 .powerbi-grid.landing-charts .grouped-chart {
   flex: 1 1 auto;
   min-height: 0;
 }
 
+.powerbi-grid.landing-charts .bar-chart,
 .powerbi-grid.landing-charts .line-chart {
   display: flex;
-  align-items: center;
+  align-items: stretch;
 }
 
+.powerbi-grid.landing-charts .bar-chart-shell,
 .powerbi-grid.landing-charts .line-chart-shell {
   width: 100%;
 }
@@ -1075,12 +1147,135 @@ select {
   gap: 12px;
 }
 
-.line-chart {
+.bar-chart {
   overflow: visible;
 }
 
+.bar-chart-shell,
 .line-chart-shell {
   position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  overflow: visible;
+}
+
+.bar-chart-plot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+  padding: 8px 2px 0;
+}
+
+.bar-chart-target {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  border-top: 1px dashed #2e7d32;
+  opacity: 0.75;
+}
+
+.bar-chart-target::after {
+  content: "80%";
+  position: absolute;
+  right: 0;
+  top: -14px;
+  color: #2e7d32;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.bar-chart-columns {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 100%;
+  min-height: 180px;
+}
+
+.bar-chart-column {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 100%;
+}
+
+.bar-chart-hit {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bar-chart-bar {
+  display: block;
+  width: 100%;
+  max-width: 30px;
+  min-height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, #4db8e8 0%, var(--ura-blue) 100%);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bar-chart-column.is-strong .bar-chart-bar {
+  background: linear-gradient(180deg, #35aee3 0%, var(--ura-blue-dark) 100%);
+}
+
+.bar-chart-column.is-latest .bar-chart-bar {
+  background: linear-gradient(180deg, var(--ura-blue) 0%, var(--ura-deep) 100%);
+  box-shadow: 0 8px 18px rgba(0, 108, 159, 0.22);
+}
+
+.bar-chart-column.is-soft .bar-chart-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #d4e8f2,
+    #d4e8f2 4px,
+    #edf5f9 4px,
+    #edf5f9 8px
+  );
+}
+
+.bar-chart-hit:hover .bar-chart-bar,
+.bar-chart-hit:focus-visible .bar-chart-bar {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 108, 159, 0.18);
+}
+
+.bar-chart-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.bar-chart-hit .chart-tooltip-card {
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(6px);
+}
+
+.bar-chart-hit:hover .chart-tooltip-card,
+.bar-chart-hit:focus-visible .chart-tooltip-card {
+  transform: translateX(-50%) translateY(0);
+}
+
+.line-chart {
   overflow: visible;
 }
 

@@ -281,7 +281,6 @@ function renderKpis(monthlyMetrics, summary, currentMetrics) {
   document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
   document.getElementById("latestAssignedKpi").textContent = formatNumber(latest.assigned_active);
   document.getElementById("latestReturnedKpi").textContent = formatNumber(latest.returned_assigned);
-  document.getElementById("latestCompletionKpi").textContent = formatPct(latest.active_completion_rate_pct);
   document.getElementById("ytdReturnedKpi").textContent = formatNumber(ytdReturned);
 }
 
@@ -300,6 +299,58 @@ function contractorChartRows(rows, selected = "all") {
     .sort((a, b) => (b.assigned - b.returned) - (a.assigned - a.returned) || b.assigned - a.assigned);
 }
 
+function renderSemiGauge(containerId, value, options = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const pct = Math.max(0, Math.min(100, Number(value || 0)));
+  const label = options.label || "Active completion";
+  const featured = Boolean(options.featured);
+  const compact = Boolean(options.compact);
+  const width = compact ? 96 : 120;
+  const height = compact ? 58 : 72;
+  const radius = compact ? 34 : 46;
+  const cx = width / 2;
+  const cy = compact ? 46 : 58;
+  const stroke = compact ? 7 : 10;
+  const arcLength = Math.PI * radius;
+  const dash = (pct / 100) * arcLength;
+  const valueSize = compact ? 13 : 18;
+  const labelSize = compact ? 8 : 9;
+  const labelY = compact ? cy + 8 : cy + 10;
+  const valueY = compact ? cy - 4 : cy - 6;
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" class="gauge-svg${featured ? " featured" : ""}${compact ? " compact" : ""}" role="img" aria-label="${escapeHtml(label)}: ${formatPct(pct)}">
+      <path
+        class="gauge-track"
+        d="M ${(cx - radius).toFixed(1)} ${cy} A ${radius} ${radius} 0 0 1 ${(cx + radius).toFixed(1)} ${cy}"
+        fill="none"
+        stroke-width="${stroke}"
+        stroke-linecap="round"
+      ></path>
+      <path
+        class="gauge-fill"
+        d="M ${(cx - radius).toFixed(1)} ${cy} A ${radius} ${radius} 0 0 1 ${(cx + radius).toFixed(1)} ${cy}"
+        fill="none"
+        stroke-width="${stroke}"
+        stroke-linecap="round"
+        stroke-dasharray="${dash.toFixed(2)} ${arcLength.toFixed(2)}"
+      ></path>
+      <text class="gauge-value" x="${cx}" y="${valueY}" text-anchor="middle" font-size="${valueSize}">${formatPct(pct)}</text>
+      ${compact ? "" : `<text class="gauge-label" x="${cx}" y="${labelY}" text-anchor="middle" font-size="${labelSize}">${escapeHtml(label)}</text>`}
+    </svg>
+  `;
+}
+
+const COMPLETION_TARGET = 80;
+
+function barToneClass(rate, isLatest) {
+  if (isLatest) return "is-latest";
+  if (rate >= COMPLETION_TARGET) return "is-strong";
+  if (rate >= 50) return "is-mid";
+  return "is-soft";
+}
+
 function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary) {
   const latest = monthlyMetrics.at(-1);
   const prior = monthlyMetrics.at(-2);
@@ -313,7 +364,8 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const largestOpen = contractorRows.sort((a, b) => b.open - a.open || a.completionRate - b.completionRate)[0];
   const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
 
-  document.getElementById("completionReadoutInsight").textContent = formatPct(latestRate);
+  renderSemiGauge("completionGauge", latestRate, { label: "Active completion", featured: true });
+  renderSemiGauge("snapshotCompletionGauge", latestRate, { compact: true });
   const completionCopy = document.getElementById("completionReadoutCopy");
   completionCopy.textContent = prior
     ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${shortMonth(prior.period_month)}`
@@ -435,7 +487,7 @@ function renderFinance(financeSummary) {
 }
 
 function renderTimeline(monthlyMetrics) {
-  renderLineChart(monthlyMetrics);
+  renderCompletionBarChart(monthlyMetrics);
   const latest = monthlyMetrics.at(-1);
   const prior = monthlyMetrics.at(-2);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
@@ -448,75 +500,44 @@ function renderTimeline(monthlyMetrics) {
   }
 }
 
-const COMPLETION_TARGET = 80;
-
-function renderLineChart(monthlyMetrics) {
+function renderCompletionBarChart(monthlyMetrics) {
   const container = document.getElementById("completionLineChart");
-  const width = 720;
-  const height = 240;
-  const margin = { top: 18, right: 42, bottom: 48, left: 50 };
-  const plotWidth = width - margin.left - margin.right;
-  const plotHeight = height - margin.top - margin.bottom;
-  const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
-  const maxValue = 100;
-  const toX = (index) =>
-    margin.left + (monthlyMetrics.length === 1 ? plotWidth / 2 : (index / (monthlyMetrics.length - 1)) * plotWidth);
-  const boundedRate = (value) => Math.max(0, Math.min(maxValue, Number(value || 0)));
-  const toY = (value) => margin.top + plotHeight - (boundedRate(value) / maxValue) * plotHeight;
-  const points = monthlyMetrics.map((row, index) => [toX(index), toY(row.active_completion_rate_pct)]);
-  const linePath = points.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
-  const yTicks = [0, 50, COMPLETION_TARGET, maxValue].filter((tick, index, arr) => arr.indexOf(tick) === index);
-
-  const hitMarkup = points.map(([x, y], index) => {
-    const row = monthlyMetrics[index];
-    const rate = values[index];
+  const latestIndex = monthlyMetrics.length - 1;
+  const columns = monthlyMetrics.map((row, index) => {
+    const rate = Number(row.active_completion_rate_pct || 0);
     const returned = Number(row.returned_assigned || 0);
     const assigned = Number(row.assigned_active || 0);
-    const priorRate = index > 0 ? values[index - 1] : null;
+    const priorRate = index > 0 ? Number(monthlyMetrics[index - 1].active_completion_rate_pct || 0) : null;
     const delta = priorRate !== null ? rate - priorRate : null;
     const deltaClass = delta === null ? "" : delta >= 0 ? " up" : " down";
     const deltaText = delta === null ? "Baseline month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`;
-    const leftPct = (x / width) * 100;
-    const topPct = (y / height) * 100;
+    const toneClass = barToneClass(rate, index === latestIndex);
     return `
-      <button
-        type="button"
-        class="chart-hit"
-        style="left:${leftPct.toFixed(2)}%; top:${topPct.toFixed(2)}%"
-        aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
-      >
-        <span class="chart-hit-dot" aria-hidden="true"></span>
-        <div class="chart-tooltip-card" role="tooltip">
-          <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
-          <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
-          <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
-          <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
-        </div>
-      </button>
+      <div class="bar-chart-column ${toneClass}">
+        <button
+          type="button"
+          class="bar-chart-hit"
+          aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
+        >
+          <span class="bar-chart-bar" style="height:${Math.max(rate, 2).toFixed(1)}%"></span>
+          <div class="chart-tooltip-card" role="tooltip">
+            <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
+            <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
+            <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
+            <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
+          </div>
+        </button>
+        <span class="bar-chart-label">${escapeHtml(shortMonth(row.period_month))}</span>
+      </div>
     `;
   }).join("");
 
   container.innerHTML = `
-    <div class="line-chart-shell">
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Active completion rate over time">
-        ${yTicks.map((tick) => {
-          const y = toY(tick);
-          const isTarget = tick === COMPLETION_TARGET;
-          return `
-            <line class="${isTarget ? "chart-target" : "chart-grid"}" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>
-            <text class="chart-tick${isTarget ? " chart-tick-target" : ""}" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>
-          `;
-        }).join("")}
-        <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
-        <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
-        <path class="chart-area" d="${areaPath}"></path>
-        <path class="chart-line" d="${linePath}"></path>
-        ${points.map(([x, y], index) => `
-          <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(monthlyMetrics[index].period_month)}</text>
-        `).join("")}
-      </svg>
-      <div class="chart-overlay">${hitMarkup}</div>
+    <div class="bar-chart-shell">
+      <div class="bar-chart-plot">
+        <div class="bar-chart-target" style="bottom:${COMPLETION_TARGET}%"></div>
+        <div class="bar-chart-columns">${columns}</div>
+      </div>
     </div>
   `;
 }
