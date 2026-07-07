@@ -1318,8 +1318,8 @@ select {
 
 .chart-hit {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -1329,22 +1329,14 @@ select {
   z-index: 1;
 }
 
-.chart-hit-dot {
-  position: absolute;
-  inset: 0;
-  width: 10px;
-  height: 10px;
-  margin: auto;
-  background: #ffffff;
-  border: 3px solid var(--ura-blue);
-  border-radius: 50%;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+.chart-hit-ghost {
+  opacity: 0;
 }
 
-.chart-hit:hover .chart-hit-dot,
-.chart-hit:focus-visible .chart-hit-dot {
-  transform: scale(1.15);
-  box-shadow: 0 0 0 5px rgba(0, 152, 211, 0.14);
+.chart-marker {
+  fill: #ffffff;
+  stroke: var(--ura-blue);
+  stroke-width: 3;
 }
 
 .chart-tooltip-card {
@@ -1474,12 +1466,6 @@ select {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 4;
-}
-
-.chart-marker {
-  fill: #ffffff;
-  stroke: var(--ura-blue);
-  stroke-width: 3;
 }
 
 .chart-label,

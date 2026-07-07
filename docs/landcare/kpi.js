@@ -377,11 +377,14 @@ function bindLineChartTooltips(container, monthlyMetrics) {
     const hitRect = hit.getBoundingClientRect();
     tooltip.style.left = `${hitRect.left - shellRect.left + hitRect.width / 2}px`;
     tooltip.style.top = `${hitRect.top - shellRect.top}px`;
+    const marker = container.querySelectorAll(".chart-marker")[index];
+    if (marker) marker.setAttribute("r", "7");
   };
 
   const hide = () => {
     tooltip.setAttribute("hidden", "");
     tooltip.classList.remove("is-visible");
+    container.querySelectorAll(".chart-marker").forEach((marker) => marker.setAttribute("r", "5"));
   };
 
   for (const hit of container.querySelectorAll(".chart-hit")) {
@@ -543,8 +546,8 @@ function renderTimeline(monthlyMetrics) {
 function renderLineChart(monthlyMetrics) {
   const container = document.getElementById("completionLineChart");
   const width = 720;
-  const height = 280;
-  const margin = { top: 24, right: 42, bottom: 58, left: 50 };
+  const height = 260;
+  const margin = { top: 22, right: 42, bottom: 44, left: 50 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
@@ -562,20 +565,16 @@ function renderLineChart(monthlyMetrics) {
     const rate = values[index];
     const returned = Number(row.returned_assigned || 0);
     const assigned = Number(row.assigned_active || 0);
-    const priorRate = index > 0 ? values[index - 1] : null;
-    const delta = priorRate !== null ? rate - priorRate : null;
     const leftPct = (x / width) * 100;
     const topPct = (y / height) * 100;
     return `
       <button
         type="button"
-        class="chart-hit"
+        class="chart-hit chart-hit-ghost"
         style="left:${leftPct.toFixed(2)}%; top:${topPct.toFixed(2)}%"
         data-point-index="${index}"
         aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
-      >
-        <span class="chart-hit-dot" aria-hidden="true"></span>
-      </button>
+      ></button>
     `;
   }).join("");
 
@@ -605,18 +604,11 @@ function renderLineChart(monthlyMetrics) {
         <path class="chart-area" d="${areaPath}"></path>
         <path class="chart-line" d="${linePath}"></path>
         ${points.map(([x, y], index) => {
-          const row = monthlyMetrics[index];
           const rate = values[index];
-          const returned = Number(row.returned_assigned || 0);
-          const assigned = Number(row.assigned_active || 0);
-          const priorRate = index > 0 ? values[index - 1] : null;
-          const delta = priorRate !== null ? rate - priorRate : null;
           return `
             <circle class="chart-marker" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"></circle>
-            <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 14).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
-            ${delta !== null ? `<text class="chart-delta${delta >= 0 ? " up" : " down"}" x="${x.toFixed(1)}" y="${(y - 27).toFixed(1)}" text-anchor="middle">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}</text>` : ""}
-            <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 34).toFixed(1)}" text-anchor="middle">${shortMonth(row.period_month)}</text>
-            <text class="chart-count-label muted" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${formatNumber(returned)}/${formatNumber(assigned)}</text>
+            <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
+            <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(monthlyMetrics[index].period_month)}</text>
           `;
         }).join("")}
       </svg>
