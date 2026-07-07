@@ -363,8 +363,8 @@ function bindLineChartTooltips(container, monthlyMetrics) {
   const tooltip = container.querySelector(".chart-floating-tooltip");
   if (!shell || !tooltip) return;
 
-  const show = (hit) => {
-    const index = Number(hit.dataset.pointIndex);
+  const show = (marker) => {
+    const index = Number(marker.dataset.pointIndex);
     const row = monthlyMetrics[index];
     if (!row) return;
     const rate = Number(row.active_completion_rate_pct || 0);
@@ -374,24 +374,27 @@ function bindLineChartTooltips(container, monthlyMetrics) {
     tooltip.removeAttribute("hidden");
     tooltip.classList.add("is-visible");
     const shellRect = shell.getBoundingClientRect();
-    const hitRect = hit.getBoundingClientRect();
-    tooltip.style.left = `${hitRect.left - shellRect.left + hitRect.width / 2}px`;
-    tooltip.style.top = `${hitRect.top - shellRect.top}px`;
-    const marker = container.querySelectorAll(".chart-marker")[index];
-    if (marker) marker.setAttribute("r", "7");
+    const markerRect = marker.getBoundingClientRect();
+    tooltip.style.left = `${markerRect.left - shellRect.left + markerRect.width / 2}px`;
+    tooltip.style.top = `${markerRect.top - shellRect.top}px`;
+    marker.setAttribute("r", "7");
+    marker.classList.add("is-active");
   };
 
-  const hide = () => {
+  const hide = (marker) => {
     tooltip.setAttribute("hidden", "");
     tooltip.classList.remove("is-visible");
-    container.querySelectorAll(".chart-marker").forEach((marker) => marker.setAttribute("r", "5"));
+    if (marker) {
+      marker.setAttribute("r", "6");
+      marker.classList.remove("is-active");
+    }
   };
 
-  for (const hit of container.querySelectorAll(".chart-hit")) {
-    hit.addEventListener("mouseenter", () => show(hit));
-    hit.addEventListener("focus", () => show(hit));
-    hit.addEventListener("mouseleave", hide);
-    hit.addEventListener("blur", hide);
+  for (const marker of container.querySelectorAll(".chart-marker")) {
+    marker.addEventListener("mouseenter", () => show(marker));
+    marker.addEventListener("focus", () => show(marker));
+    marker.addEventListener("mouseleave", () => hide(marker));
+    marker.addEventListener("blur", () => hide(marker));
   }
 }
 
@@ -560,24 +563,6 @@ function renderLineChart(monthlyMetrics) {
   const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
   const yTicks = [0, COMPLETION_TARGET, maxValue];
 
-  const hitMarkup = points.map(([x, y], index) => {
-    const row = monthlyMetrics[index];
-    const rate = values[index];
-    const returned = Number(row.returned_assigned || 0);
-    const assigned = Number(row.assigned_active || 0);
-    const leftPct = (x / width) * 100;
-    const topPct = (y / height) * 100;
-    return `
-      <button
-        type="button"
-        class="chart-hit chart-hit-ghost"
-        style="left:${leftPct.toFixed(2)}%; top:${topPct.toFixed(2)}%"
-        data-point-index="${index}"
-        aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
-      ></button>
-    `;
-  }).join("");
-
   container.innerHTML = `
     <div class="line-chart-shell">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Active completion rate over time">
@@ -604,15 +589,28 @@ function renderLineChart(monthlyMetrics) {
         <path class="chart-area" d="${areaPath}"></path>
         <path class="chart-line" d="${linePath}"></path>
         ${points.map(([x, y], index) => {
+          const row = monthlyMetrics[index];
           const rate = values[index];
+          const returned = Number(row.returned_assigned || 0);
+          const assigned = Number(row.assigned_active || 0);
           return `
-            <circle class="chart-marker" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"></circle>
-            <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
-            <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(monthlyMetrics[index].period_month)}</text>
+            <g class="chart-point">
+              <circle
+                class="chart-marker"
+                cx="${x.toFixed(1)}"
+                cy="${y.toFixed(1)}"
+                r="6"
+                data-point-index="${index}"
+                tabindex="0"
+                role="button"
+                aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
+              ></circle>
+              <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
+              <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(row.period_month)}</text>
+            </g>
           `;
         }).join("")}
       </svg>
-      <div class="chart-overlay">${hitMarkup}</div>
       <div class="chart-floating-tooltip" hidden></div>
     </div>
   `;

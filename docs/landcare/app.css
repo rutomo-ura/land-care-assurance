@@ -1337,6 +1337,17 @@ select {
   fill: #ffffff;
   stroke: var(--ura-blue);
   stroke-width: 3;
+  cursor: pointer;
+  pointer-events: all;
+  outline: none;
+}
+
+.chart-marker.is-active,
+.chart-marker:hover,
+.chart-marker:focus-visible {
+  fill: var(--ura-blue-soft);
+  stroke: var(--ura-blue-dark);
+  stroke-width: 4;
 }
 
 .chart-tooltip-card {
@@ -1434,6 +1445,16 @@ select {
   display: block;
   width: 100%;
   height: auto;
+  overflow: visible;
+}
+
+.line-chart svg .chart-area,
+.line-chart svg .chart-line,
+.line-chart svg .chart-grid,
+.line-chart svg .chart-axis,
+.line-chart svg .chart-target,
+.line-chart svg text {
+  pointer-events: none;
 }
 
 .chart-axis {
