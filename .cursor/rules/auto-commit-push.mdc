@@ -1,0 +1,27 @@
+---
+description: Auto commit and push after completing implementation work
+alwaysApply: true
+---
+
+# Auto commit and push
+
+After finishing implementation changes in this repo, **commit and push to `origin/master` automatically** without waiting for a separate request.
+
+## Workflow
+
+1. Complete the requested code changes.
+2. Run `git status` and `git diff` to see what changed.
+3. Stage only files related to the task (never `.env`, secrets, or unrelated WIP).
+4. Write a concise commit message focused on **why**.
+5. `git commit` then `git push origin master`.
+6. Briefly tell the user the commit hash and that deploy will run (GitHub Pages on `docs/**` changes).
+
+## Do not commit
+
+- Unrelated local WIP the user did not ask to include
+- `tmp/`, large outputs, or credential files
+- Ask first if the only changes are ambiguous or span unrelated work
+
+## Deploy note
+
+Pushes to `master` that touch `docs/**` trigger the GitHub Pages workflow automatically.
