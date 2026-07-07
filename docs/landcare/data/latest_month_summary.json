@@ -18,7 +18,7 @@
   "latest_assignment_period": "2026-06-15",
   "latest_survey_period": "2026-06-15",
   "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
-  "generated_on": "2026-07-06",
+  "generated_on": "2026-07-07",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -33,31 +33,32 @@
   "missing_geometry_rows": 106,
   "latest_comparable_month": "2026-06-01",
   "ownership_scope": "URA owned only",
-  "all_month_feature_count": 2877,
-  "feature_count": 217,
+  "all_month_feature_count": 2776,
+  "feature_count": 210,
   "status_counts": {
-    "missing": 182,
+    "missing": 168,
     "request_only": 34,
-    "returned": 1
+    "returned": 8
   },
   "contractor_counts": {
-    "Amani Christian CDC": 11,
+    "Amani Christian CDC": 10,
     "Center That CARES": 11,
-    "Chatman Properties": 31,
-    "Ervin Home Beautification": 16,
-    "FHCV Contracting LLC & LawnCare": 1,
-    "Hilltop Rising": 82,
-    "KRJ Enterprises": 60,
-    "One Call Handles It All": 5
+    "Chatman Properties": 27,
+    "Ervin Home Beautification": 17,
+    "FHCV Contracting LLC & LawnCare": 5,
+    "Hilltop Rising": 74,
+    "KRJ Enterprises": 62,
+    "One Call Handles It All": 4
   },
   "contractor_returned": {
+    "Chatman Properties": 7,
     "Ervin Home Beautification": 1
   },
   "level_counts": {
-    "Active": 183,
+    "Active": 176,
     "Request Only": 34
   },
   "ownership_counts": {
-    "URA": 217
+    "URA": 210
   }
 }

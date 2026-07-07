@@ -2,337 +2,344 @@
   {
     "period_month": "2025-05",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 21,
-    "returned_assigned_parcel_keys": 16,
-    "completion_rate_pct": 76.2
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "Concrete Rose Construction",
-    "assigned_parcel_keys": 7,
-    "returned_assigned_parcel_keys": 7,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 62.5
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 25,
-    "returned_assigned_parcel_keys": 4,
-    "completion_rate_pct": 16.0
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 102,
-    "returned_assigned_parcel_keys": 46,
-    "completion_rate_pct": 45.1
-  },
-  {
-    "period_month": "2025-05",
-    "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-06",
-    "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-06",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-06",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 21,
+    "assigned_parcel_keys": 9,
     "returned_assigned_parcel_keys": 9,
-    "completion_rate_pct": 42.9
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 15,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 17,
+    "completion_rate_pct": 77.3
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "Concrete Rose Construction",
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 9,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 6,
+    "completion_rate_pct": 66.7
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "Hilltop Rising",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 3,
+    "completion_rate_pct": 13.6
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 84,
+    "returned_assigned_parcel_keys": 40,
+    "completion_rate_pct": 47.6
+  },
+  {
+    "period_month": "2025-05",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 8,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-06",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 9,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-06",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 15,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-06",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 12,
+    "completion_rate_pct": 54.5
   },
   {
     "period_month": "2025-06",
     "organization": "Concrete Rose Construction",
-    "assigned_parcel_keys": 7,
-    "returned_assigned_parcel_keys": 7,
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 9,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2025-06",
     "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 62.5
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 6,
+    "completion_rate_pct": 66.7
   },
   {
     "period_month": "2025-06",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 25,
+    "assigned_parcel_keys": 22,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2025-06",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 102,
-    "returned_assigned_parcel_keys": 66,
-    "completion_rate_pct": 64.7
+    "assigned_parcel_keys": 84,
+    "returned_assigned_parcel_keys": 50,
+    "completion_rate_pct": 59.5
   },
   {
     "period_month": "2025-06",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 8,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2025-07",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 8,
+    "assigned_parcel_keys": 9,
     "returned_assigned_parcel_keys": 6,
-    "completion_rate_pct": 75.0
-  },
-  {
-    "period_month": "2025-07",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-07",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 21,
-    "returned_assigned_parcel_keys": 14,
     "completion_rate_pct": 66.7
   },
   {
     "period_month": "2025-07",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 15,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-07",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 13,
+    "completion_rate_pct": 59.1
+  },
+  {
+    "period_month": "2025-07",
     "organization": "Concrete Rose Construction",
-    "assigned_parcel_keys": 7,
-    "returned_assigned_parcel_keys": 7,
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 9,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2025-07",
     "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 8,
+    "assigned_parcel_keys": 9,
     "returned_assigned_parcel_keys": 5,
+    "completion_rate_pct": 55.6
+  },
+  {
+    "period_month": "2025-07",
+    "organization": "Hilltop Rising",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-07",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 85,
+    "returned_assigned_parcel_keys": 63,
+    "completion_rate_pct": 74.1
+  },
+  {
+    "period_month": "2025-07",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 8,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 9,
+    "returned_assigned_parcel_keys": 9,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 21,
+    "returned_assigned_parcel_keys": 19,
+    "completion_rate_pct": 90.5
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 16,
+    "returned_assigned_parcel_keys": 10,
     "completion_rate_pct": 62.5
   },
   {
-    "period_month": "2025-07",
-    "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 25,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-07",
-    "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 102,
-    "returned_assigned_parcel_keys": 77,
-    "completion_rate_pct": 75.5
-  },
-  {
-    "period_month": "2025-07",
-    "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 21,
-    "returned_assigned_parcel_keys": 18,
-    "completion_rate_pct": 85.7
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 14,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 57.1
-  },
-  {
     "period_month": "2025-09",
     "organization": "Ervin Home Beautification Primary Contact",
-    "assigned_parcel_keys": 1,
-    "returned_assigned_parcel_keys": 1,
+    "assigned_parcel_keys": 2,
+    "returned_assigned_parcel_keys": 2,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2025-09",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 25,
-    "returned_assigned_parcel_keys": 12,
-    "completion_rate_pct": 48.0
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 98,
-    "returned_assigned_parcel_keys": 66,
-    "completion_rate_pct": 67.3
-  },
-  {
-    "period_month": "2025-09",
-    "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 8,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 21,
-    "returned_assigned_parcel_keys": 18,
-    "completion_rate_pct": 85.7
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 14,
-    "returned_assigned_parcel_keys": 8,
-    "completion_rate_pct": 57.1
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Ervin Home Beautification Primary Contact",
-    "assigned_parcel_keys": 1,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 25,
-    "returned_assigned_parcel_keys": 12,
-    "completion_rate_pct": 48.0
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 98,
-    "returned_assigned_parcel_keys": 66,
-    "completion_rate_pct": 67.3
-  },
-  {
-    "period_month": "2025-10",
-    "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 100.0
-  },
-  {
-    "period_month": "2025-11",
-    "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 22,
     "returned_assigned_parcel_keys": 11,
+    "completion_rate_pct": 50.0
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 83,
+    "returned_assigned_parcel_keys": 52,
+    "completion_rate_pct": 62.7
+  },
+  {
+    "period_month": "2025-09",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 8,
     "completion_rate_pct": 100.0
   },
   {
-    "period_month": "2025-11",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 9.1
-  },
-  {
-    "period_month": "2025-11",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
-    "returned_assigned_parcel_keys": 4,
-    "completion_rate_pct": 14.8
-  },
-  {
-    "period_month": "2025-11",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
+    "period_month": "2025-10",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 9,
     "returned_assigned_parcel_keys": 9,
-    "completion_rate_pct": 56.2
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 21,
+    "returned_assigned_parcel_keys": 19,
+    "completion_rate_pct": 90.5
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 16,
+    "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 62.5
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "Ervin Home Beautification Primary Contact",
+    "assigned_parcel_keys": 2,
+    "returned_assigned_parcel_keys": 2,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "Hilltop Rising",
+    "assigned_parcel_keys": 22,
+    "returned_assigned_parcel_keys": 11,
+    "completion_rate_pct": 50.0
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 83,
+    "returned_assigned_parcel_keys": 52,
+    "completion_rate_pct": 62.7
+  },
+  {
+    "period_month": "2025-10",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 8,
+    "returned_assigned_parcel_keys": 8,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-11",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 10,
+    "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2025-11",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 11,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 9.1
+  },
+  {
+    "period_month": "2025-11",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-11",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 58.8
+  },
+  {
+    "period_month": "2025-11",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
   },
   {
     "period_month": "2025-11",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
+    "assigned_parcel_keys": 49,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2025-11",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 62,
-    "returned_assigned_parcel_keys": 33,
-    "completion_rate_pct": 53.2
+    "assigned_parcel_keys": 61,
+    "returned_assigned_parcel_keys": 35,
+    "completion_rate_pct": 57.4
   },
   {
     "period_month": "2025-11",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 4,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2025-12",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 10,
+    "returned_assigned_parcel_keys": 10,
     "completion_rate_pct": 100.0
   },
   {
@@ -345,91 +352,105 @@
   {
     "period_month": "2025-12",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 8,
+    "completion_rate_pct": 33.3
+  },
+  {
+    "period_month": "2025-12",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 12,
+    "completion_rate_pct": 70.6
+  },
+  {
+    "period_month": "2025-12",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-12",
+    "organization": "Hilltop Rising",
+    "assigned_parcel_keys": 49,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2025-12",
+    "organization": "KRJ Enterprises",
+    "assigned_parcel_keys": 60,
+    "returned_assigned_parcel_keys": 43,
+    "completion_rate_pct": 71.7
+  },
+  {
+    "period_month": "2025-12",
+    "organization": "One Call Handles It All",
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 4,
+    "completion_rate_pct": 100.0
+  },
+  {
+    "period_month": "2026-01",
+    "organization": "Amani Christian CDC",
+    "assigned_parcel_keys": 10,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 10.0
+  },
+  {
+    "period_month": "2026-01",
+    "organization": "Center That CARES",
+    "assigned_parcel_keys": 11,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
+  },
+  {
+    "period_month": "2026-01",
+    "organization": "Chatman Properties",
+    "assigned_parcel_keys": 24,
     "returned_assigned_parcel_keys": 7,
-    "completion_rate_pct": 25.9
+    "completion_rate_pct": 29.2
   },
   {
-    "period_month": "2025-12",
+    "period_month": "2026-01",
     "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
-    "returned_assigned_parcel_keys": 13,
-    "completion_rate_pct": 81.2
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 9,
+    "completion_rate_pct": 52.9
   },
   {
-    "period_month": "2025-12",
-    "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2025-12",
-    "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 62,
-    "returned_assigned_parcel_keys": 49,
-    "completion_rate_pct": 79.0
-  },
-  {
-    "period_month": "2025-12",
-    "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "period_month": "2026-01",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 3,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2026-01",
-    "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 9.1
-  },
-  {
-    "period_month": "2026-01",
-    "organization": "Center That CARES",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
-  },
-  {
-    "period_month": "2026-01",
-    "organization": "Chatman Properties",
-    "assigned_parcel_keys": 26,
-    "returned_assigned_parcel_keys": 5,
-    "completion_rate_pct": 19.2
-  },
-  {
-    "period_month": "2026-01",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
-    "returned_assigned_parcel_keys": 11,
-    "completion_rate_pct": 68.8
-  },
-  {
-    "period_month": "2026-01",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 1.8
+    "assigned_parcel_keys": 49,
+    "returned_assigned_parcel_keys": 2,
+    "completion_rate_pct": 4.1
   },
   {
     "period_month": "2026-01",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 62,
-    "returned_assigned_parcel_keys": 27,
-    "completion_rate_pct": 43.5
+    "assigned_parcel_keys": 60,
+    "returned_assigned_parcel_keys": 29,
+    "completion_rate_pct": 48.3
   },
   {
     "period_month": "2026-01",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 4,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2026-02",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 10,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
@@ -443,44 +464,51 @@
   {
     "period_month": "2026-02",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 4.2
+  },
+  {
+    "period_month": "2026-02",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 58.8
+  },
+  {
+    "period_month": "2026-02",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-02",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
-    "returned_assigned_parcel_keys": 11,
-    "completion_rate_pct": 68.8
-  },
-  {
-    "period_month": "2026-02",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
+    "assigned_parcel_keys": 49,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-02",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 62,
+    "assigned_parcel_keys": 61,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-02",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 4,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2026-03",
     "organization": "Amani Christian CDC Primary Contact",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 9,
-    "completion_rate_pct": 81.8
+    "assigned_parcel_keys": 10,
+    "returned_assigned_parcel_keys": 8,
+    "completion_rate_pct": 80.0
   },
   {
     "period_month": "2026-03",
@@ -492,42 +520,49 @@
   {
     "period_month": "2026-03",
     "organization": "Chatman Properties Primary Contact",
-    "assigned_parcel_keys": 27,
-    "returned_assigned_parcel_keys": 11,
-    "completion_rate_pct": 40.7
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 14,
+    "completion_rate_pct": 58.3
   },
   {
     "period_month": "2026-03",
     "organization": "Ervin Home Beautification Primary Contact",
-    "assigned_parcel_keys": 16,
+    "assigned_parcel_keys": 17,
     "returned_assigned_parcel_keys": 12,
-    "completion_rate_pct": 75.0
+    "completion_rate_pct": 70.6
+  },
+  {
+    "period_month": "2026-03",
+    "organization": "FHCV Contracting LLC & LawnCare Primary Contact",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-03",
     "organization": "Hilltop Rising Primary Contact",
-    "assigned_parcel_keys": 55,
+    "assigned_parcel_keys": 49,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-03",
     "organization": "KRJ Enterprises Primary Contact",
-    "assigned_parcel_keys": 59,
-    "returned_assigned_parcel_keys": 47,
-    "completion_rate_pct": 79.7
+    "assigned_parcel_keys": 58,
+    "returned_assigned_parcel_keys": 43,
+    "completion_rate_pct": 74.1
   },
   {
     "period_month": "2026-03",
     "organization": "One Call Handles It All Primary Contact",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 4,
     "completion_rate_pct": 100.0
   },
   {
     "period_month": "2026-04",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 10,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
@@ -541,30 +576,37 @@
   {
     "period_month": "2026-04",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 28,
+    "assigned_parcel_keys": 24,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-04",
     "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 15,
+    "assigned_parcel_keys": 16,
     "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 62.5
+  },
+  {
+    "period_month": "2026-04",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 2,
     "completion_rate_pct": 66.7
   },
   {
     "period_month": "2026-04",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
-    "returned_assigned_parcel_keys": 2,
-    "completion_rate_pct": 3.6
+    "assigned_parcel_keys": 49,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 2.0
   },
   {
     "period_month": "2026-04",
     "organization": "KRJ Enterprises",
     "assigned_parcel_keys": 61,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 1.6
+    "returned_assigned_parcel_keys": 2,
+    "completion_rate_pct": 3.3
   },
   {
     "period_month": "2026-04",
@@ -576,8 +618,8 @@
   {
     "period_month": "2026-05",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 10,
+    "returned_assigned_parcel_keys": 10,
     "completion_rate_pct": 100.0
   },
   {
@@ -590,42 +632,49 @@
   {
     "period_month": "2026-05",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
-    "returned_assigned_parcel_keys": 21,
-    "completion_rate_pct": 77.8
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 19,
+    "completion_rate_pct": 79.2
   },
   {
     "period_month": "2026-05",
     "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
-    "returned_assigned_parcel_keys": 13,
-    "completion_rate_pct": 81.2
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 12,
+    "completion_rate_pct": 70.6
+  },
+  {
+    "period_month": "2026-05",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-05",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 55,
+    "assigned_parcel_keys": 49,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-05",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 61,
-    "returned_assigned_parcel_keys": 49,
-    "completion_rate_pct": 80.3
+    "assigned_parcel_keys": 62,
+    "returned_assigned_parcel_keys": 46,
+    "completion_rate_pct": 74.2
   },
   {
     "period_month": "2026-05",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 20.0
+    "assigned_parcel_keys": 4,
+    "returned_assigned_parcel_keys": 0,
+    "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-06",
     "organization": "Amani Christian CDC",
-    "assigned_parcel_keys": 11,
+    "assigned_parcel_keys": 10,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
@@ -639,21 +688,28 @@
   {
     "period_month": "2026-06",
     "organization": "Chatman Properties",
-    "assigned_parcel_keys": 27,
+    "assigned_parcel_keys": 24,
+    "returned_assigned_parcel_keys": 7,
+    "completion_rate_pct": 29.2
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "Ervin Home Beautification",
+    "assigned_parcel_keys": 17,
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 5.9
+  },
+  {
+    "period_month": "2026-06",
+    "organization": "FHCV Contracting LLC & LawnCare",
+    "assigned_parcel_keys": 3,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
   {
     "period_month": "2026-06",
-    "organization": "Ervin Home Beautification",
-    "assigned_parcel_keys": 16,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 6.2
-  },
-  {
-    "period_month": "2026-06",
     "organization": "Hilltop Rising",
-    "assigned_parcel_keys": 54,
+    "assigned_parcel_keys": 48,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
@@ -667,7 +723,7 @@
   {
     "period_month": "2026-06",
     "organization": "One Call Handles It All",
-    "assigned_parcel_keys": 5,
+    "assigned_parcel_keys": 4,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   }

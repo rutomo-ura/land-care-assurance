@@ -20,7 +20,7 @@
     "latest_assignment_period": "2026-06-15",
     "latest_survey_period": "2026-06-15",
     "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
-    "generated_on": "2026-07-06",
+    "generated_on": "2026-07-07",
     "geometry_mode": "postgres_readonly_export",
     "source_tables": [
       "gis.regrid_bundle_assignments",
@@ -35,52 +35,10 @@
     "missing_geometry_rows": 106,
     "latest_comparable_month": "2026-06-01",
     "ownership_scope": "URA owned only",
-    "all_month_feature_count": 2877,
-    "feature_count": 217
+    "all_month_feature_count": 2776,
+    "feature_count": 210
   },
   "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002600054000000",
-        "organization": "Amani Christian CDC",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.956119,
-              40.453577
-            ],
-            [
-              -79.956568,
-              40.453725
-            ],
-            [
-              -79.956749,
-              40.453421
-            ],
-            [
-              -79.956297,
-              40.453269
-            ],
-            [
-              -79.956119,
-              40.453577
-            ]
-          ]
-        ]
-      }
-    },
     {
       "type": "Feature",
       "properties": {
@@ -163,6 +121,94 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002700085000000",
+        "organization": "Amani Christian CDC",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.959504,
+              40.452162
+            ],
+            [
+              -79.959603,
+              40.452196
+            ],
+            [
+              -79.959716,
+              40.452001
+            ],
+            [
+              -79.959617,
+              40.451968
+            ],
+            [
+              -79.959504,
+              40.452162
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002700087000000",
+        "organization": "Amani Christian CDC",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.955659,
+              40.452383
+            ],
+            [
+              -79.956036,
+              40.452501
+            ],
+            [
+              -79.956084,
+              40.452413
+            ],
+            [
+              -79.955734,
+              40.452301
+            ],
+            [
+              -79.955666,
+              40.452369
+            ],
+            [
+              -79.955659,
+              40.452383
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "002700089000000",
         "organization": "Amani Christian CDC",
         "period_month": "2026-06",
@@ -217,7 +263,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700090000000",
+        "parcel_key": "002700102000000",
         "organization": "Amani Christian CDC",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -232,70 +278,24 @@
         "coordinates": [
           [
             [
-              -79.960099,
-              40.444117
+              -79.951679,
+              40.451149
             ],
             [
-              -79.960319,
-              40.444296
+              -79.951768,
+              40.451293
             ],
             [
-              -79.960893,
-              40.443986
+              -79.952231,
+              40.45113
             ],
             [
-              -79.961,
-              40.443883
+              -79.952143,
+              40.450986
             ],
             [
-              -79.960672,
-              40.443698
-            ],
-            [
-              -79.960099,
-              40.444117
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700101000000",
-        "organization": "Amani Christian CDC",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.958552,
-              40.451612
-            ],
-            [
-              -79.958439,
-              40.451807
-            ],
-            [
-              -79.958513,
-              40.451831
-            ],
-            [
-              -79.958623,
-              40.451636
-            ],
-            [
-              -79.958552,
-              40.451612
+              -79.951679,
+              40.451149
             ]
           ]
         ]
@@ -347,7 +347,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700104000000",
+        "parcel_key": "002700105000000",
         "organization": "Amani Christian CDC",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -362,102 +362,40 @@
         "coordinates": [
           [
             [
-              -79.95051,
-              40.445655
+              -79.964962,
+              40.451111
             ],
             [
-              -79.950633,
-              40.446656
+              -79.96509,
+              40.451161
             ],
             [
-              -79.950645,
-              40.446677
+              -79.965103,
+              40.451234
             ],
             [
-              -79.950662,
-              40.44669
+              -79.965147,
+              40.451195
             ],
             [
-              -79.950685,
-              40.446693
+              -79.965187,
+              40.451128
             ],
             [
-              -79.951163,
-              40.446659
-            ],
-            [
-              -79.951235,
-              40.446646
-            ],
-            [
-              -79.951325,
-              40.446628
-            ],
-            [
-              -79.951492,
-              40.446577
-            ],
-            [
-              -79.951567,
-              40.446551
-            ],
-            [
-              -79.951671,
-              40.446505
-            ],
-            [
-              -79.951708,
-              40.446483
-            ],
-            [
-              -79.951305,
-              40.445598
-            ],
-            [
-              -79.95051,
-              40.445655
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700107000000",
-        "organization": "Amani Christian CDC",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.965266,
-              40.45094
-            ],
-            [
-              -79.965361,
-              40.451064
-            ],
-            [
-              -79.965501,
-              40.451002
-            ],
-            [
-              -79.965412,
-              40.450878
+              -79.96535,
+              40.451049
             ],
             [
               -79.965266,
               40.45094
+            ],
+            [
+              -79.964999,
+              40.451052
+            ],
+            [
+              -79.964962,
+              40.451111
             ]
           ]
         ]
@@ -509,6 +447,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002700131000000",
+        "organization": "Amani Christian CDC",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.952549,
+              40.45255
+            ],
+            [
+              -79.952681,
+              40.452757
+            ],
+            [
+              -79.953172,
+              40.452603
+            ],
+            [
+              -79.953044,
+              40.452404
+            ],
+            [
+              -79.952549,
+              40.45255
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "002700164000000",
         "organization": "Amani Christian CDC",
         "period_month": "2026-06",
@@ -542,64 +522,6 @@
             [
               -79.961596,
               40.452285
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700166000000",
-        "organization": "Amani Christian CDC",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.951398,
-              40.452163
-            ],
-            [
-              -79.950951,
-              40.452292
-            ],
-            [
-              -79.951103,
-              40.452542
-            ],
-            [
-              -79.951365,
-              40.452449
-            ],
-            [
-              -79.951399,
-              40.452505
-            ],
-            [
-              -79.951556,
-              40.452458
-            ],
-            [
-              -79.951475,
-              40.452321
-            ],
-            [
-              -79.951497,
-              40.452316
-            ],
-            [
-              -79.951398,
-              40.452163
             ]
           ]
         ]
@@ -684,6 +606,76 @@
             [
               -79.984706,
               40.439499
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "000200301000000",
+        "organization": "Center That CARES",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.987998,
+              40.441635
+            ],
+            [
+              -79.9876,
+              40.441801
+            ],
+            [
+              -79.986886,
+              40.440814
+            ],
+            [
+              -79.986657,
+              40.44089
+            ],
+            [
+              -79.986546,
+              40.440934
+            ],
+            [
+              -79.986211,
+              40.441075
+            ],
+            [
+              -79.986201,
+              40.441091
+            ],
+            [
+              -79.9862,
+              40.441115
+            ],
+            [
+              -79.986207,
+              40.441131
+            ],
+            [
+              -79.987252,
+              40.442574
+            ],
+            [
+              -79.988332,
+              40.442116
+            ],
+            [
+              -79.987998,
+              40.441635
             ]
           ]
         ]
@@ -1025,48 +1017,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000352000000",
-        "organization": "Center That CARES",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.97931,
-              40.446276
-            ],
-            [
-              -79.979405,
-              40.446407
-            ],
-            [
-              -79.979584,
-              40.446332
-            ],
-            [
-              -79.979491,
-              40.4462
-            ],
-            [
-              -79.97931,
-              40.446276
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "001000376000002",
         "organization": "Center That CARES",
         "period_month": "2026-06",
@@ -1129,7 +1079,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001100202000000",
+        "parcel_key": "001100201000000",
         "organization": "Center That CARES",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -1144,32 +1094,36 @@
         "coordinates": [
           [
             [
-              -79.979795,
-              40.440333
+              -79.970442,
+              40.440367
             ],
             [
-              -79.979828,
-              40.440405
+              -79.970666,
+              40.440807
             ],
             [
-              -79.979963,
-              40.440361
+              -79.971014,
+              40.440898
             ],
             [
-              -79.979892,
-              40.440229
+              -79.970902,
+              40.440654
             ],
             [
-              -79.97977,
-              40.440267
+              -79.970697,
+              40.440266
             ],
             [
-              -79.979805,
-              40.44033
+              -79.970661,
+              40.440252
             ],
             [
-              -79.979795,
-              40.440333
+              -79.970621,
+              40.440256
+            ],
+            [
+              -79.970442,
+              40.440367
             ]
           ]
         ]
@@ -1305,7 +1259,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "008300279000000",
+        "parcel_key": "008300209000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -1313,6 +1267,184 @@
         "ownership_type": "URA",
         "masked_geometry": false,
         "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.919842,
+              40.463832
+            ],
+            [
+              -79.920032,
+              40.463901
+            ],
+            [
+              -79.920155,
+              40.463702
+            ],
+            [
+              -79.920502,
+              40.463827
+            ],
+            [
+              -79.92094,
+              40.46312
+            ],
+            [
+              -79.921087,
+              40.462948
+            ],
+            [
+              -79.92109,
+              40.462934
+            ],
+            [
+              -79.921084,
+              40.462921
+            ],
+            [
+              -79.921072,
+              40.462912
+            ],
+            [
+              -79.920418,
+              40.462662
+            ],
+            [
+              -79.920274,
+              40.462589
+            ],
+            [
+              -79.920238,
+              40.462586
+            ],
+            [
+              -79.920216,
+              40.462592
+            ],
+            [
+              -79.920196,
+              40.462603
+            ],
+            [
+              -79.920183,
+              40.462618
+            ],
+            [
+              -79.920004,
+              40.462911
+            ],
+            [
+              -79.920335,
+              40.463029
+            ],
+            [
+              -79.919842,
+              40.463832
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "008300271000000",
+        "organization": "Chatman Properties",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": true,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "returned",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.922503,
+              40.47011
+            ],
+            [
+              -79.922684,
+              40.470174
+            ],
+            [
+              -79.922932,
+              40.469768
+            ],
+            [
+              -79.922757,
+              40.469705
+            ],
+            [
+              -79.922503,
+              40.47011
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "008300276000000",
+        "organization": "Chatman Properties",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": true,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "returned",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.91698,
+              40.471043
+            ],
+            [
+              -79.917159,
+              40.471075
+            ],
+            [
+              -79.917272,
+              40.470739
+            ],
+            [
+              -79.917098,
+              40.470705
+            ],
+            [
+              -79.91698,
+              40.471043
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "008300279000000",
+        "organization": "Chatman Properties",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": true,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -1393,10 +1525,10 @@
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -1439,7 +1571,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "008400283000000",
+        "parcel_key": "012400068000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -1454,70 +1586,24 @@
         "coordinates": [
           [
             [
-              -79.923839,
-              40.456724
+              -79.905232,
+              40.469907
             ],
             [
-              -79.924536,
-              40.456806
+              -79.905817,
+              40.470249
             ],
             [
-              -79.924613,
-              40.455578
+              -79.906058,
+              40.470011
             ],
             [
-              -79.92457,
-              40.455547
+              -79.905469,
+              40.469671
             ],
             [
-              -79.924085,
-              40.4555
-            ],
-            [
-              -79.923839,
-              40.456724
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012400011000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.915259,
-              40.465839
-            ],
-            [
-              -79.915392,
-              40.46596
-            ],
-            [
-              -79.915718,
-              40.465749
-            ],
-            [
-              -79.915584,
-              40.465628
-            ],
-            [
-              -79.915259,
-              40.465839
+              -79.905232,
+              40.469907
             ]
           ]
         ]
@@ -1569,7 +1655,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "01240016900000",
+        "parcel_key": "012400145000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -1584,24 +1670,24 @@
         "coordinates": [
           [
             [
-              -79.91146,
-              40.465427
+              -79.901452,
+              40.46551
             ],
             [
-              -79.911521,
-              40.465482
+              -79.901668,
+              40.465638
             ],
             [
-              -79.911757,
-              40.46533
+              -79.901931,
+              40.465384
             ],
             [
-              -79.911699,
-              40.465278
+              -79.901715,
+              40.465257
             ],
             [
-              -79.91146,
-              40.465427
+              -79.901452,
+              40.46551
             ]
           ]
         ]
@@ -1695,7 +1781,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012500014000000",
+        "parcel_key": "012500226000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -1710,174 +1796,24 @@
         "coordinates": [
           [
             [
-              -79.916634,
-              40.457783
+              -79.90538,
+              40.455939
             ],
             [
-              -79.917109,
-              40.457378
+              -79.905129,
+              40.455883
             ],
             [
-              -79.916096,
-              40.456696
+              -79.904891,
+              40.456216
             ],
             [
-              -79.915842,
-              40.456919
+              -79.905216,
+              40.456299
             ],
             [
-              -79.91606,
-              40.457071
-            ],
-            [
-              -79.916619,
-              40.457445
-            ],
-            [
-              -79.916406,
-              40.457629
-            ],
-            [
-              -79.916634,
-              40.457783
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012500015000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.907582,
-              40.453327
-            ],
-            [
-              -79.907752,
-              40.453393
-            ],
-            [
-              -79.908001,
-              40.45299
-            ],
-            [
-              -79.907837,
-              40.452934
-            ],
-            [
-              -79.907582,
-              40.453327
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012500022000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.902865,
-              40.458362
-            ],
-            [
-              -79.903025,
-              40.458705
-            ],
-            [
-              -79.903613,
-              40.458598
-            ],
-            [
-              -79.903692,
-              40.458231
-            ],
-            [
-              -79.903336,
-              40.458241
-            ],
-            [
-              -79.903165,
-              40.458272
-            ],
-            [
-              -79.902972,
-              40.458319
-            ],
-            [
-              -79.902865,
-              40.458362
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012500233000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.90978,
-              40.453435
-            ],
-            [
-              -79.910245,
-              40.453631
-            ],
-            [
-              -79.910316,
-              40.453571
-            ],
-            [
-              -79.909859,
-              40.453353
-            ],
-            [
-              -79.90978,
-              40.453435
+              -79.90538,
+              40.455939
             ]
           ]
         ]
@@ -1933,10 +1869,10 @@
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -1975,10 +1911,10 @@
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -2017,10 +1953,10 @@
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -2269,49 +2205,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "017400078000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.890082,
-              40.45443
-            ],
-            [
-              -79.890213,
-              40.454459
-            ],
-            [
-              -79.890349,
-              40.454103
-            ],
-            [
-              -79.890216,
-              40.454073
-            ],
-            [
-              -79.890082,
-              40.45443
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "017500141000000",
+        "parcel_key": "017400053000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -2326,24 +2220,24 @@
         "coordinates": [
           [
             [
-              -79.897781,
-              40.445612
+              -79.89088,
+              40.460663
             ],
             [
-              -79.899007,
-              40.44602
+              -79.891008,
+              40.460313
             ],
             [
-              -79.899193,
-              40.445731
+              -79.890731,
+              40.460597
             ],
             [
-              -79.897949,
-              40.445317
+              -79.890721,
+              40.460626
             ],
             [
-              -79.897781,
-              40.445612
+              -79.89088,
+              40.460663
             ]
           ]
         ]
@@ -2395,90 +2289,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "017500151000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.885629,
-              40.451227
-            ],
-            [
-              -79.885783,
-              40.451265
-            ],
-            [
-              -79.885873,
-              40.451038
-            ],
-            [
-              -79.885725,
-              40.451002
-            ],
-            [
-              -79.885629,
-              40.451227
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "017500309000000",
-        "organization": "Chatman Properties",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.882933,
-              40.451028
-            ],
-            [
-              -79.883332,
-              40.450954
-            ],
-            [
-              -79.883313,
-              40.450875
-            ],
-            [
-              -79.88294,
-              40.450942
-            ],
-            [
-              -79.882933,
-              40.451028
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "017500330000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
@@ -2521,7 +2331,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "023100011000000",
+        "parcel_key": "023100074000000",
         "organization": "Chatman Properties",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -2536,24 +2346,24 @@
         "coordinates": [
           [
             [
-              -79.873663,
-              40.457661
+              -79.877362,
+              40.456524
             ],
             [
-              -79.87381,
-              40.457662
+              -79.877862,
+              40.456843
             ],
             [
-              -79.873815,
-              40.457293
+              -79.877989,
+              40.456726
             ],
             [
-              -79.873668,
-              40.457293
+              -79.877505,
+              40.456421
             ],
             [
-              -79.873663,
-              40.457661
+              -79.877362,
+              40.456524
             ]
           ]
         ]
@@ -2689,7 +2499,91 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001400107000000",
+        "parcel_key": "001400160000000",
+        "organization": "Ervin Home Beautification",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.988892,
+              40.420029
+            ],
+            [
+              -79.988881,
+              40.419688
+            ],
+            [
+              -79.988659,
+              40.419692
+            ],
+            [
+              -79.98868,
+              40.420033
+            ],
+            [
+              -79.988892,
+              40.420029
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001500199000000",
+        "organization": "Ervin Home Beautification",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.008749,
+              40.422007
+            ],
+            [
+              -80.008863,
+              40.422019
+            ],
+            [
+              -80.008909,
+              40.421773
+            ],
+            [
+              -80.008797,
+              40.421761
+            ],
+            [
+              -80.008749,
+              40.422007
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001500236000000",
         "organization": "Ervin Home Beautification",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -2704,24 +2598,24 @@
         "coordinates": [
           [
             [
-              -79.993799,
-              40.420258
+              -80.012137,
+              40.421893
             ],
             [
-              -79.993804,
-              40.420382
+              -80.012135,
+              40.422073
             ],
             [
-              -79.994085,
-              40.42038
+              -80.012441,
+              40.422074
             ],
             [
-              -79.99408,
-              40.420253
+              -80.012499,
+              40.421895
             ],
             [
-              -79.993799,
-              40.420258
+              -80.012137,
+              40.421893
             ]
           ]
         ]
@@ -2764,48 +2658,6 @@
             [
               -80.023666,
               40.455052
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002200033000000",
-        "organization": "Ervin Home Beautification",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.021611,
-              40.454995
-            ],
-            [
-              -80.021723,
-              40.455342
-            ],
-            [
-              -80.021823,
-              40.455324
-            ],
-            [
-              -80.021711,
-              40.454976
-            ],
-            [
-              -80.021611,
-              40.454995
             ]
           ]
         ]
@@ -2890,48 +2742,6 @@
             [
               -80.027735,
               40.459241
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "00220004100000",
-        "organization": "Ervin Home Beautification",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.027614,
-              40.459554
-            ],
-            [
-              -80.027686,
-              40.459541
-            ],
-            [
-              -80.027625,
-              40.459365
-            ],
-            [
-              -80.027555,
-              40.459379
-            ],
-            [
-              -80.027614,
-              40.459554
             ]
           ]
         ]
@@ -3151,6 +2961,52 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002200256000000",
+        "organization": "Ervin Home Beautification",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.022969,
+              40.457696
+            ],
+            [
+              -80.022901,
+              40.457786
+            ],
+            [
+              -80.023279,
+              40.458007
+            ],
+            [
+              -80.023424,
+              40.457978
+            ],
+            [
+              -80.023315,
+              40.457637
+            ],
+            [
+              -80.022969,
+              40.457696
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "00220026700000",
         "organization": "Ervin Home Beautification",
         "period_month": "2026-06",
@@ -3277,6 +3133,194 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "017400048000000",
+        "organization": "FHCV Contracting LLC & LawnCare",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.888208,
+              40.457207
+            ],
+            [
+              -79.888148,
+              40.457214
+            ],
+            [
+              -79.888448,
+              40.457852
+            ],
+            [
+              -79.889106,
+              40.458001
+            ],
+            [
+              -79.8892,
+              40.457758
+            ],
+            [
+              -79.88867,
+              40.457637
+            ],
+            [
+              -79.888709,
+              40.457544
+            ],
+            [
+              -79.888329,
+              40.457433
+            ],
+            [
+              -79.888394,
+              40.45725
+            ],
+            [
+              -79.888208,
+              40.457207
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "017400058000000",
+        "organization": "FHCV Contracting LLC & LawnCare",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.898885,
+              40.459939
+            ],
+            [
+              -79.89913,
+              40.459995
+            ],
+            [
+              -79.899271,
+              40.459637
+            ],
+            [
+              -79.899022,
+              40.459579
+            ],
+            [
+              -79.898885,
+              40.459939
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "017400335000000",
+        "organization": "FHCV Contracting LLC & LawnCare",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.888858,
+              40.46016
+            ],
+            [
+              -79.888947,
+              40.46018
+            ],
+            [
+              -79.889073,
+              40.459871
+            ],
+            [
+              -79.888982,
+              40.45985
+            ],
+            [
+              -79.888858,
+              40.46016
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "017400372000000",
+        "organization": "FHCV Contracting LLC & LawnCare",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.88877,
+              40.457601
+            ],
+            [
+              -79.888813,
+              40.457609
+            ],
+            [
+              -79.888903,
+              40.457366
+            ],
+            [
+              -79.888853,
+              40.457353
+            ],
+            [
+              -79.88877,
+              40.457601
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "017400501000000",
         "organization": "FHCV Contracting LLC & LawnCare",
         "period_month": "2026-06",
@@ -3387,7 +3431,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "000200147000000",
+        "parcel_key": "000200056000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -3402,24 +3446,24 @@
         "coordinates": [
           [
             [
-              -79.982982,
-              40.439083
+              -79.99637,
+              40.437156
             ],
             [
-              -79.983115,
-              40.439088
+              -79.996575,
+              40.437232
             ],
             [
-              -79.983132,
-              40.438841
+              -79.996684,
+              40.437062
             ],
             [
-              -79.983005,
-              40.438836
+              -79.996473,
+              40.436988
             ],
             [
-              -79.982982,
-              40.439083
+              -79.99637,
+              40.437156
             ]
           ]
         ]
@@ -3613,6 +3657,64 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "000200300000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.994102,
+              40.435317
+            ],
+            [
+              -79.994359,
+              40.434905
+            ],
+            [
+              -79.994607,
+              40.434908
+            ],
+            [
+              -79.994657,
+              40.434395
+            ],
+            [
+              -79.992611,
+              40.434253
+            ],
+            [
+              -79.992181,
+              40.434242
+            ],
+            [
+              -79.992156,
+              40.43452
+            ],
+            [
+              -79.992124,
+              40.434588
+            ],
+            [
+              -79.994102,
+              40.435317
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "000200312000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -3739,7 +3841,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "000200323000000",
+        "parcel_key": "000200322000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -3754,24 +3856,24 @@
         "coordinates": [
           [
             [
-              -79.983611,
-              40.439561
+              -79.991743,
+              40.438768
             ],
             [
-              -79.983278,
-              40.439553
+              -79.991821,
+              40.438771
             ],
             [
-              -79.983276,
-              40.439603
+              -79.991855,
+              40.438453
             ],
             [
-              -79.983608,
-              40.439614
+              -79.991778,
+              40.43845
             ],
             [
-              -79.983611,
-              40.439561
+              -79.991743,
+              40.438768
             ]
           ]
         ]
@@ -3856,90 +3958,6 @@
             [
               -79.991553,
               40.438759
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "000200325000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.99148,
-              40.438755
-            ],
-            [
-              -79.991553,
-              40.438759
-            ],
-            [
-              -79.991596,
-              40.438441
-            ],
-            [
-              -79.991513,
-              40.438437
-            ],
-            [
-              -79.99148,
-              40.438755
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "000200327000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.991316,
-              40.438748
-            ],
-            [
-              -79.991374,
-              40.43875
-            ],
-            [
-              -79.991414,
-              40.438432
-            ],
-            [
-              -79.991352,
-              40.438429
-            ],
-            [
-              -79.991316,
-              40.438748
             ]
           ]
         ]
@@ -4197,6 +4215,56 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "000900097000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.991167,
+              40.446641
+            ],
+            [
+              -79.990913,
+              40.4468
+            ],
+            [
+              -79.991169,
+              40.44703
+            ],
+            [
+              -79.991123,
+              40.447059
+            ],
+            [
+              -79.991384,
+              40.447286
+            ],
+            [
+              -79.991662,
+              40.447115
+            ],
+            [
+              -79.991167,
+              40.446641
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "000900116000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -4281,6 +4349,94 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "000900118000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.992531,
+              40.446222
+            ],
+            [
+              -79.992438,
+              40.446279
+            ],
+            [
+              -79.991542,
+              40.446836
+            ],
+            [
+              -79.991766,
+              40.447052
+            ],
+            [
+              -79.992757,
+              40.44643
+            ],
+            [
+              -79.992531,
+              40.446222
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "000900133000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.996178,
+              40.444416
+            ],
+            [
+              -79.99637,
+              40.444835
+            ],
+            [
+              -79.996471,
+              40.444809
+            ],
+            [
+              -79.996276,
+              40.44439
+            ],
+            [
+              -79.996178,
+              40.444416
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "000900148000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -4322,48 +4478,6 @@
             [
               -79.986674,
               40.444216
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "000900181000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.984285,
-              40.445131
-            ],
-            [
-              -79.984221,
-              40.445043
-            ],
-            [
-              -79.984002,
-              40.445135
-            ],
-            [
-              -79.984065,
-              40.445223
-            ],
-            [
-              -79.984285,
-              40.445131
             ]
           ]
         ]
@@ -4415,6 +4529,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000353000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.969705,
+              40.449777
+            ],
+            [
+              -79.969778,
+              40.449899
+            ],
+            [
+              -79.970367,
+              40.449689
+            ],
+            [
+              -79.970298,
+              40.449566
+            ],
+            [
+              -79.969705,
+              40.449777
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "00110005200000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -4448,76 +4604,6 @@
             [
               -79.982171,
               40.43905
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001100207000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.969103,
-              40.442231
-            ],
-            [
-              -79.969451,
-              40.442476
-            ],
-            [
-              -79.969827,
-              40.442487
-            ],
-            [
-              -79.969865,
-              40.441978
-            ],
-            [
-              -79.969874,
-              40.441798
-            ],
-            [
-              -79.96987,
-              40.441783
-            ],
-            [
-              -79.969857,
-              40.441771
-            ],
-            [
-              -79.969838,
-              40.441766
-            ],
-            [
-              -79.969703,
-              40.441762
-            ],
-            [
-              -79.969656,
-              40.441773
-            ],
-            [
-              -79.969635,
-              40.441783
-            ],
-            [
-              -79.969103,
-              40.442231
             ]
           ]
         ]
@@ -4602,6 +4688,48 @@
             [
               -79.980016,
               40.441188
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001100221000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.979646,
+              40.436814
+            ],
+            [
+              -79.979637,
+              40.436943
+            ],
+            [
+              -79.979866,
+              40.436952
+            ],
+            [
+              -79.979873,
+              40.436816
+            ],
+            [
+              -79.979646,
+              40.436814
             ]
           ]
         ]
@@ -4710,48 +4838,6 @@
             [
               -79.979384,
               40.442163
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "00110029700000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.981222,
-              40.439423
-            ],
-            [
-              -79.981372,
-              40.439431
-            ],
-            [
-              -79.981383,
-              40.439298
-            ],
-            [
-              -79.981234,
-              40.439291
-            ],
-            [
-              -79.981222,
-              40.439423
             ]
           ]
         ]
@@ -4887,7 +4973,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001200007000000",
+        "parcel_key": "001300271000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -4902,36 +4988,24 @@
         "coordinates": [
           [
             [
-              -79.979638,
-              40.43162
+              -79.981392,
+              40.413935
             ],
             [
-              -79.979597,
-              40.432021
+              -79.981397,
+              40.414071
             ],
             [
-              -79.980009,
-              40.431985
+              -79.98177,
+              40.41406
             ],
             [
-              -79.980117,
-              40.431968
+              -79.981763,
+              40.413931
             ],
             [
-              -79.980148,
-              40.431658
-            ],
-            [
-              -79.979919,
-              40.431648
-            ],
-            [
-              -79.979921,
-              40.431634
-            ],
-            [
-              -79.979638,
-              40.43162
+              -79.981392,
+              40.413935
             ]
           ]
         ]
@@ -4941,7 +5015,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001300021000000",
+        "parcel_key": "002000006000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -4956,108 +5030,32 @@
         "coordinates": [
           [
             [
-              -79.979463,
-              40.416078
+              -80.045157,
+              40.447531
             ],
             [
-              -79.979423,
-              40.415475
+              -80.04495,
+              40.447626
             ],
             [
-              -79.979205,
-              40.415476
+              -80.045053,
+              40.447981
             ],
             [
-              -79.979245,
-              40.416085
+              -80.045729,
+              40.447725
             ],
             [
-              -79.979463,
-              40.416078
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001300257000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.968249,
-              40.417255
+              -80.045525,
+              40.447419
             ],
             [
-              -79.968318,
-              40.41693
+              -80.045249,
+              40.447552
             ],
             [
-              -79.968146,
-              40.416903
-            ],
-            [
-              -79.968086,
-              40.41723
-            ],
-            [
-              -79.968249,
-              40.417255
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002200137000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.025504,
-              40.454269
-            ],
-            [
-              -80.025354,
-              40.454297
-            ],
-            [
-              -80.025461,
-              40.45464
-            ],
-            [
-              -80.025611,
-              40.454612
-            ],
-            [
-              -80.025504,
-              40.454269
+              -80.045157,
+              40.447531
             ]
           ]
         ]
@@ -5109,7 +5107,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002300414000000",
+        "parcel_key": "002300336000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -5124,32 +5122,28 @@
         "coordinates": [
           [
             [
-              -80.008007,
-              40.455321
+              -80.015098,
+              40.455754
             ],
             [
-              -80.008172,
-              40.455799
+              -80.015052,
+              40.455602
             ],
             [
-              -80.00825,
-              40.455784
+              -80.015022,
+              40.45554
             ],
             [
-              -80.008168,
-              40.455544
+              -80.014664,
+              40.455611
             ],
             [
-              -80.008197,
-              40.455539
+              -80.014732,
+              40.455823
             ],
             [
-              -80.008115,
-              40.4553
-            ],
-            [
-              -80.008007,
-              40.455321
+              -80.015098,
+              40.455754
             ]
           ]
         ]
@@ -5343,90 +5337,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "00260001400000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.961192,
-              40.461756
-            ],
-            [
-              -79.961248,
-              40.462072
-            ],
-            [
-              -79.961292,
-              40.462065
-            ],
-            [
-              -79.961236,
-              40.461751
-            ],
-            [
-              -79.961192,
-              40.461756
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700195000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.95752,
-              40.44845
-            ],
-            [
-              -79.957649,
-              40.448354
-            ],
-            [
-              -79.957309,
-              40.448075
-            ],
-            [
-              -79.957178,
-              40.448171
-            ],
-            [
-              -79.95752,
-              40.44845
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "002700196000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -5460,116 +5370,6 @@
             [
               -79.95615,
               40.450272
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700204000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "MultiPolygon",
-        "coordinates": [
-          [
-            [
-              [
-                -79.956283,
-                40.450871
-              ],
-              [
-                -79.955823,
-                40.450506
-              ],
-              [
-                -79.955717,
-                40.450581
-              ],
-              [
-                -79.956184,
-                40.450964
-              ],
-              [
-                -79.956283,
-                40.450871
-              ]
-            ]
-          ],
-          [
-            [
-              [
-                -79.955632,
-                40.450516
-              ],
-              [
-                -79.955675,
-                40.450552
-              ],
-              [
-                -79.95578,
-                40.450477
-              ],
-              [
-                -79.95574,
-                40.450441
-              ],
-              [
-                -79.955632,
-                40.450516
-              ]
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700258000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.949817,
-              40.451581
-            ],
-            [
-              -79.95036,
-              40.45143
-            ],
-            [
-              -79.950213,
-              40.451129
-            ],
-            [
-              -79.94966,
-              40.451286
-            ],
-            [
-              -79.949817,
-              40.451581
             ]
           ]
         ]
@@ -5961,7 +5761,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "004100090000000",
+        "parcel_key": "004100080000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -5976,24 +5776,172 @@
         "coordinates": [
           [
             [
-              -80.055126,
-              40.447215
+              -80.04922,
+              40.446645
             ],
             [
-              -80.055433,
-              40.447218
+              -80.049269,
+              40.446595
             ],
             [
-              -80.055618,
-              40.446816
+              -80.049324,
+              40.44655
             ],
             [
-              -80.055138,
-              40.446809
+              -80.049385,
+              40.44651
             ],
             [
-              -80.055126,
-              40.447215
+              -80.049452,
+              40.446475
+            ],
+            [
+              -80.049523,
+              40.446445
+            ],
+            [
+              -80.049597,
+              40.446421
+            ],
+            [
+              -80.049675,
+              40.446404
+            ],
+            [
+              -80.049754,
+              40.446392
+            ],
+            [
+              -80.049835,
+              40.446387
+            ],
+            [
+              -80.049915,
+              40.446388
+            ],
+            [
+              -80.049996,
+              40.446396
+            ],
+            [
+              -80.050074,
+              40.44641
+            ],
+            [
+              -80.050151,
+              40.446431
+            ],
+            [
+              -80.050224,
+              40.446457
+            ],
+            [
+              -80.050293,
+              40.446489
+            ],
+            [
+              -80.050357,
+              40.446527
+            ],
+            [
+              -80.050961,
+              40.446921
+            ],
+            [
+              -80.05099,
+              40.446931
+            ],
+            [
+              -80.051022,
+              40.446933
+            ],
+            [
+              -80.051054,
+              40.446928
+            ],
+            [
+              -80.051082,
+              40.446916
+            ],
+            [
+              -80.051768,
+              40.4463
+            ],
+            [
+              -80.052102,
+              40.445951
+            ],
+            [
+              -80.052274,
+              40.445738
+            ],
+            [
+              -80.052737,
+              40.445105
+            ],
+            [
+              -80.053161,
+              40.444542
+            ],
+            [
+              -80.052837,
+              40.444402
+            ],
+            [
+              -80.0525,
+              40.444353
+            ],
+            [
+              -80.052342,
+              40.444286
+            ],
+            [
+              -80.052549,
+              40.443997
+            ],
+            [
+              -80.052236,
+              40.443943
+            ],
+            [
+              -80.052217,
+              40.443935
+            ],
+            [
+              -80.051352,
+              40.445122
+            ],
+            [
+              -80.050329,
+              40.445911
+            ],
+            [
+              -80.049475,
+              40.446119
+            ],
+            [
+              -80.049189,
+              40.446199
+            ],
+            [
+              -80.049224,
+              40.446225
+            ],
+            [
+              -80.048775,
+              40.446391
+            ],
+            [
+              -80.048929,
+              40.446477
+            ],
+            [
+              -80.048912,
+              40.446498
+            ],
+            [
+              -80.04922,
+              40.446645
             ]
           ]
         ]
@@ -6045,7 +5993,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "004100145000000",
+        "parcel_key": "004100142000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -6060,24 +6008,24 @@
         "coordinates": [
           [
             [
-              -80.051768,
-              40.443656
+              -80.062469,
+              40.448195
             ],
             [
-              -80.052177,
-              40.443929
+              -80.062601,
+              40.448287
             ],
             [
-              -80.052763,
-              40.443136
+              -80.062894,
+              40.448043
             ],
             [
-              -80.052368,
-              40.442986
+              -80.062764,
+              40.447951
             ],
             [
-              -80.051768,
-              40.443656
+              -80.062469,
+              40.448195
             ]
           ]
         ]
@@ -6087,7 +6035,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "004100147000000",
+        "parcel_key": "004100295000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -6102,60 +6050,24 @@
         "coordinates": [
           [
             [
-              -80.057434,
-              40.451968
+              -80.054514,
+              40.451407
             ],
             [
-              -80.057562,
-              40.452093
+              -80.05487,
+              40.451431
             ],
             [
-              -80.057947,
-              40.451995
+              -80.05489,
+              40.45126
             ],
             [
-              -80.058278,
-              40.45189
+              -80.054536,
+              40.451236
             ],
             [
-              -80.058597,
-              40.451765
-            ],
-            [
-              -80.058903,
-              40.451622
-            ],
-            [
-              -80.058959,
-              40.451682
-            ],
-            [
-              -80.059246,
-              40.451521
-            ],
-            [
-              -80.059706,
-              40.451202
-            ],
-            [
-              -80.060464,
-              40.45058
-            ],
-            [
-              -80.060397,
-              40.450512
-            ],
-            [
-              -80.060115,
-              40.450723
-            ],
-            [
-              -80.058955,
-              40.451496
-            ],
-            [
-              -80.057434,
-              40.451968
+              -80.054514,
+              40.451407
             ]
           ]
         ]
@@ -6437,6 +6349,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "004500135000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.016775,
+              40.463967
+            ],
+            [
+              -80.016955,
+              40.464228
+            ],
+            [
+              -80.017011,
+              40.464206
+            ],
+            [
+              -80.016824,
+              40.463937
+            ],
+            [
+              -80.016775,
+              40.463967
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "004500380000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -6470,48 +6424,6 @@
             [
               -80.017522,
               40.46508
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "004500382000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.028503,
-              40.471484
-            ],
-            [
-              -80.028578,
-              40.471706
-            ],
-            [
-              -80.028925,
-              40.471635
-            ],
-            [
-              -80.028851,
-              40.471412
-            ],
-            [
-              -80.028503,
-              40.471484
             ]
           ]
         ]
@@ -6567,7 +6479,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "004600249000000",
+        "parcel_key": "004600261000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -6582,90 +6494,24 @@
         "coordinates": [
           [
             [
-              -80.009363,
-              40.464289
+              -80.011993,
+              40.47151
             ],
             [
-              -80.009698,
-              40.464233
+              -80.011784,
+              40.470877
             ],
             [
-              -80.009654,
-              40.464097
+              -80.011441,
+              40.470947
             ],
             [
-              -80.00932,
-              40.464158
+              -80.011649,
+              40.47158
             ],
             [
-              -80.009363,
-              40.464289
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "006300173000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.047221,
-              40.402913
-            ],
-            [
-              -80.046915,
-              40.40292
-            ],
-            [
-              -80.046933,
-              40.40321
-            ],
-            [
-              -80.047346,
-              40.403199
-            ],
-            [
-              -80.047343,
-              40.403119
-            ],
-            [
-              -80.047334,
-              40.403048
-            ],
-            [
-              -80.047318,
-              40.402978
-            ],
-            [
-              -80.047311,
-              40.402964
-            ],
-            [
-              -80.047289,
-              40.40294
-            ],
-            [
-              -80.047257,
-              40.402922
-            ],
-            [
-              -80.047221,
-              40.402913
+              -80.011993,
+              40.47151
             ]
           ]
         ]
@@ -6801,6 +6647,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "007000080000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.076389,
+              40.447311
+            ],
+            [
+              -80.076549,
+              40.447985
+            ],
+            [
+              -80.077216,
+              40.447688
+            ],
+            [
+              -80.076885,
+              40.447229
+            ],
+            [
+              -80.076389,
+              40.447311
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "007000081000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -6834,64 +6722,6 @@
             [
               -80.072687,
               40.452197
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "007000082000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.077216,
-              40.447688
-            ],
-            [
-              -80.077225,
-              40.447693
-            ],
-            [
-              -80.077254,
-              40.447668
-            ],
-            [
-              -80.077247,
-              40.447662
-            ],
-            [
-              -80.077367,
-              40.447566
-            ],
-            [
-              -80.077028,
-              40.447186
-            ],
-            [
-              -80.076936,
-              40.447222
-            ],
-            [
-              -80.076885,
-              40.447229
-            ],
-            [
-              -80.077216,
-              40.447688
             ]
           ]
         ]
@@ -7076,6 +6906,48 @@
             [
               -80.073153,
               40.449725
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "007700265000000",
+        "organization": "Hilltop Rising",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.010476,
+              40.473012
+            ],
+            [
+              -80.010479,
+              40.473123
+            ],
+            [
+              -80.011156,
+              40.473106
+            ],
+            [
+              -80.011148,
+              40.472986
+            ],
+            [
+              -80.010476,
+              40.473012
             ]
           ]
         ]
@@ -7651,48 +7523,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "011600044000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.012005,
-              40.490928
-            ],
-            [
-              -80.011859,
-              40.490458
-            ],
-            [
-              -80.011396,
-              40.49052
-            ],
-            [
-              -80.011556,
-              40.491017
-            ],
-            [
-              -80.012005,
-              40.490928
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "011600056000000",
         "organization": "Hilltop Rising",
         "period_month": "2026-06",
@@ -7735,91 +7565,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "011600140000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.004709,
-              40.485573
-            ],
-            [
-              -80.004439,
-              40.484948
-            ],
-            [
-              -80.004051,
-              40.48505
-            ],
-            [
-              -80.004325,
-              40.485672
-            ],
-            [
-              -80.004709,
-              40.485573
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "011600250000000",
-        "organization": "Hilltop Rising",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -80.004548,
-              40.487483
-            ],
-            [
-              -80.003573,
-              40.487736
-            ],
-            [
-              -80.003584,
-              40.488143
-            ],
-            [
-              -80.0047,
-              40.487854
-            ],
-            [
-              -80.004548,
-              40.487483
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000008000000",
+        "parcel_key": "001000034000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -7834,140 +7580,24 @@
         "coordinates": [
           [
             [
-              -79.970028,
-              40.447702
+              -79.972169,
+              40.44802
             ],
             [
-              -79.970111,
-              40.447671
+              -79.972333,
+              40.448256
             ],
             [
-              -79.969964,
-              40.447426
+              -79.972465,
+              40.4482
             ],
             [
-              -79.969827,
-              40.447475
+              -79.972296,
+              40.447966
             ],
             [
-              -79.970028,
-              40.447702
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000016000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.979194,
-              40.444593
-            ],
-            [
-              -79.979333,
-              40.444784
-            ],
-            [
-              -79.979488,
-              40.444718
-            ],
-            [
-              -79.979403,
-              40.4446
-            ],
-            [
-              -79.979448,
-              40.444582
-            ],
-            [
-              -79.979534,
-              40.444699
-            ],
-            [
-              -79.980264,
-              40.444391
-            ],
-            [
-              -79.980119,
-              40.444191
-            ],
-            [
-              -79.979858,
-              40.444302
-            ],
-            [
-              -79.979712,
-              40.444102
-            ],
-            [
-              -79.979242,
-              40.444299
-            ],
-            [
-              -79.979396,
-              40.444509
-            ],
-            [
-              -79.979194,
-              40.444593
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000019000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.970697,
-              40.448164
-            ],
-            [
-              -79.970848,
-              40.448377
-            ],
-            [
-              -79.970983,
-              40.44832
-            ],
-            [
-              -79.970829,
-              40.448107
-            ],
-            [
-              -79.970697,
-              40.448164
+              -79.972169,
+              40.44802
             ]
           ]
         ]
@@ -8010,6 +7640,64 @@
             [
               -79.978814,
               40.443665
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000069000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.968798,
+              40.451787
+            ],
+            [
+              -79.968845,
+              40.451861
+            ],
+            [
+              -79.968863,
+              40.451851
+            ],
+            [
+              -79.969018,
+              40.452092
+            ],
+            [
+              -79.96908,
+              40.452066
+            ],
+            [
+              -79.968926,
+              40.451819
+            ],
+            [
+              -79.968883,
+              40.451836
+            ],
+            [
+              -79.968839,
+              40.45177
+            ],
+            [
+              -79.968798,
+              40.451787
             ]
           ]
         ]
@@ -8103,7 +7791,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000189000000",
+        "parcel_key": "001000199000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -8118,32 +7806,24 @@
         "coordinates": [
           [
             [
-              -79.972072,
-              40.447293
+              -79.976343,
+              40.444527
             ],
             [
-              -79.972185,
-              40.447456
+              -79.976412,
+              40.444498
             ],
             [
-              -79.973024,
-              40.447098
+              -79.976233,
+              40.44426
             ],
             [
-              -79.972951,
-              40.446999
+              -79.976164,
+              40.44429
             ],
             [
-              -79.972686,
-              40.447112
-            ],
-            [
-              -79.972645,
-              40.447053
-            ],
-            [
-              -79.972072,
-              40.447293
+              -79.976343,
+              40.444527
             ]
           ]
         ]
@@ -8153,7 +7833,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000203000000",
+        "parcel_key": "001000204000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -8168,24 +7848,28 @@
         "coordinates": [
           [
             [
-              -79.982058,
-              40.44616
+              -79.967877,
+              40.450066
             ],
             [
-              -79.981987,
-              40.446062
+              -79.967729,
+              40.450126
             ],
             [
-              -79.981723,
-              40.446175
+              -79.967626,
+              40.450166
             ],
             [
-              -79.981795,
-              40.44627
+              -79.967695,
+              40.450256
             ],
             [
-              -79.982058,
-              40.44616
+              -79.967944,
+              40.450159
+            ],
+            [
+              -79.967877,
+              40.450066
             ]
           ]
         ]
@@ -8237,6 +7921,140 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000229000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.968306,
+              40.446053
+            ],
+            [
+              -79.968542,
+              40.446264
+            ],
+            [
+              -79.968654,
+              40.446186
+            ],
+            [
+              -79.968418,
+              40.445981
+            ],
+            [
+              -79.968306,
+              40.446053
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000238000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.973262,
+              40.448131
+            ],
+            [
+              -79.973322,
+              40.448239
+            ],
+            [
+              -79.973635,
+              40.448145
+            ],
+            [
+              -79.973575,
+              40.448032
+            ],
+            [
+              -79.973262,
+              40.448131
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000244000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.968355,
+              40.451068
+            ],
+            [
+              -79.968497,
+              40.451258
+            ],
+            [
+              -79.968627,
+              40.451201
+            ],
+            [
+              -79.96851,
+              40.451027
+            ],
+            [
+              -79.968454,
+              40.451047
+            ],
+            [
+              -79.968446,
+              40.451036
+            ],
+            [
+              -79.968355,
+              40.451068
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "001000245000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -8270,6 +8088,48 @@
             [
               -79.9668,
               40.448613
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000257000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.966349,
+              40.44803
+            ],
+            [
+              -79.966613,
+              40.448222
+            ],
+            [
+              -79.966696,
+              40.448175
+            ],
+            [
+              -79.966434,
+              40.447971
+            ],
+            [
+              -79.966349,
+              40.44803
             ]
           ]
         ]
@@ -8321,48 +8181,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000272000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.96662,
-              40.449077
-            ],
-            [
-              -79.966999,
-              40.448936
-            ],
-            [
-              -79.966952,
-              40.448859
-            ],
-            [
-              -79.966572,
-              40.449
-            ],
-            [
-              -79.96662,
-              40.449077
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "001000273000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -8400,94 +8218,6 @@
             [
               -79.966652,
               40.449128
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000274000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.971395,
-              40.446096
-            ],
-            [
-              -79.971541,
-              40.44633
-            ],
-            [
-              -79.971904,
-              40.446204
-            ],
-            [
-              -79.971864,
-              40.446151
-            ],
-            [
-              -79.971495,
-              40.446062
-            ],
-            [
-              -79.971395,
-              40.446096
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000277000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.976049,
-              40.447648
-            ],
-            [
-              -79.97615,
-              40.447792
-            ],
-            [
-              -79.976294,
-              40.447731
-            ],
-            [
-              -79.97619,
-              40.447587
-            ],
-            [
-              -79.976049,
-              40.447648
             ]
           ]
         ]
@@ -8576,6 +8306,48 @@
             [
               -79.967341,
               40.450325
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "001000285000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.972266,
+              40.449847
+            ],
+            [
+              -79.972189,
+              40.44988
+            ],
+            [
+              -79.972431,
+              40.450336
+            ],
+            [
+              -79.972508,
+              40.450304
+            ],
+            [
+              -79.972266,
+              40.449847
             ]
           ]
         ]
@@ -8711,7 +8483,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000302000000",
+        "parcel_key": "001000298000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -8726,24 +8498,24 @@
         "coordinates": [
           [
             [
-              -79.973466,
-              40.449907
+              -79.966671,
+              40.446524
             ],
             [
-              -79.973644,
-              40.450143
+              -79.966779,
+              40.446457
             ],
             [
-              -79.973711,
-              40.450115
+              -79.966331,
+              40.446057
             ],
             [
-              -79.973571,
-              40.449861
+              -79.966229,
+              40.44612
             ],
             [
-              -79.973466,
-              40.449907
+              -79.966671,
+              40.446524
             ]
           ]
         ]
@@ -8753,7 +8525,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000318000000",
+        "parcel_key": "001000301000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -8768,78 +8540,32 @@
         "coordinates": [
           [
             [
-              -79.967206,
-              40.4512
+              -79.965897,
+              40.446176
             ],
             [
-              -79.967319,
-              40.451348
+              -79.966139,
+              40.446573
             ],
             [
-              -79.967846,
-              40.451127
+              -79.966267,
+              40.446773
             ],
             [
-              -79.967757,
-              40.450983
+              -79.966459,
+              40.446654
             ],
             [
-              -79.967502,
-              40.451086
+              -79.965949,
+              40.446176
             ],
             [
-              -79.967417,
-              40.450957
+              -79.965933,
+              40.446179
             ],
             [
-              -79.967112,
-              40.451087
-            ],
-            [
-              -79.967206,
-              40.4512
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001000329000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.967286,
-              40.451433
-            ],
-            [
-              -79.967364,
-              40.451561
-            ],
-            [
-              -79.967968,
-              40.451308
-            ],
-            [
-              -79.967882,
-              40.451177
-            ],
-            [
-              -79.967286,
-              40.451433
+              -79.965897,
+              40.446176
             ]
           ]
         ]
@@ -9277,122 +9003,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "001100105000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.979529,
-              40.438407
-            ],
-            [
-              -79.979479,
-              40.438934
-            ],
-            [
-              -79.979561,
-              40.438937
-            ],
-            [
-              -79.979595,
-              40.43841
-            ],
-            [
-              -79.979529,
-              40.438407
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700001000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.966364,
-              40.444016
-            ],
-            [
-              -79.966344,
-              40.443981
-            ],
-            [
-              -79.965741,
-              40.443057
-            ],
-            [
-              -79.965723,
-              40.443037
-            ],
-            [
-              -79.965689,
-              40.443023
-            ],
-            [
-              -79.965653,
-              40.443023
-            ],
-            [
-              -79.965606,
-              40.443045
-            ],
-            [
-              -79.965099,
-              40.443435
-            ],
-            [
-              -79.965718,
-              40.444482
-            ],
-            [
-              -79.966298,
-              40.444124
-            ],
-            [
-              -79.966337,
-              40.444089
-            ],
-            [
-              -79.966354,
-              40.444062
-            ],
-            [
-              -79.966364,
-              40.444016
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "002700015000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -9477,7 +9087,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700050000000",
+        "parcel_key": "002700048000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -9492,24 +9102,24 @@
         "coordinates": [
           [
             [
-              -79.950154,
-              40.444377
+              -79.959259,
+              40.452526
             ],
             [
-              -79.950072,
-              40.444211
+              -79.959327,
+              40.452549
             ],
             [
-              -79.949639,
-              40.444324
+              -79.959478,
+              40.452295
             ],
             [
-              -79.949651,
-              40.444412
+              -79.95941,
+              40.452273
             ],
             [
-              -79.950154,
-              40.444377
+              -79.959259,
+              40.452526
             ]
           ]
         ]
@@ -9519,7 +9129,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700051000000",
+        "parcel_key": "002700054000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -9534,24 +9144,66 @@
         "coordinates": [
           [
             [
-              -79.956174,
-              40.447911
+              -79.957993,
+              40.448635
             ],
             [
-              -79.956292,
-              40.448006
+              -79.957668,
+              40.44838
             ],
             [
-              -79.956608,
-              40.447783
+              -79.957544,
+              40.448472
             ],
             [
-              -79.956489,
-              40.447687
+              -79.957856,
+              40.448732
             ],
             [
-              -79.956174,
-              40.447911
+              -79.957993,
+              40.448635
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002700055000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.959934,
+              40.452453
+            ],
+            [
+              -79.959796,
+              40.4527
+            ],
+            [
+              -79.959864,
+              40.452721
+            ],
+            [
+              -79.959997,
+              40.452475
+            ],
+            [
+              -79.959934,
+              40.452453
             ]
           ]
         ]
@@ -9594,140 +9246,6 @@
             [
               -79.955734,
               40.447556
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700062000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.956606,
-              40.451685
-            ],
-            [
-              -79.956927,
-              40.451811
-            ],
-            [
-              -79.957001,
-              40.451683
-            ],
-            [
-              -79.956712,
-              40.451557
-            ],
-            [
-              -79.956606,
-              40.451685
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700071000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.956974,
-              40.449352
-            ],
-            [
-              -79.956683,
-              40.449112
-            ],
-            [
-              -79.956386,
-              40.449333
-            ],
-            [
-              -79.95667,
-              40.449567
-            ],
-            [
-              -79.956974,
-              40.449352
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700072000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.956188,
-              40.452224
-            ],
-            [
-              -79.95635,
-              40.452274
-            ],
-            [
-              -79.956345,
-              40.452284
-            ],
-            [
-              -79.956606,
-              40.452368
-            ],
-            [
-              -79.956646,
-              40.452299
-            ],
-            [
-              -79.956223,
-              40.452161
-            ],
-            [
-              -79.956188,
-              40.452224
             ]
           ]
         ]
@@ -9787,7 +9305,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002700115000000",
+        "parcel_key": "002700117000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -9802,24 +9320,66 @@
         "coordinates": [
           [
             [
-              -79.95232,
-              40.449944
+              -79.958385,
+              40.451556
             ],
             [
-              -79.951723,
-              40.450156
+              -79.958529,
+              40.451604
             ],
             [
-              -79.951797,
-              40.45028
+              -79.95864,
+              40.45141
             ],
             [
-              -79.952398,
-              40.450075
+              -79.958497,
+              40.451363
             ],
             [
-              -79.95232,
-              40.449944
+              -79.958385,
+              40.451556
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002700319000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.958742,
+              40.450724
+            ],
+            [
+              -79.958832,
+              40.450754
+            ],
+            [
+              -79.958977,
+              40.450513
+            ],
+            [
+              -79.958884,
+              40.45048
+            ],
+            [
+              -79.958742,
+              40.450724
             ]
           ]
         ]
@@ -9955,48 +9515,6 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "005600162000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.943076,
-              40.406002
-            ],
-            [
-              -79.943094,
-              40.406063
-            ],
-            [
-              -79.943693,
-              40.405976
-            ],
-            [
-              -79.94368,
-              40.405915
-            ],
-            [
-              -79.943076,
-              40.406002
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "00560018300000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -10072,6 +9590,48 @@
             [
               -79.937462,
               40.407551
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "005600315000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.939841,
+              40.412028
+            ],
+            [
+              -79.940169,
+              40.412482
+            ],
+            [
+              -79.940304,
+              40.412427
+            ],
+            [
+              -79.939983,
+              40.411973
+            ],
+            [
+              -79.939841,
+              40.412028
             ]
           ]
         ]
@@ -10165,6 +9725,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "005700237000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.938352,
+              40.400713
+            ],
+            [
+              -79.938538,
+              40.400818
+            ],
+            [
+              -79.938674,
+              40.400688
+            ],
+            [
+              -79.938498,
+              40.400584
+            ],
+            [
+              -79.938352,
+              40.400713
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "005700254000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -10240,6 +9842,174 @@
             [
               -79.938204,
               40.400844
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "005700342000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.937083,
+              40.401954
+            ],
+            [
+              -79.937451,
+              40.402085
+            ],
+            [
+              -79.937499,
+              40.402015
+            ],
+            [
+              -79.937128,
+              40.401875
+            ],
+            [
+              -79.937083,
+              40.401954
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "008800020000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.916932,
+              40.420467
+            ],
+            [
+              -79.918179,
+              40.421383
+            ],
+            [
+              -79.918539,
+              40.421216
+            ],
+            [
+              -79.918724,
+              40.421139
+            ],
+            [
+              -79.919104,
+              40.420999
+            ],
+            [
+              -79.919495,
+              40.420879
+            ],
+            [
+              -79.919291,
+              40.420656
+            ],
+            [
+              -79.919251,
+              40.420602
+            ],
+            [
+              -79.919018,
+              40.420346
+            ],
+            [
+              -79.918659,
+              40.419926
+            ],
+            [
+              -79.919345,
+              40.419611
+            ],
+            [
+              -79.919228,
+              40.419658
+            ],
+            [
+              -79.919104,
+              40.419695
+            ],
+            [
+              -79.918976,
+              40.419721
+            ],
+            [
+              -79.918846,
+              40.419737
+            ],
+            [
+              -79.918713,
+              40.419742
+            ],
+            [
+              -79.918548,
+              40.419733
+            ],
+            [
+              -79.918501,
+              40.419727
+            ],
+            [
+              -79.918227,
+              40.419671
+            ],
+            [
+              -79.918138,
+              40.419661
+            ],
+            [
+              -79.917988,
+              40.419668
+            ],
+            [
+              -79.91788,
+              40.419691
+            ],
+            [
+              -79.917784,
+              40.419719
+            ],
+            [
+              -79.917684,
+              40.419765
+            ],
+            [
+              -79.917277,
+              40.41999
+            ],
+            [
+              -79.916932,
+              40.420467
             ]
           ]
         ]
@@ -10333,6 +10103,48 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "012500370000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.907504,
+              40.455471
+            ],
+            [
+              -79.907643,
+              40.455526
+            ],
+            [
+              -79.907862,
+              40.455286
+            ],
+            [
+              -79.907668,
+              40.455212
+            ],
+            [
+              -79.907504,
+              40.455471
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
         "parcel_key": "012500372000000",
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
@@ -10362,48 +10174,6 @@
             [
               -79.90756,
               40.455171
-            ],
-            [
-              -79.907392,
-              40.455427
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "012500374000000",
-        "organization": "KRJ Enterprises",
-        "period_month": "2026-06",
-        "assigned_flag": true,
-        "returned_flag": false,
-        "ownership_type": "URA",
-        "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -79.907392,
-              40.455427
-            ],
-            [
-              -79.90756,
-              40.455171
-            ],
-            [
-              -79.90743,
-              40.455121
-            ],
-            [
-              -79.907268,
-              40.455379
             ],
             [
               -79.907392,
@@ -10511,39 +10281,55 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002500198000000",
-        "organization": "One Call Handles It All",
+        "parcel_key": "017500111000000",
+        "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
         "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [
-              -79.967368,
-              40.453299
+              -79.897428,
+              40.452014
             ],
             [
-              -79.967488,
-              40.453249
+              -79.898839,
+              40.452553
             ],
             [
-              -79.967321,
-              40.453008
+              -79.899682,
+              40.451364
             ],
             [
-              -79.967188,
-              40.453065
+              -79.898501,
+              40.450979
             ],
             [
-              -79.967368,
-              40.453299
+              -79.898694,
+              40.450628
+            ],
+            [
+              -79.898538,
+              40.450572
+            ],
+            [
+              -79.898517,
+              40.450607
+            ],
+            [
+              -79.898437,
+              40.450575
+            ],
+            [
+              -79.897428,
+              40.452014
             ]
           ]
         ]
@@ -10553,7 +10339,57 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002500234000000",
+        "parcel_key": "023100190000000",
+        "organization": "KRJ Enterprises",
+        "period_month": "2026-06",
+        "assigned_flag": true,
+        "returned_flag": false,
+        "ownership_type": "URA",
+        "masked_geometry": false,
+        "completion_status": "missing",
+        "maintenance_level": "Active"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.876328,
+              40.453103
+            ],
+            [
+              -79.876504,
+              40.453244
+            ],
+            [
+              -79.876789,
+              40.452885
+            ],
+            [
+              -79.876653,
+              40.452778
+            ],
+            [
+              -79.876398,
+              40.452963
+            ],
+            [
+              -79.876456,
+              40.453011
+            ],
+            [
+              -79.876328,
+              40.453103
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
+        "parcel_key": "002500249000000",
         "organization": "One Call Handles It All",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -10568,24 +10404,24 @@
         "coordinates": [
           [
             [
-              -79.967921,
-              40.456166
+              -79.97497,
+              40.457913
             ],
             [
-              -79.967893,
-              40.455838
+              -79.974656,
+              40.45765
             ],
             [
-              -79.966854,
-              40.455886
+              -79.974345,
+              40.457863
             ],
             [
-              -79.96688,
-              40.456214
+              -79.974657,
+              40.458132
             ],
             [
-              -79.967921,
-              40.456166
+              -79.97497,
+              40.457913
             ]
           ]
         ]
@@ -10679,7 +10515,7 @@
       "type": "Feature",
       "properties": {
         "owner_name": "URBAN REDEVELOPMENT AUTHORITY OFPITTSBURGH",
-        "parcel_key": "002600321000000",
+        "parcel_key": "002500262000000",
         "organization": "One Call Handles It All",
         "period_month": "2026-06",
         "assigned_flag": true,
@@ -10694,24 +10530,24 @@
         "coordinates": [
           [
             [
-              -79.959056,
-              40.455982
+              -79.966426,
+              40.454464
             ],
             [
-              -79.959258,
-              40.456156
+              -79.966437,
+              40.454532
             ],
             [
-              -79.959411,
-              40.456065
+              -79.966973,
+              40.454298
             ],
             [
-              -79.9592,
-              40.455884
+              -79.966963,
+              40.45423
             ],
             [
-              -79.959056,
-              40.455982
+              -79.966426,
+              40.454464
             ]
           ]
         ]
