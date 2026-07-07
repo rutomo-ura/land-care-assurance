@@ -18,6 +18,11 @@ outputs/*
 !outputs/**/
 !outputs/**/.gitkeep
 !outputs/**/README.md
+outputs/**/*.zip
+outputs/**/.python-packages/
+outputs/**/.python-packages/**
+outputs/**/contractor-analysis/
+tmp/
 prototype/source/
 *.csv
 *.xlsx

@@ -1,5 +1,7 @@
 # Meeting Notes: Land Care Assurance
 
+> **Superseded in part (2026-07-02):** Regrid survey ingestion is now a **daily** pipeline in `URA-Data-Repository` (`regrid_survey_daily_pipeline.py` at 4:00 AM under `\GIS Automations\REGRID`). GISDB is the survey source of truth; G-drive CSVs are monthly archives only. The monthly 15th/18th survey schedule and manual Regrid URL edits described below are historical. See `docs/upstream-regrid-survey-pipeline.md`.
+
 Date: June 5, 2026
 Source: `raw_notes/20260605-oscar-brief.md` (rough note), reconciled against the live artifacts.
 

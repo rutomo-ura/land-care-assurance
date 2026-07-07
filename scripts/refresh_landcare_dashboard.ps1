@@ -28,6 +28,35 @@ $message = ""
 $commitBefore = ""
 $commitAfter = ""
 $publishedDataChanges = $false
+$upstreamContext = $null
+
+function Get-UpstreamContext {
+  $manifestPath = Join-Path $RepoRoot "docs\landcare\data\refresh_manifest.json"
+  $kpiPath = Join-Path $RepoRoot "docs\landcare\data\kpi_summary.json"
+  if (-not (Test-Path -LiteralPath $manifestPath)) {
+    return $null
+  }
+
+  try {
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    $returnedAssigned = $null
+    if (Test-Path -LiteralPath $kpiPath) {
+      $kpi = Get-Content -LiteralPath $kpiPath -Raw | ConvertFrom-Json
+      if ($kpi.latest_month_metrics) {
+        $returnedAssigned = $kpi.latest_month_metrics.returned_assigned
+      }
+    }
+
+    return [ordered]@{
+      regrid_survey_pipeline = "URA-Data-Repository daily 4:00 AM"
+      latest_survey_period = $manifest.latest_survey_period
+      survey_submission_count = $manifest.survey_submission_count
+      latest_returned_assigned = $returnedAssigned
+    }
+  } catch {
+    return $null
+  }
+}
 
 function Get-GitCommit {
   try {
@@ -72,7 +101,11 @@ function Write-RunStatus {
     message = $Message
   }
 
-  $statusJson = $statusPayload | ConvertTo-Json -Depth 4
+  if ($upstreamContext) {
+    $statusPayload.upstream = $upstreamContext
+  }
+
+  $statusJson = $statusPayload | ConvertTo-Json -Depth 5
   Set-Content -LiteralPath $StatusPath -Value $statusJson -Encoding UTF8
   Set-Content -LiteralPath $datedStatusPath -Value $statusJson -Encoding UTF8
 }
@@ -163,6 +196,8 @@ try {
   Invoke-Checked "Daily QA/QC validation" {
     & $Python @qaArgs
   }
+
+  $upstreamContext = Get-UpstreamContext
 
   Invoke-Checked "Stage dashboard data files" {
     git add $dataPathSpec

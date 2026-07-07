@@ -51,6 +51,32 @@
     },
     "message": {
       "type": "string"
+    },
+    "upstream": {
+      "type": "object",
+      "properties": {
+        "regrid_survey_pipeline": {
+          "type": "string"
+        },
+        "latest_survey_period": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "survey_submission_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "latest_returned_assigned": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
     }
   },
   "required": [

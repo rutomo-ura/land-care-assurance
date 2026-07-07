@@ -11,7 +11,10 @@ const state = {
   contractorRows: [],
   summary: null,
   map: null,
-  layer: null
+  layer: null,
+  hitLayer: null,
+  hoverTargets: [],
+  hoveredTarget: null
 };
 
 const formatNumber = new Intl.NumberFormat("en-US");
@@ -79,6 +82,8 @@ function initMap() {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
   }).addTo(state.map);
+  state.map.on("mousemove", handleMapHover);
+  state.map.on("mouseout", clearHoverHighlight);
 }
 
 function populateFilters() {
@@ -151,9 +156,18 @@ function popupHtml(props) {
   `;
 }
 
-function detailHtml(props) {
+function tooltipHtml(props) {
+  return `
+    <strong>${props.parcel_key}</strong><br>
+    ${props.organization}<br>
+    ${statusLabel(props.completion_status)}
+  `;
+}
+
+function detailHtml(props, label = "Selected parcel") {
   const geometryLabel = props.masked_geometry ? "masked sample" : "PostgreSQL export";
   return `
+    <span class="detail-label">${label}</span><br>
     <strong>${props.parcel_key}</strong><br>
     Contractor: ${props.organization}<br>
     Month: ${props.period_month}<br>
@@ -165,6 +179,92 @@ function detailHtml(props) {
   `;
 }
 
+function showParcelDetail(props, label) {
+  document.getElementById("parcel-detail").innerHTML = detailHtml(props, label);
+}
+
+function highlightParcel(target) {
+  if (state.hoveredTarget?.visualLayer && state.hoveredTarget !== target) {
+    state.layer.resetStyle(state.hoveredTarget.visualLayer);
+  }
+  state.hoveredTarget = target;
+  showParcelDetail(target.props, "Hovered parcel");
+  target.visualLayer.setStyle({
+    color: "#000000",
+    fillOpacity: 1,
+    weight: 3
+  });
+  target.visualLayer.bringToFront();
+  target.targetLayer.openTooltip();
+}
+
+function clearHoverHighlight() {
+  if (state.hoveredTarget?.visualLayer && state.layer) {
+    state.layer.resetStyle(state.hoveredTarget.visualLayer);
+  }
+  if (state.hoveredTarget?.targetLayer) {
+    state.hoveredTarget.targetLayer.closeTooltip();
+  }
+  state.hoveredTarget = null;
+}
+
+function handleMapHover(event) {
+  if (!state.hoverTargets.length) return;
+
+  let closest = null;
+  let closestDistance = Infinity;
+  for (const target of state.hoverTargets) {
+    const point = state.map.latLngToContainerPoint(target.latlng);
+    const distance = point.distanceTo(event.containerPoint);
+    if (distance < closestDistance) {
+      closest = target;
+      closestDistance = distance;
+    }
+  }
+
+  if (closest && closestDistance <= 11) {
+    highlightParcel(closest);
+  } else {
+    clearHoverHighlight();
+  }
+}
+
+function attachParcelInteraction(targetLayer, visualLayer, feature) {
+  const props = feature.properties;
+  targetLayer.bindPopup(popupHtml(props));
+  targetLayer.bindTooltip(tooltipHtml(props), {
+    direction: "top",
+    opacity: 0.96,
+    sticky: true
+  });
+  targetLayer.on("click", () => {
+    showParcelDetail(props, "Selected parcel");
+  });
+  targetLayer.on("mouseover", () => {
+    showParcelDetail(props, "Hovered parcel");
+    visualLayer.setStyle({
+      color: "#000000",
+      fillOpacity: 1,
+      weight: 3
+    });
+    visualLayer.bringToFront();
+  });
+  targetLayer.on("mouseout", () => {
+    state.layer.resetStyle(visualLayer);
+  });
+  targetLayer.on("tooltipopen", () => {
+    showParcelDetail(props, "Hovered parcel");
+  });
+  targetLayer.on("add", () => {
+    const element = targetLayer.getElement?.();
+    if (element) {
+      element.addEventListener("mouseover", () => {
+        showParcelDetail(props, "Hovered parcel");
+      });
+    }
+  });
+}
+
 function renderMap() {
   const filtered = {
     type: "FeatureCollection",
@@ -174,25 +274,38 @@ function renderMap() {
   if (state.layer) {
     state.map.removeLayer(state.layer);
   }
+  if (state.hitLayer) {
+    state.map.removeLayer(state.hitLayer);
+  }
+
+  state.hitLayer = L.layerGroup().addTo(state.map);
+  state.hoverTargets = [];
+  state.hoveredTarget = null;
 
   state.layer = L.geoJSON(filtered, {
     style: layerStyle,
     onEachFeature: (feature, layer) => {
-      layer.bindPopup(popupHtml(feature.properties));
-      layer.on("click", () => {
-        document.getElementById("parcel-detail").innerHTML = detailHtml(feature.properties);
-      });
-      layer.on("mouseover", () => {
-        layer.setStyle({
-          color: "#000000",
-          fillOpacity: 1,
-          weight: 3
+      attachParcelInteraction(layer, layer, feature);
+      if (layer.getBounds && layer.getBounds().isValid()) {
+        const hitMarker = L.circleMarker(layer.getBounds().getCenter(), {
+          className: "parcel-hit-target",
+          fill: true,
+          fillColor: "#ffffff",
+          fillOpacity: 0.01,
+          interactive: true,
+          opacity: 0.01,
+          radius: 8,
+          stroke: false
         });
-        layer.bringToFront();
-      });
-      layer.on("mouseout", () => {
-        state.layer.resetStyle(layer);
-      });
+        attachParcelInteraction(hitMarker, layer, feature);
+        hitMarker.addTo(state.hitLayer);
+        state.hoverTargets.push({
+          latlng: hitMarker.getLatLng(),
+          props: feature.properties,
+          targetLayer: hitMarker,
+          visualLayer: layer
+        });
+      }
     }
   }).addTo(state.map);
   state.layer.bringToFront();

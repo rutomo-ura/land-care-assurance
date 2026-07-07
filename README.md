@@ -1,5 +1,7 @@
 # LandCare Daily Refresh VM Bundle
 
+Architecture: [`docs/landcare-architecture.md`](docs/landcare-architecture.md)
+
 This bundle bootstraps or updates the LandCare dashboard repo on the VM, then installs the daily refresh scripts.
 
 ## What It Includes
@@ -20,16 +22,7 @@ Copy this extracted folder to the VM, then run PowerShell from the bundle folder
 
 ## Install With Database Settings
 
-This credential-included bundle defaults to:
-
-
-Run this to install/update the repo and write the VM-local `.env`:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance
-```
-
-To avoid using the embedded default, let the installer prompt for the PostgreSQL password:
+Database credentials are VM-local and should not be committed. Let the installer prompt for the PostgreSQL password when writing `.env`:
 
 ```powershell
 .\install_landcare_daily_refresh.ps1 `
@@ -40,12 +33,6 @@ To avoid using the embedded default, let the installer prompt for the PostgreSQL
   -PgUser rutomo `
   -PromptForPgPassword
 ```
-
-Fast path, if command history exposure is acceptable:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 `
-  -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
 
 When a password is supplied, the installer writes VM-local credentials to:
 

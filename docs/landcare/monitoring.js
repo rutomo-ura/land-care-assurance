@@ -906,6 +906,9 @@ async function setDistrictFilter(district, { zoom = true } = {}) {
 
 async function setContractorFilter(name, { zoom = false } = {}) {
   state.contractorFilter = name || "all";
+  if (state.contractorFilter !== "all" && state.colorMode !== "contractor") {
+    setColorMode("contractor");
+  }
   if (state.contractorFilter === "all") {
     state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
   }
@@ -1072,6 +1075,20 @@ function contractorOpenRank() {
 }
 
 function printLegendHtml() {
+  if (state.colorMode === "contractor" || state.contractorFilter !== "all") {
+    const items = contractorItems();
+    const visibleItems = state.contractorFilter === "all"
+      ? items
+      : items.filter((item) => item.name === state.contractorFilter);
+    return visibleItems.map((item) => `
+    <div class="print-legend-row">
+      <svg class="legend-chip" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${item.color}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
+      </svg>
+      <strong>${escapeHtml(item.label)}</strong>
+    </div>
+  `).join("");
+  }
   const statuses = state.dataView === "current"
     ? ["current_active", "request_only"]
     : ["returned", "missing", "request_only"];

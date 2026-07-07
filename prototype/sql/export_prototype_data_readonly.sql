@@ -28,6 +28,16 @@ with latest_dates as (
     from gis.regrid_bundle_assignments a
     cross join gis.regrid_survey_submissions s
 ),
+survey_stats as (
+    select
+        count(*) as survey_submission_count,
+        count(distinct regexp_replace(s.parcelnumb::text, '[^0-9]', '', 'g')) filter (
+            where regexp_replace(s.parcelnumb::text, '[^0-9]', '', 'g') <> ''
+        ) as survey_distinct_parcels
+    from gis.regrid_survey_submissions s
+    cross join latest_dates d
+    where s.period = d.latest_survey_period
+),
 current_epp as (
     select distinct on (parcel_key)
         parcel_key,
@@ -222,7 +232,6 @@ select jsonb_build_object(
     'metadata', jsonb_build_object(
         'geometry_mode', 'postgres_readonly_export',
         'generated_on', current_date,
-        'source_note', 'PostgreSQL export. Assignments updated through May 15, 2026; survey completion shown through Apr 15, 2026.',
         'source_tables', jsonb_build_array(
             'gis.regrid_bundle_assignments',
             'gis.regrid_survey_submissions',
@@ -236,6 +245,8 @@ select jsonb_build_object(
         'latest_assignment_period', (select latest_assignment_period from latest_dates),
         'latest_survey_period', (select latest_survey_period from latest_dates),
         'latest_comparable_month', (select latest_comparable_month from latest_dates),
+        'survey_submission_count', (select survey_submission_count from survey_stats),
+        'survey_distinct_parcels', (select survey_distinct_parcels from survey_stats),
         'missing_geometry_rows', (select count(*) from parcel_month where geom is null)
     ),
     'features', coalesce(jsonb_agg(feature order by feature->'properties'->>'period_month', feature->'properties'->>'organization', feature->'properties'->>'parcel_key'), '[]'::jsonb)

@@ -458,14 +458,15 @@ function renderLineChart(monthlyMetrics) {
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
-  const maxValue = Math.max(COMPLETION_TARGET + 5, Math.ceil(Math.max(...values, COMPLETION_TARGET) / 10) * 10);
+  const maxValue = 100;
   const toX = (index) =>
     margin.left + (monthlyMetrics.length === 1 ? plotWidth / 2 : (index / (monthlyMetrics.length - 1)) * plotWidth);
-  const toY = (value) => margin.top + plotHeight - (value / maxValue) * plotHeight;
-  const points = monthlyMetrics.map((row, index) => [toX(index), toY(Number(row.active_completion_rate_pct || 0))]);
+  const boundedRate = (value) => Math.max(0, Math.min(maxValue, Number(value || 0)));
+  const toY = (value) => margin.top + plotHeight - (boundedRate(value) / maxValue) * plotHeight;
+  const points = monthlyMetrics.map((row, index) => [toX(index), toY(row.active_completion_rate_pct)]);
   const linePath = points.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
-  const yTicks = [0, COMPLETION_TARGET, maxValue].filter((tick, index, arr) => index === 0 || tick !== arr[index - 1]);
+  const yTicks = [0, 50, COMPLETION_TARGET, maxValue].filter((tick, index, arr) => arr.indexOf(tick) === index);
 
   const hitMarkup = points.map(([x, y], index) => {
     const row = monthlyMetrics[index];

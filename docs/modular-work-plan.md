@@ -1,13 +1,19 @@
 # Modular Work Plan
 
+Architecture reference: [`docs/landcare-architecture.md`](landcare-architecture.md)
+
 Grounded in the inspected pipeline. Concrete script, table, and dashboard-page names are used so each module is actionable. Tags: **[CONFIRMED]** (seen in an artifact), **[ASSUMPTION]** (validate first), **[NEXT]** (action).
 
 ## Reference: Confirmed Pipeline
 
 - **Repo** `URA-GIS-User/URA-Data-Repository` (private). Relevant scripts:
+  - `regrid_survey_daily_pipeline.py` — daily orchestrator: download → load → AGOL publish.
+  - `regrid_survey_download.py` — Selenium download from Regrid to daily staging folder.
+  - `SurveysDriveToSQL.py` — loads survey CSVs into `gis.regrid_survey_submissions` (daily source of truth).
+  - `publish_regrid_snapshot.py` — publishes `gis.regrid_surveys` to AGOL hosted layer.
+  - `regrid_survey_monthly_export.py` — monthly G-drive archive export from GISDB.
   - `bundle_assignment_creation.py` — SQL→CSV export of LandCare assignments from `gis.epp_snapshot`.
   - `BundlesDriveToSQL.py` — upserts assignment CSVs back to the DB; creates assignment tables.
-  - `SurveysDriveToSQL.py` — loads Regrid survey CSVs into `gis.regrid_survey_submissions`.
   - `ContractsDriveToSQL.py` — loads budget/contracts Excel (manual).
   - `countyownership_vm.py` — loads county assessment/ownership into `analysis.assessment_snapshot`.
   - `city_epp_properties_etl.py` → `analysis.city_epp_properties`; plus `city_parcels_etl.py`, `city_delinquent_etl.py`, `condemnation_etl.py`.
@@ -99,10 +105,11 @@ Goal: Make it repeatable and reduce known fragility.
 
 Work to do:
 - **[NEXT]** Run Universe QA + ownership exclusion before the 15th (the bundle-creation date).
-- **[NEXT]** Review completion after the 18th (after the survey upsert).
-- **[CONFIRMED risks to track/escalate]** The Regrid export URL is changed manually each period; the Regrid download uses a shared personal login; `ContractsDriveToSQL.py` and NetSuite reports are manual. Log these as operational risks (login/secret handling is an escalation, not a GIS code change).
+- **[NEXT]** Review completion daily after upstream Regrid survey loads (4:00 AM) and dashboard refresh (7:00 AM).
+- **[CONFIRMED]** Regrid survey ingestion is automated daily in `URA-Data-Repository` under `\GIS Automations\REGRID`. See `docs/upstream-regrid-survey-pipeline.md`.
+- **[CONFIRMED risks to track/escalate]** `ContractsDriveToSQL.py` and NetSuite reports are manual. Bundle assignments remain monthly. Log these as operational risks.
 
-Deliverables: monthly QA checklist; monthly review template; risk/decision log.
+Deliverables: daily QA checklist; monthly review template; risk/decision log.
 
 ## Recommended First Sprint
 

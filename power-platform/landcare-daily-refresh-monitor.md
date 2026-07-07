@@ -134,7 +134,23 @@ Failed stage: @{body('Parse_JSON')?['failed_stage']}
 Message: @{body('Parse_JSON')?['message']}
 Log path: @{body('Parse_JSON')?['log_path']}
 Repo root: @{body('Parse_JSON')?['repo_root']}
+Latest survey period: @{body('Parse_JSON')?['upstream']?['latest_survey_period']}
+Survey submission count: @{body('Parse_JSON')?['upstream']?['survey_submission_count']}
+Latest returned assigned: @{body('Parse_JSON')?['upstream']?['latest_returned_assigned']}
 ```
+
+## Optional Upstream Fields
+
+When the refresh completes successfully, the status JSON may include an optional `upstream` object populated from `docs/landcare/data/refresh_manifest.json` and `kpi_summary.json`:
+
+| Field | Meaning |
+|---|---|
+| `upstream.regrid_survey_pipeline` | Upstream source label (`URA-Data-Repository daily 4:00 AM`) |
+| `upstream.latest_survey_period` | Latest Regrid service period in GISDB |
+| `upstream.survey_submission_count` | Raw submission rows for that period |
+| `upstream.latest_returned_assigned` | Active assigned parcels with survey evidence in the latest dashboard month |
+
+These fields are optional for backward compatibility. Power Automate flows can add a warning condition when `latest_survey_period` is more than 45 days old relative to `run_date`.
 
 ## Expected Outcomes
 

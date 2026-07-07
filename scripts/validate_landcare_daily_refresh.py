@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import date
+import warnings
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,43 @@ def require_date_not_backward(current: Any, previous: Any, label: str) -> None:
         return
     if str(current) < str(previous):
         raise ValidationError(f"{label} moved backward: previous={previous}, current={current}")
+
+
+def require_count_not_backward(
+    current: Any,
+    previous: Any,
+    label: str,
+    *,
+    same_period: bool,
+) -> None:
+    if not same_period:
+        return
+    if previous is None or current is None:
+        return
+    if not isinstance(previous, int) or not isinstance(current, int):
+        return
+    if current < previous:
+        raise ValidationError(f"{label} decreased: previous={previous}, current={current}")
+
+
+def warn_if_survey_period_stale(latest_survey_period: Any, *, max_stale_days: int) -> None:
+    if latest_survey_period in (None, ""):
+        return
+    period_text = str(latest_survey_period)
+    try:
+        period_date = datetime.strptime(period_text, "%Y-%m-%d").date()
+    except ValueError:
+        try:
+            period_date = datetime.strptime(period_text, "%Y-%m").date()
+        except ValueError:
+            return
+    stale_days = (date.today() - period_date).days
+    if stale_days > max_stale_days:
+        warnings.warn(
+            f"latest_survey_period {latest_survey_period} is {stale_days} days old; "
+            f"upstream Regrid daily pipeline may be stalled (threshold={max_stale_days} days).",
+            stacklevel=2,
+        )
 
 
 def validate_feature_collection(payload: Any, label: str) -> list[dict[str, Any]]:
@@ -141,6 +179,10 @@ def validate_daily_refresh(args: argparse.Namespace) -> None:
             f"finance_summary.json metadata.generated_on must be {expected_date}; got {finance_generated_on!r}"
         )
 
+    latest_metrics = kpi.get("latest_month_metrics")
+    if not isinstance(latest_metrics, dict):
+        raise ValidationError("kpi_summary.json missing latest_month_metrics")
+
     if previous_manifest:
         require_date_not_backward(
             manifest.get("latest_assignment_period"),
@@ -151,6 +193,15 @@ def validate_daily_refresh(args: argparse.Namespace) -> None:
             manifest.get("latest_survey_period"),
             previous_manifest.get("latest_survey_period"),
             "latest_survey_period",
+        )
+        same_survey_period = (
+            manifest.get("latest_survey_period") == previous_manifest.get("latest_survey_period")
+        )
+        require_count_not_backward(
+            manifest.get("survey_submission_count"),
+            previous_manifest.get("survey_submission_count"),
+            "survey_submission_count",
+            same_period=same_survey_period,
         )
     if previous_kpi:
         previous_missing = previous_kpi.get("missing_geometry_rows")
@@ -163,13 +214,23 @@ def validate_daily_refresh(args: argparse.Namespace) -> None:
                     f"previous={previous_missing}, current={current_missing}, "
                     f"increase={increase}, allowed={args.max_missing_geometry_increase}"
                 )
+        same_latest_month = kpi.get("latest_month") == previous_kpi.get("latest_month")
+        previous_metrics = previous_kpi.get("latest_month_metrics")
+        if isinstance(previous_metrics, dict) and isinstance(latest_metrics, dict):
+            require_count_not_backward(
+                latest_metrics.get("returned_assigned"),
+                previous_metrics.get("returned_assigned"),
+                "latest_month_metrics.returned_assigned",
+                same_period=same_latest_month,
+            )
+
+    warn_if_survey_period_stale(
+        manifest.get("latest_survey_period"),
+        max_stale_days=args.max_survey_period_stale_days,
+    )
 
     require_positive_int(manifest.get("all_month_feature_count"), "all_month_feature_count")
     require_positive_int(manifest.get("latest_month_feature_count"), "latest_month_feature_count")
-
-    latest_metrics = kpi.get("latest_month_metrics")
-    if not isinstance(latest_metrics, dict):
-        raise ValidationError("kpi_summary.json missing latest_month_metrics")
     require_positive_int(latest_metrics.get("assigned_active"), "latest_month_metrics.assigned_active")
     require_positive_int(latest_metrics.get("assigned_total"), "latest_month_metrics.assigned_total")
     require_positive_int(latest_metrics.get("returned_assigned"), "latest_month_metrics.returned_assigned")
@@ -199,6 +260,12 @@ def main() -> None:
         type=int,
         default=25,
         help="Maximum allowed increase in missing geometry rows compared with the prior manifest.",
+    )
+    parser.add_argument(
+        "--max-survey-period-stale-days",
+        type=int,
+        default=45,
+        help="Warn when latest_survey_period is older than this many days.",
     )
     args = parser.parse_args()
 
