@@ -574,7 +574,7 @@ textarea {
 
 .report-context {
   display: grid;
-  grid-template-columns: minmax(150px, 0.35fr) minmax(190px, 0.45fr) minmax(0, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   align-items: stretch;
 }
@@ -582,24 +582,31 @@ textarea {
 .report-context div,
 .report-context p {
   margin: 0;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: #ffffff;
   border: 1px solid var(--line);
 }
 
 .report-context strong {
   display: block;
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--ink);
-  font-size: 18px;
+  font-size: 14px;
   line-height: 1.1;
 }
 
 .report-context p {
+  grid-column: 1 / -1;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
+}
+
+.source-strip-status.is-warning {
+  color: #7c2d12;
+  background: #fff7ed;
+  border-color: #fed7aa;
 }
 
 .kpi-grid {
@@ -691,9 +698,9 @@ textarea {
 
 .insight-card {
   display: grid;
-  gap: 8px;
-  min-height: 132px;
-  padding: 16px 18px;
+  gap: 7px;
+  min-height: 116px;
+  padding: 14px 16px;
   background: #ffffff;
   border: 1px solid var(--line);
   border-top: 4px solid var(--ura-blue);
@@ -716,9 +723,9 @@ textarea {
 .insight-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .powerbi-panel {
@@ -931,6 +938,24 @@ select {
   align-items: center;
 }
 
+.contractor-chart-head {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.24fr) minmax(0, 1fr) repeat(4, minmax(52px, 0.08fr));
+  gap: 10px;
+  margin: -2px 0 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.contractor-panel .grouped-row {
+  grid-template-columns: minmax(170px, 0.24fr) minmax(0, 1fr) minmax(220px, 0.34fr);
+  padding: 7px 0;
+  border-top: 1px solid #edf3f6;
+}
+
 .grouped-label {
   display: grid;
   gap: 3px;
@@ -1003,6 +1028,34 @@ select {
   text-align: right;
 }
 
+.grouped-values em {
+  display: none;
+  color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.contractor-panel .grouped-values {
+  grid-template-columns: repeat(4, minmax(52px, 1fr));
+  gap: 8px;
+}
+
+.contractor-panel .grouped-values span {
+  color: var(--ink);
+}
+
+.empty-state {
+  padding: 18px;
+  color: var(--muted);
+  background: #f7fbfd;
+  border: 1px dashed var(--line);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .single-bar-row .grouped-values {
   align-self: center;
 }
@@ -1029,7 +1082,7 @@ select {
 }
 
 .legend-line.returned {
-  background: var(--gold);
+  background: #2e7d32;
 }
 
 .source-required {
@@ -1258,9 +1311,26 @@ select {
     gap: 6px;
   }
 
+  .contractor-chart-head {
+    display: none;
+  }
+
+  .contractor-panel .grouped-row {
+    grid-template-columns: 1fr;
+  }
+
   .grouped-values {
     grid-template-columns: 1fr 1fr;
     text-align: left;
+  }
+
+  .contractor-panel .grouped-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .contractor-panel .grouped-values em {
+    display: block;
+    margin-bottom: 2px;
   }
 
   .leader-grid {

@@ -33,16 +33,32 @@
         <button type="button" data-tab="maintenanceExpenses">Maintenance Expenses</button>
       </nav>
 
-      <section class="report-context" aria-label="Report context">
+      <section class="report-context source-strip" aria-label="Report context">
         <div>
-          <span class="eyebrow">Reporting Window</span>
-          <strong id="periodKpi">Loading...</strong>
+          <span class="eyebrow">Assignments</span>
+          <strong id="assignmentSourceKpi">VM export</strong>
         </div>
         <div>
-          <span class="eyebrow">Data Quality</span>
-          <strong id="reportUpdatedKpi">Checking data...</strong>
+          <span class="eyebrow">Surveys</span>
+          <strong id="surveySourceKpi">ArcGIS live</strong>
         </div>
-        <p id="liveUniverseNote">Preparing dashboard summary...</p>
+        <div>
+          <span class="eyebrow">Assignment Period</span>
+          <strong id="assignmentPeriodKpi">Loading...</strong>
+        </div>
+        <div>
+          <span class="eyebrow">Survey Period</span>
+          <strong id="surveyPeriodKpi">Loading...</strong>
+        </div>
+        <div>
+          <span class="eyebrow">AGOL Surveys</span>
+          <strong id="agolSurveyKpi">Checking...</strong>
+        </div>
+        <div>
+          <span class="eyebrow">Dashboard Refresh</span>
+          <strong id="reportUpdatedKpi">Checking...</strong>
+        </div>
+        <p class="source-strip-status" id="liveUniverseNote">Loading sources...</p>
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
@@ -52,20 +68,20 @@
             <strong id="completionReadoutInsight">--</strong>
             <p id="completionReadoutCopy">Loading completion trend...</p>
           </article>
-          <article class="insight-card warning">
-            <span class="eyebrow">Largest Follow-Up</span>
-            <strong id="problemContractorInsight">--</strong>
-            <p id="problemContractorCopy">Loading contractor review...</p>
-          </article>
           <article class="insight-card">
             <span class="eyebrow">Open Active Work</span>
             <strong id="openParcelInsight">--</strong>
             <p id="openParcelCopy">Loading open parcel count...</p>
           </article>
           <article class="insight-card">
-            <span class="eyebrow">Budget Run Rate</span>
-            <strong id="budgetRunRateInsight">--</strong>
-            <p id="budgetRunRateCopy">Loading budget status...</p>
+            <span class="eyebrow">Surveys Returned</span>
+            <strong id="returnedSurveyInsight">--</strong>
+            <p id="returnedSurveyCopy">Loading returned count...</p>
+          </article>
+          <article class="insight-card warning">
+            <span class="eyebrow">Largest Follow-Up</span>
+            <strong id="problemContractorInsight">--</strong>
+            <p id="problemContractorCopy">Loading contractor review...</p>
           </article>
         </section>
 
@@ -88,8 +104,8 @@
           <article class="panel metric-group">
             <div class="panel-head">
               <div>
-                <span class="eyebrow">Monthly Survey Scope</span>
-                <h1>Latest Survey Month Assignments</h1>
+                <span class="eyebrow">Assignment Scope</span>
+                <h1>Latest Assignment Month</h1>
               </div>
             </div>
             <div class="reference-card-grid four-up">
@@ -128,6 +144,14 @@
               </select>
             </div>
             <div class="chart-legend"><span class="legend-line returned"></span> Returned <span class="legend-line open"></span> Open active</div>
+            <div class="contractor-chart-head" aria-hidden="true">
+              <span>Contractor</span>
+              <span>Returned / Open</span>
+              <span>Open</span>
+              <span>Returned</span>
+              <span>Assigned</span>
+              <span>Rate</span>
+            </div>
             <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
           </article>
 

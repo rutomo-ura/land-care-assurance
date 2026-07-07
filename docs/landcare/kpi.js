@@ -53,6 +53,13 @@ function formatAcres(value) {
   return `${formatter.format(Number(value || 0).toFixed(1))}`;
 }
 
+function formatDate(value) {
+  if (!value) return "Unknown";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -105,13 +112,6 @@ function normalizeCurrentRecord(attrs) {
     sqft,
     acres
   };
-}
-
-function currentMaintenanceLevel(tags) {
-  const text = String(tags || "");
-  if (text.includes("LandCare - Request Only")) return "Request Only";
-  if (text.includes("LandCare - Active")) return "Active";
-  return "LandCare";
 }
 
 async function fetchArcgisRecords(url, params) {
@@ -181,10 +181,60 @@ function aggregateCurrentRecords(records) {
   };
 }
 
+function buildStaticCurrentFallback(allMonthsGeojson, summary) {
+  const latestMonth = summary?.latest_month || allMonthsGeojson?.metadata?.latest_month;
+  const latestFeatures = (allMonthsGeojson?.features || [])
+    .filter((feature) => feature.properties?.period_month === latestMonth);
+  const parcelArea = new Map();
+  const activeKeys = new Set();
+  const requestOnlyKeys = new Set();
+  const contractorParcels = {};
+  const contractorAcres = {};
+
+  for (const feature of latestFeatures) {
+    const props = feature.properties || {};
+    const parcelKey = props.parcel_key;
+    if (!parcelKey) continue;
+    const contractor = normalizeContractorName(props.organization);
+    const acres = Number(props.acres || props.parcel_acres || 0);
+    if (!parcelArea.has(parcelKey)) {
+      parcelArea.set(parcelKey, { contractor, acres });
+    }
+    if (props.maintenance_level === "Active") activeKeys.add(parcelKey);
+    if (props.maintenance_level === "Request Only") requestOnlyKeys.add(parcelKey);
+    contractorParcels[contractor] ||= new Set();
+    contractorParcels[contractor].add(parcelKey);
+  }
+
+  for (const area of parcelArea.values()) {
+    contractorAcres[area.contractor] = (contractorAcres[area.contractor] || 0) + area.acres;
+  }
+
+  return {
+    records: latestFeatures.length,
+    uniqueParcels: parcelArea.size,
+    activeParcels: activeKeys.size,
+    requestOnlyParcels: requestOnlyKeys.size,
+    contractors: Object.keys(contractorParcels).length,
+    totalAcres: [...parcelArea.values()].reduce((sum, area) => sum + area.acres, 0),
+    contractorRows: Object.keys(contractorParcels)
+      .map((contractor) => ({
+        organization: contractor,
+        currentParcels: contractorParcels[contractor].size,
+        currentAcres: contractorAcres[contractor] || 0
+      }))
+      .sort((a, b) => b.currentParcels - a.currentParcels),
+    eppEdited: null,
+    surveyEdited: null,
+    surveyLayerUrl: null,
+    surveyLayerItemUrl: SURVEY_AGOL_ITEM_URL,
+    fallback: true
+  };
+}
+
 async function loadCurrentArcgisMetrics() {
-  const [layerInfo, surveyInfo, features] = await Promise.all([
+  const [layerInfo, features] = await Promise.all([
     fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
-    fetchSurveyLayerMetadata(),
     fetchArcgisRecords(EPP_LAYER_URL, {
       f: "json",
       where: CURRENT_WHERE,
@@ -200,8 +250,8 @@ async function loadCurrentArcgisMetrics() {
   return {
     ...metrics,
     eppEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
-    surveyEdited: surveyInfo?.dataLastEdit,
-    surveyLayerUrl: surveyInfo?.serviceUrl,
+    surveyEdited: null,
+    surveyLayerUrl: null,
     surveyLayerItemUrl: SURVEY_AGOL_ITEM_URL
   };
 }
@@ -238,7 +288,11 @@ function aggregateContractorMonthly(rows) {
 function contractorRowsForMonth(contractorMonthly, month) {
   return contractorMonthly
     .filter((row) => row.period_month === month)
-    .sort((a, b) => b.assigned - a.assigned);
+    .sort((a, b) => {
+      const openA = Number(a.assigned || 0) - Number(a.returned || 0);
+      const openB = Number(b.assigned || 0) - Number(b.returned || 0);
+      return openB - openA || b.assigned - a.assigned;
+    });
 }
 
 function buildContractorDetailRows(currentRows, latestRows) {
@@ -267,20 +321,40 @@ function buildContractorDetailRows(currentRows, latestRows) {
     prior.latestRate = row.completionRate;
     byName.set(row.organization, prior);
   }
-  return Array.from(byName.values()).sort((a, b) => b.currentParcels - a.currentParcels);
+  return Array.from(byName.values()).sort((a, b) => {
+    const openA = Math.max(Number(a.latestAssigned || 0) - Number(a.latestReturned || 0), 0);
+    const openB = Math.max(Number(b.latestAssigned || 0) - Number(b.latestReturned || 0), 0);
+    return openB - openA || b.currentParcels - a.currentParcels;
+  });
 }
 
-function renderSourceSummary(summary, currentMetrics) {
+function renderSourceSummary(summary, currentMetrics, sourceStatus) {
   const latestMonth = summary.latest_month;
   const latestSurveyMonth = summary.latest_survey_period || summary.survey_layer_summary?.available_periods?.at(-1);
-  const surveyEdited = summary.survey_layer_summary?.data_last_edit || currentMetrics.surveyEdited;
-  document.getElementById("freshnessNote").textContent = "Data quality checked";
-  document.getElementById("periodKpi").textContent =
-    `${quarterLabel(latestMonth)} through ${shortMonth(latestMonth)}`;
+  const surveyPeriods = summary.survey_layer_summary?.available_periods || [];
+  const surveyRecords = Number(summary.survey_layer_summary?.record_count || 0);
+  const warnings = [];
+  if (!sourceStatus.surveyLive) warnings.push("Surveys unavailable; showing last exported values");
+  if (!sourceStatus.currentLive) warnings.push("Current parcels using export fallback");
+
+  document.getElementById("freshnessNote").textContent =
+    warnings.length ? "Live source warning" : "Sources checked";
+  document.getElementById("assignmentSourceKpi").textContent = "VM export / GitHub";
+  document.getElementById("surveySourceKpi").textContent =
+    sourceStatus.surveyLive ? "ArcGIS live" : "Export fallback";
+  document.getElementById("assignmentPeriodKpi").textContent =
+    shortMonth(latestMonth);
+  document.getElementById("surveyPeriodKpi").textContent =
+    shortMonth(latestSurveyMonth || latestMonth);
+  document.getElementById("agolSurveyKpi").textContent =
+    sourceStatus.surveyLive
+      ? `${formatNumber(surveyPeriods.length)} periods / ${formatNumber(surveyRecords)} records`
+      : "Unavailable";
   document.getElementById("reportUpdatedKpi").textContent =
-    `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}; surveys live ${surveyEdited || "from ArcGIS"}`;
+    formatDate(summary.generated_on || currentMetrics.eppEdited);
   document.getElementById("liveUniverseNote").textContent =
-    `Survey submissions load daily from ArcGIS Online ${SURVEY_LAYER_NAME}. Latest survey month: ${shortMonth(latestSurveyMonth || latestMonth)}. Assignments still refresh from the published Postgres export.`;
+    warnings.length ? warnings.join(" | ") : "Assignments from export. Surveys live from ArcGIS.";
+  document.getElementById("liveUniverseNote").classList.toggle("is-warning", Boolean(warnings.length));
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
@@ -336,29 +410,33 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
   document.getElementById("completionReadoutInsight").textContent = formatPct(latestRate);
   document.getElementById("completionReadoutCopy").textContent =
-    `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts versus ${prior ? shortMonth(prior.period_month) : "prior month"} across active assignments.`;
+    `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${prior ? shortMonth(prior.period_month) : "prior"}`;
   document.getElementById("problemContractorInsight").textContent = largestOpen
     ? shortContractor(largestOpen.organization)
     : "On track";
   document.getElementById("problemContractorCopy").textContent = largestOpen
-    ? `${formatNumber(largestOpen.open)} active parcels remain open in ${shortMonth(latest.period_month)}; returned ${formatNumber(largestOpen.returned)} of ${formatNumber(largestOpen.assigned)}.`
-    : "No open active parcels in the latest reporting month.";
+    ? `${formatNumber(largestOpen.open)} open active assignments`
+    : "No open active assignments";
   document.getElementById("openParcelInsight").textContent = formatNumber(openTotal);
   document.getElementById("openParcelCopy").textContent =
-    `Open active assignments after ${formatNumber(latest.returned_assigned)} returned surveys in ${shortMonth(latest.period_month)}.`;
-  document.getElementById("budgetRunRateInsight").textContent =
-    formatMoney(financeSummary?.summary?.annual_invoice_run_rate || 0);
-  document.getElementById("budgetRunRateCopy").textContent =
-    `${formatMoney(financeSummary?.summary?.monthly_invoice_total || 0)} monthly invoice run rate across ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors.`;
+    `${shortMonth(latest.period_month)} assignment month`;
+  document.getElementById("returnedSurveyInsight").textContent = formatNumber(latest.returned_assigned);
+  document.getElementById("returnedSurveyCopy").textContent =
+    `Live survey evidence where available`;
 }
 
 function renderContractorGroupedChart(rows, selected = "all") {
   const chartRows = contractorChartRows(rows, selected);
+  const container = document.getElementById("contractorGroupedChart");
+  if (!chartRows.length) {
+    container.innerHTML = `<div class="empty-state">No contractor assignments for this month.</div>`;
+    return;
+  }
   const maxValue = Math.max(
     1,
     ...chartRows.map((row) => Number(row.assigned || 0))
   );
-  document.getElementById("contractorGroupedChart").innerHTML = chartRows.map((row) => {
+  container.innerHTML = chartRows.map((row) => {
     const assigned = Number(row.assigned || 0);
     const returned = Number(row.returned || 0);
     const open = Math.max(assigned - returned, 0);
@@ -369,15 +447,17 @@ function renderContractorGroupedChart(rows, selected = "all") {
       <div class="grouped-row">
         <div class="grouped-label">
           <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-          <span>${formatPct(rate)} complete - ${formatNumber(open)} open active</span>
+          <span>${formatNumber(open)} open active</span>
         </div>
         <div class="stacked-bars" style="width:${Math.max((100 * assigned) / maxValue, 4)}%">
           <span class="stacked-segment returned" style="width:${returned ? Math.max(returnedWidth, 2) : 0}%"></span>
           <span class="stacked-segment open" style="width:${open ? Math.max(openWidth, 2) : 0}%"></span>
         </div>
         <div class="grouped-values">
-          <span>${formatNumber(returned)} returned</span>
-          <span>${formatNumber(open)} open</span>
+          <span><em>Open</em>${formatNumber(open)}</span>
+          <span><em>Returned</em>${formatNumber(returned)}</span>
+          <span><em>Assigned</em>${formatNumber(assigned)}</span>
+          <span><em>Rate</em>${formatPct(rate)}</span>
         </div>
       </div>
     `;
@@ -538,11 +618,12 @@ function renderParcelDetailsTable(rows) {
     document.getElementById("parcelDetailsTable"),
     [
       { label: "Contractor", value: (row) => shortContractor(row.organization) },
-      { label: "Inventory Parcels", value: (row) => formatNumber(row.currentParcels) },
-      { label: "Current Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` },
-      { label: "Latest Assigned", value: (row) => formatNumber(row.latestAssigned) },
-      { label: "Latest Returned", value: (row) => formatNumber(row.latestReturned) },
-      { label: "Latest Rate", value: (row) => formatPct(row.latestRate) }
+      { label: "Open", value: (row) => formatNumber(Math.max(Number(row.latestAssigned || 0) - Number(row.latestReturned || 0), 0)) },
+      { label: "Returned", value: (row) => formatNumber(row.latestReturned) },
+      { label: "Assigned", value: (row) => formatNumber(row.latestAssigned) },
+      { label: "Rate", value: (row) => formatPct(row.latestRate) },
+      { label: "Inventory", value: (row) => formatNumber(row.currentParcels) },
+      { label: "Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` }
     ],
     rows
   );
@@ -591,42 +672,72 @@ function setupTabs() {
   }
 }
 
+async function fetchJson(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Required dashboard data failed to load: ${path}`);
+  return response.json();
+}
+
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics, allMonthsGeojson, surveyPeriodStats] =
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, allMonthsGeojson] =
     await Promise.all([
-      fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
-      fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
-      fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
-      fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
-      loadCurrentArcgisMetrics(),
-      fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-      fetchSurveyPeriodStats().catch(() => [])
+      fetchJson(`${DATA_ROOT}/monthly_metrics.json`),
+      fetchJson(`${DATA_ROOT}/contractor_monthly.json`),
+      fetchJson(`${DATA_ROOT}/kpi_summary.json`),
+      fetchJson(`${DATA_ROOT}/finance_summary.json`),
+      fetchJson(`${DATA_ROOT}/all_months.geojson`)
     ]);
 
-  const enrichedSummary = enrichSummaryWithSurveyLayer(summary, await fetchSurveyLayerMetadata().catch(() => null), surveyPeriodStats);
-  const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
-  const mergedGeojson = mergeSurveyEvidenceIntoGeojson(allMonthsGeojson, evidenceByPeriod);
-  const latestMonth = enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
-  const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
-  const enrichedMonthlyMetrics = enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+  const sourceStatus = {
+    surveyLive: false,
+    currentLive: false
+  };
+
+  let enrichedSummary = enrichSummaryWithSurveyLayer(summary, null, []);
+  let enrichedMonthlyMetrics = monthlyMetrics;
+  try {
+    const [surveyMetadata, surveyPeriodStats] = await Promise.all([
+      fetchSurveyLayerMetadata(),
+      fetchSurveyPeriodStats()
+    ]);
+    enrichedSummary = enrichSummaryWithSurveyLayer(summary, surveyMetadata, surveyPeriodStats);
+    const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months);
+    const mergedGeojson = mergeSurveyEvidenceIntoGeojson(allMonthsGeojson, evidenceByPeriod);
+    const latestMonth = enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
+    const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
+    enrichedMonthlyMetrics = enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+    sourceStatus.surveyLive = true;
+  } catch (error) {
+    console.warn("Live ArcGIS survey layer unavailable; using exported survey metrics.", error);
+  }
+
+  let currentMetrics;
+  try {
+    currentMetrics = await loadCurrentArcgisMetrics();
+    sourceStatus.currentLive = true;
+  } catch (error) {
+    console.warn("Live ArcGIS current inventory unavailable; using exported assignment fallback.", error);
+    currentMetrics = buildStaticCurrentFallback(allMonthsGeojson, enrichedSummary);
+  }
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     summary: enrichedSummary,
-    currentMetrics
+    currentMetrics,
+    sourceStatus
   };
 }
 
 async function main() {
   setupTabs();
-  const { monthlyMetrics, contractorMonthly, financeSummary, summary, currentMetrics } = await loadData();
+  const { monthlyMetrics, contractorMonthly, financeSummary, summary, currentMetrics, sourceStatus } = await loadData();
   const latestMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   const latestContractorRows = contractorRowsForMonth(contractorMonthly, latestMonth);
   const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, latestContractorRows);
 
-  renderSourceSummary(summary, currentMetrics);
+  renderSourceSummary(summary, currentMetrics, sourceStatus);
   appendFinanceSourceToSummary(financeSummary);
   renderKpis(monthlyMetrics, summary, currentMetrics);
   renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary);
@@ -646,4 +757,7 @@ async function main() {
 main().catch((error) => {
   console.error(error);
   document.getElementById("freshnessNote").textContent = "KPI dashboard failed to load source data.";
+  document.getElementById("liveUniverseNote").textContent =
+    "Required dashboard data is unavailable.";
+  document.getElementById("liveUniverseNote").classList.add("is-warning");
 });
