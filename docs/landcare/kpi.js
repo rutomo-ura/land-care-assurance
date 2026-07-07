@@ -1,8 +1,20 @@
+import {
+  SURVEY_LAYER_URL,
+  SURVEY_AGOL_ITEM_URL,
+  dateFromMillis,
+  fetchArcgisJson,
+  fetchSurveyLayerMetadata,
+  fetchSurveyPeriodStats,
+  enrichLatestMonthlyMetrics,
+  enrichSummaryWithSurveyLayer,
+  countReturnedAssigned,
+  loadSurveyEvidenceByPeriod,
+  mergeSurveyEvidenceIntoGeojson
+} from "./survey-layer.js";
+
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
-const SURVEY_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
@@ -74,11 +86,6 @@ function normalizeContractorName(value) {
   return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
 }
 
-function dateFromMillis(value) {
-  if (!value) return null;
-  return new Date(value).toISOString().slice(0, 10);
-}
-
 function currentMaintenanceLevel(tags) {
   const text = String(tags || "");
   if (text.includes("LandCare - Request Only")) return "Request Only";
@@ -99,12 +106,11 @@ function normalizeCurrentRecord(attrs) {
   };
 }
 
-async function fetchArcgisJson(url, params) {
-  const response = await fetch(`${url}?${new URLSearchParams(params).toString()}`);
-  if (!response.ok) throw new Error(`ArcGIS request failed: ${response.status}`);
-  const payload = await response.json();
-  if (payload.error) throw new Error(payload.error.message || "ArcGIS request failed");
-  return payload;
+function currentMaintenanceLevel(tags) {
+  const text = String(tags || "");
+  if (text.includes("LandCare - Request Only")) return "Request Only";
+  if (text.includes("LandCare - Active")) return "Active";
+  return "LandCare";
 }
 
 async function fetchArcgisRecords(url, params) {
@@ -177,7 +183,7 @@ function aggregateCurrentRecords(records) {
 async function loadCurrentArcgisMetrics() {
   const [layerInfo, surveyInfo, features] = await Promise.all([
     fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
-    fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
+    fetchSurveyLayerMetadata(),
     fetchArcgisRecords(EPP_LAYER_URL, {
       f: "json",
       where: CURRENT_WHERE,
@@ -193,7 +199,9 @@ async function loadCurrentArcgisMetrics() {
   return {
     ...metrics,
     eppEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
-    surveyEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate)
+    surveyEdited: surveyInfo?.dataLastEdit,
+    surveyLayerUrl: surveyInfo?.serviceUrl,
+    surveyLayerItemUrl: SURVEY_AGOL_ITEM_URL
   };
 }
 
@@ -263,13 +271,15 @@ function buildContractorDetailRows(currentRows, latestRows) {
 
 function renderSourceSummary(summary, currentMetrics) {
   const latestMonth = summary.latest_month;
+  const latestSurveyMonth = summary.latest_survey_period || summary.survey_layer_summary?.available_periods?.at(-1);
+  const surveyEdited = summary.survey_layer_summary?.data_last_edit || currentMetrics.surveyEdited;
   document.getElementById("freshnessNote").textContent = "Data quality checked";
   document.getElementById("periodKpi").textContent =
     `${quarterLabel(latestMonth)} through ${shortMonth(latestMonth)}`;
   document.getElementById("reportUpdatedKpi").textContent =
-    `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}`;
+    `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}; surveys live ${surveyEdited || "from ArcGIS"}`;
   document.getElementById("liveUniverseNote").textContent =
-    `Full LandCare inventory is shown separately from monthly survey assignments so totals do not look duplicated. Latest survey month: ${shortMonth(latestMonth)}.`;
+    `Survey submissions load daily from ArcGIS Online gisdb_gis_regrid_surveys_current_period. Latest survey month: ${shortMonth(latestSurveyMonth || latestMonth)}. Assignments still refresh from the published Postgres export.`;
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
@@ -581,18 +591,29 @@ function setupTabs() {
 }
 
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics] = await Promise.all([
-    fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
-    loadCurrentArcgisMetrics()
-  ]);
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics, allMonthsGeojson, surveyPeriodStats] =
+    await Promise.all([
+      fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
+      loadCurrentArcgisMetrics(),
+      fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
+      fetchSurveyPeriodStats().catch(() => [])
+    ]);
+
+  const enrichedSummary = enrichSummaryWithSurveyLayer(summary, await fetchSurveyLayerMetadata().catch(() => null), surveyPeriodStats);
+  const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
+  const mergedGeojson = mergeSurveyEvidenceIntoGeojson(allMonthsGeojson, evidenceByPeriod);
+  const latestMonth = enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
+  const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
+  const enrichedMonthlyMetrics = enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+
   return {
-    monthlyMetrics,
+    monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
-    summary,
+    summary: enrichedSummary,
     currentMetrics
   };
 }

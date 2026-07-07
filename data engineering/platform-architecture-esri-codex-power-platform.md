@@ -1,4 +1,4 @@
-# LandCare Platform Architecture: ESRI, Codex, and Task Scheduler
+﻿# LandCare Platform Architecture: ESRI, Codex, and Task Scheduler
 
 Last updated: 2026-07-02
 
@@ -115,7 +115,7 @@ flowchart TD
 | Question | Primary source | Reason |
 |---|---|---|
 | What is the current LandCare parcel universe? | ArcGIS `gisdb_gis_epp_parcels_full` live query | ESRI is the freshest current-state map layer |
-| What surveys were returned for a service period? | GISDB `gis.regrid_survey_submissions`, published to AGOL `gisdb_gis_regrid_surveys` | Upstream publishes daily; web app uses AGOL at runtime |
+| What surveys were returned for a service period? | GISDB `gis.regrid_survey_submissions`, published to AGOL `gisdb_gis_regrid_surveys_current_period` | Upstream publishes daily; web app uses AGOL at runtime |
 | What parcels were assigned for a reporting month? | PostgreSQL read-only export from `gis.regrid_bundle_assignments` | Bundle assignments define the denominator |
 | What does the public dashboard consume for assignments and finance? | `docs/landcare/data` generated files | GitHub-published files are the assignment/finance contract |
 | What are current finance, contract, and invoice metrics? | LandCare finance workbook, with optional Postgres parity | Workbook is current finance source |

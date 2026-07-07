@@ -7,16 +7,26 @@ import WebTileLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/WebTile
 import Home from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Home.js";
 import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
+import {
+  SURVEY_LAYER_URL,
+  SURVEY_AGOL_ITEM_URL,
+  dateFromMillis,
+  fetchArcgisJson,
+  fetchSurveyLayerMetadata,
+  fetchSurveyPeriodStats,
+  enrichSummaryWithSurveyLayer,
+  loadSurveyEvidenceByPeriod,
+  mergeAvailableMonths,
+  mergeSurveyEvidenceIntoGeojson
+} from "./survey-layer.js";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
-const SURVEY_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
 const COUNCIL_DISTRICT_LAYER_URL =
   "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
-const CARTO_LIGHT_ATTRIBUTION = "© OpenStreetMap contributors © CARTO";
+const CARTO_LIGHT_ATTRIBUTION = "(c) OpenStreetMap contributors (c) CARTO";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
   "parcel_number",
@@ -71,7 +81,9 @@ const state = {
   selectedMonth: null,
   dataView: "current",
   mapFocusLabel: "",
-  currentDataWarning: ""
+  currentDataWarning: "",
+  surveyLayerInfo: null,
+  surveyPeriodStats: []
 };
 
 const formatter = new Intl.NumberFormat("en-US");
@@ -211,10 +223,6 @@ function contractorContactClause(name) {
     : null;
 }
 
-function dateFromMillis(value) {
-  if (!value) return null;
-  return new Date(value).toISOString().slice(0, 10);
-}
 
 function stripPrimaryContact(value) {
   return String(value || "Unassigned").replace(/\s+Primary Contact$/i, "") || "Unassigned";
@@ -390,6 +398,34 @@ function contractorRenderer(mode = state.dataView) {
   };
 }
 
+
+function surveyPeriodClause(month = state.selectedMonth) {
+  const safeMonth = String(month || "").replace(/'/g, "''");
+  return safeMonth ? `period_label = '${safeMonth}'` : "1=1";
+}
+
+function surveyWhereForFilter(mode = state.dataView) {
+  if (mode !== "history") return "1=1";
+  const clauses = [surveyPeriodClause()];
+  if (state.contractorFilter !== "all") {
+    clauses.push(`maintained_by LIKE '%${String(state.contractorFilter).replace(/'/g, "''")}%'`);
+  }
+  return clauses.join(" AND ");
+}
+
+function assignmentHistoryWhereForFilter(mode = state.dataView) {
+  if (mode !== "history") return whereForFilter(mode);
+  const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
+  const clauses = [
+    `period_month = '${month}'`,
+    "(completion_status <> 'returned' OR maintenance_level = 'Request Only')"
+  ];
+  if (state.contractorFilter !== "all") {
+    clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
+  }
+  return clauses.join(" AND ");
+}
+
 function whereForFilter(mode = state.dataView) {
   const clauses = [];
   if (mode === "current") {
@@ -415,9 +451,7 @@ function whereForFilter(mode = state.dataView) {
 
 function availableMonths() {
   const history = state.datasets?.history;
-  return history?.summary.available_months || [
-    ...new Set((history?.geojson?.features || []).map((feature) => feature.properties.period_month))
-  ].sort();
+  return history?.summary.available_months || mergeAvailableMonths([], state.surveyPeriodStats);
 }
 
 function renderMonthOptions() {
@@ -658,9 +692,10 @@ function renderFreshness() {
   }
   document.getElementById("mapBadge").textContent =
     `${formatNumber(currentMonthFeatures().length)} monthly survey parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
+  const surveyEdited = state.surveyLayerInfo?.dataLastEdit || state.datasets?.history?.summary?.survey_layer_summary?.data_last_edit;
   document.getElementById("mapCallout").innerHTML = `
     <strong>URA-owned ${state.selectedMonth} LandCare parcels</strong>
-    <span>Monthly survey subset for Power BI-style completion review; colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
+    <span>Returned surveys from live ArcGIS layer${surveyEdited ? ` updated ${escapeHtml(surveyEdited)}` : ""}; open assignments from published export. Colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
   `;
 }
 
@@ -746,14 +781,23 @@ async function zoomToDistrict(district = state.districtFilter) {
 }
 
 async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}) {
-  const layer = activeLayer();
-  if (!state.view || !layer?.queryExtent) return;
-  const result = await layer.queryExtent({
-    where: whereForFilter(),
-    outSpatialReference: state.view.spatialReference
-  }).catch(() => null);
-  if (!result?.extent) return;
-  await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
+  if (!state.view) return;
+  const layers = state.dataView === "history" ? historyLayers() : [activeLayer()].filter(Boolean);
+  const extents = [];
+  for (const layer of layers) {
+    if (!layer?.queryExtent) continue;
+    const result = await layer.queryExtent({
+      where: layer === state.layers.historySurveys ? surveyWhereForFilter("history") : assignmentHistoryWhereForFilter("history"),
+      outSpatialReference: state.view.spatialReference
+    }).catch(() => null);
+    if (result?.extent) extents.push(result.extent);
+  }
+  if (!extents.length) return;
+  let target = extents[0];
+  for (let index = 1; index < extents.length; index += 1) {
+    target = target.union(extents[index]);
+  }
+  await state.view.goTo(target.expand(expand), { duration }).catch(() => {});
 }
 
 async function zoomToSelectedExtent({ duration = 650 } = {}) {
@@ -835,9 +879,13 @@ function setColorMode(mode) {
   document.querySelectorAll("[data-color-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.colorMode === state.colorMode);
   });
-  const layer = activeLayer();
-  if (layer) {
-    layer.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
+  if (state.dataView === "history") {
+    if (state.layers.historyAssignments) {
+      state.layers.historyAssignments.renderer =
+        state.colorMode === "contractor" ? contractorRenderer("history") : statusRenderer("history");
+    }
+  } else if (state.layers.current) {
+    state.layers.current.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
   }
   renderLegend();
   renderFreshness();
@@ -861,9 +909,10 @@ async function setContractorFilter(name, { zoom = false } = {}) {
   if (state.contractorFilter === "all") {
     state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
   }
-  const layer = activeLayer();
-  if (layer) {
-    layer.definitionExpression = whereForFilter();
+  if (state.dataView === "history") {
+    syncHistoryLayerFilters();
+  } else if (state.layers.current) {
+    state.layers.current.definitionExpression = whereForFilter("current");
   }
   renderKpis();
   renderContractors();
@@ -887,8 +936,27 @@ function setActiveDataset() {
   state.selectedMonth = months.includes(state.selectedMonth) ? state.selectedMonth : dataset.summary.latest_month;
 }
 
+function syncHistoryLayerFilters() {
+  if (state.layers.historyAssignments) {
+    state.layers.historyAssignments.definitionExpression = assignmentHistoryWhereForFilter("history");
+  }
+  if (state.layers.historySurveys) {
+    state.layers.historySurveys.definitionExpression = surveyWhereForFilter("history");
+  }
+}
+
+function setHistoryLayerVisibility(visible) {
+  if (state.layers.historyAssignments) state.layers.historyAssignments.visible = visible;
+  if (state.layers.historySurveys) state.layers.historySurveys.visible = visible;
+}
+
 function activeLayer() {
-  return state.layers[state.dataView];
+  if (state.dataView === "current") return state.layers.current;
+  return state.layers.historySurveys || state.layers.historyAssignments;
+}
+
+function historyLayers() {
+  return [state.layers.historyAssignments, state.layers.historySurveys].filter(Boolean);
 }
 
 function renderAll() {
@@ -910,11 +978,19 @@ async function setDataView(mode) {
   setActiveDataset();
   const dataViewSelect = document.getElementById("dataViewSelect");
   if (dataViewSelect) dataViewSelect.value = state.dataView;
-  Object.entries(state.layers).forEach(([key, layer]) => {
-    layer.visible = key === state.dataView;
-    layer.definitionExpression = whereForFilter(key);
-    if (key === state.dataView) layer.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
-  });
+  setHistoryLayerVisibility(state.dataView === "history");
+  if (state.layers.current) {
+    state.layers.current.visible = state.dataView === "current";
+    state.layers.current.definitionExpression = whereForFilter("current");
+    if (state.dataView === "current") {
+      state.layers.current.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
+    }
+  }
+  syncHistoryLayerFilters();
+  if (state.layers.historyAssignments) {
+    state.layers.historyAssignments.renderer =
+      state.colorMode === "contractor" ? contractorRenderer("history") : statusRenderer("history");
+  }
   updateDistrictHighlight();
   renderAll();
   await zoomToSelectedExtent({ duration: 450 });
@@ -927,10 +1003,9 @@ async function setMonthFilter(month) {
   state.contractorFilter = "all";
   state.districtFilter = "all";
   state.mapFocusLabel = "";
-  const layer = activeLayer();
-  if (layer) {
-    layer.definitionExpression = whereForFilter();
-  }
+  setHistoryLayerVisibility(true);
+  if (state.layers.current) state.layers.current.visible = false;
+  syncHistoryLayerFilters();
   updateDistrictHighlight();
   renderAll();
   document.getElementById("parcelDetail").textContent =
@@ -1240,46 +1315,49 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
 }
 
 async function loadData() {
-  const [historySummary, historyGeojson, currentDatasetResult, financeSummary] = await Promise.all([
-    fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
-    fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-    loadCurrentArcgisDataset().then(
-      (dataset) => ({ dataset }),
-      (error) => ({ error })
-    ),
-    fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json())
-  ]);
-  const currentDataset = currentDatasetResult.dataset || buildCurrentFallbackDataset(historySummary, historyGeojson);
+  const [historySummary, historyGeojson, currentDatasetResult, financeSummary, surveyMetadata, surveyPeriodStats] =
+    await Promise.all([
+      fetch(`${DATA_ROOT}/latest_month_summary.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
+      loadCurrentArcgisDataset().then(
+        (dataset) => ({ dataset }),
+        (error) => ({ error })
+      ),
+      fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
+      fetchSurveyLayerMetadata().catch(() => null),
+      fetchSurveyPeriodStats().catch(() => [])
+    ]);
+
+  state.surveyLayerInfo = surveyMetadata;
+  state.surveyPeriodStats = surveyPeriodStats;
+  const enrichedSummary = enrichSummaryWithSurveyLayer(historySummary, surveyMetadata, surveyPeriodStats);
+  const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
+  const mergedHistoryGeojson = mergeSurveyEvidenceIntoGeojson(historyGeojson, evidenceByPeriod);
+
+  const currentDataset = currentDatasetResult.dataset || buildCurrentFallbackDataset(enrichedSummary, mergedHistoryGeojson);
   state.currentDataWarning = currentDatasetResult.error ? "live ArcGIS fallback" : "";
   if (currentDatasetResult.error) {
     console.warn("Live ArcGIS current inventory unavailable; using latest published dashboard data.", currentDatasetResult.error);
   }
   state.datasets = {
     history: {
-      summary: historySummary,
+      summary: enrichedSummary,
       geojson: currentDatasetResult.dataset
-        ? alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset)
-        : historyGeojson
+        ? alignHistoryToCurrentArcgisGeometries(mergedHistoryGeojson, currentDataset)
+        : mergedHistoryGeojson
     },
     current: currentDataset
   };
   state.finance = financeSummary;
-  state.selectedMonth = historySummary.latest_month;
+  state.selectedMonth = enrichedSummary.latest_month;
   setActiveDataset();
 }
 
-async function fetchArcgisJson(url, params) {
-  const response = await fetch(`${url}?${new URLSearchParams(params).toString()}`);
-  if (!response.ok) throw new Error(`ArcGIS request failed: ${response.status}`);
-  const payload = await response.json();
-  if (payload.error) throw new Error(payload.error.message || "ArcGIS request failed");
-  return payload;
-}
 
 async function loadCurrentArcgisDataset() {
   const [layerInfo, surveyInfo, result] = await Promise.all([
     fetchArcgisJson(EPP_LAYER_URL, { f: "json" }),
-    fetchArcgisJson(SURVEY_LAYER_URL, { f: "json" }),
+    fetchSurveyLayerMetadata(),
     fetchArcgisJson(`${EPP_LAYER_URL}/query`, {
       f: "json",
       where: CURRENT_WHERE,
@@ -1299,9 +1377,9 @@ async function loadCurrentArcgisDataset() {
     sourceKind: "live_arcgis",
     generatedOn: "live",
     eppLayerEdited: dateFromMillis(layerInfo.editingInfo?.dataLastEditDate),
-    surveyLayerEdited: dateFromMillis(surveyInfo.editingInfo?.dataLastEditDate),
+    surveyLayerEdited: surveyInfo?.dataLastEdit,
     eppRecordCount: layerInfo.recordCount,
-    surveyRecordCount: surveyInfo.recordCount
+    surveyRecordCount: surveyInfo?.recordCount
   });
 }
 
@@ -1352,8 +1430,9 @@ function summarizeCurrentDataset(features, options) {
       source_note: sourceNote,
       source_layer: "gisdb_gis_epp_parcels_full",
       source_layer_url: EPP_LAYER_URL.replace(/\/0$/, ""),
-      survey_layer: "gisdb_gis_regrid_surveys",
+      survey_layer: "gisdb_gis_regrid_surveys_current_period",
       survey_layer_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
+      survey_layer_item_url: SURVEY_AGOL_ITEM_URL,
       ownership_scope: "URA owned only",
       feature_count: features.length,
       unique_parcel_count: parcelKeys.size,
@@ -1373,7 +1452,8 @@ function summarizeCurrentDataset(features, options) {
       survey_layer_summary: {
         data_last_edit: options.surveyLayerEdited,
         record_count: options.surveyRecordCount,
-        service_url: SURVEY_LAYER_URL.replace(/\/0$/, "")
+        service_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
+        item_url: SURVEY_AGOL_ITEM_URL
       }
     },
     geojson: {
@@ -1384,15 +1464,15 @@ function summarizeCurrentDataset(features, options) {
   };
 }
 
-function buildHistoryLayer({ url, title, mode, visible }) {
+function buildHistoryAssignmentLayer({ url, title, mode, visible }) {
   return new GeoJSONLayer({
     url,
     title,
     outFields: ["*"],
     visible,
-    definitionExpression: whereForFilter(mode),
+    definitionExpression: assignmentHistoryWhereForFilter(mode),
     renderer: statusRenderer(mode),
-    opacity: 0.9,
+    opacity: 0.88,
     popupTemplate: {
       title: "{organization}",
       content: `
@@ -1404,6 +1484,44 @@ function buildHistoryLayer({ url, title, mode, visible }) {
       `
     }
   });
+}
+
+function buildHistorySurveyLayer({ visible }) {
+  return new FeatureLayer({
+    url: SURVEY_LAYER_URL,
+    title: "LandCare Survey Submissions",
+    outFields: ["*"],
+    visible,
+    definitionExpression: surveyWhereForFilter("history"),
+    renderer: {
+      type: "simple",
+      symbol: {
+        type: "simple-fill",
+        color: [46, 125, 50, 0.72],
+        outline: { color: [27, 94, 32, 0.95], width: 0.9 }
+      }
+    },
+    opacity: 0.95,
+    popupTemplate: {
+      title: "Survey {parcelnumb}",
+      content: [
+        {
+          type: "fields",
+          fieldInfos: [
+            { fieldName: "period_label", label: "Service period" },
+            { fieldName: "maintained_by", label: "Maintained by" },
+            { fieldName: "created_at", label: "Submitted", format: { dateFormat: "short-date-short-time" } },
+            { fieldName: "status", label: "Status" },
+            { fieldName: "address", label: "Address" }
+          ]
+        }
+      ]
+    }
+  });
+}
+
+function buildHistoryLayer({ url, title, mode, visible }) {
+  return buildHistoryAssignmentLayer({ url, title, mode, visible });
 }
 
 function buildCurrentLayer({ visible }) {
@@ -1473,16 +1591,23 @@ async function initMap() {
     [JSON.stringify(state.datasets.history.geojson)],
     { type: "application/geo+json" }
   ));
-  const historyLayer = buildHistoryLayer({
+  const historyAssignmentLayer = buildHistoryAssignmentLayer({
     url: historyUrl,
-    title: "LandCare URA-Owned Parcel Months",
+    title: "LandCare Open Assignments",
     mode: "history",
+    visible: state.dataView === "history"
+  });
+  const historySurveyLayer = buildHistorySurveyLayer({
     visible: state.dataView === "history"
   });
   const currentLayer = buildCurrentLayer({
     visible: state.dataView === "current"
   });
-  state.layers = { history: historyLayer, current: currentLayer };
+  state.layers = {
+    historyAssignments: historyAssignmentLayer,
+    historySurveys: historySurveyLayer,
+    current: currentLayer
+  };
 
   const neighborhoodLayer = new FeatureLayer({
     url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
@@ -1545,7 +1670,7 @@ async function initMap() {
 
   const map = new Map({
     basemap: buildCartoLightBasemap(),
-    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyLayer, currentLayer]
+    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, historySurveyLayer, currentLayer]
   });
 
   const view = new MapView({
@@ -1566,14 +1691,37 @@ async function initMap() {
 
   view.on("click", async (event) => {
     const hit = await view.hitTest(event);
-    const graphic = hit.results.find((result) => result.graphic?.layer === activeLayer())?.graphic;
+    const historyLayerSet = new Set(historyLayers());
+    const graphic = hit.results.find((result) => {
+      const layer = result.graphic?.layer;
+      return layer === state.layers.current || historyLayerSet.has(layer);
+    })?.graphic;
     if (!graphic?.attributes) return;
-    const props = state.dataView === "current" ? normalizeCurrentAttributes(graphic.attributes) : graphic.attributes;
+    if (graphic.layer === state.layers.historySurveys) {
+      setParcelDetail({
+        parcel_key: graphic.attributes.parcelnumb,
+        organization: graphic.attributes.maintained_by || "Unassigned",
+        maintenance_level: "Active",
+        completion_status: "returned",
+        returned_flag: true,
+        period_month: graphic.attributes.period_label,
+        ownership_type: graphic.attributes.owner || "URA",
+        survey_source: "gisdb_gis_regrid_surveys_current_period"
+      });
+      return;
+    }
+    const props = state.dataView === "current"
+      ? normalizeCurrentAttributes(graphic.attributes)
+      : graphic.attributes;
     setParcelDetail(props);
   });
 
   await view.when();
-  await Promise.all([historyLayer.when(), currentLayer.when()]);
+  await Promise.all([
+    historyAssignmentLayer.when(),
+    historySurveyLayer.when(),
+    currentLayer.when()
+  ]);
   await zoomToDefaultCurrent();
 }
 

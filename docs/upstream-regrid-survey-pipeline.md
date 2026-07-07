@@ -1,4 +1,4 @@
-# Upstream Regrid Survey Pipeline
+﻿# Upstream Regrid Survey Pipeline
 
 Canonical architecture: [`docs/landcare-architecture.md`](landcare-architecture.md)
 
@@ -11,9 +11,9 @@ This document summarizes how Regrid survey data reaches the LandCare dashboard. 
 
 | Time (Eastern) | Task Scheduler folder | Script | Output |
 |---|---|---|---|
-| 4:00 AM daily | `\GIS Automations\REGRID` | `regrid_survey_daily_pipeline.py` | Regrid CSV → `gis.regrid_survey_submissions` → AGOL `gisdb_gis_regrid_surveys` |
+| 4:00 AM daily | `\GIS Automations\REGRID` | `regrid_survey_daily_pipeline.py` | Regrid CSV â†’ `gis.regrid_survey_submissions`; AGOL current-period layer should be checked separately until upstream publisher is aligned |
 | 4:15 AM on the 15th | `\GIS Automations\REGRID` | `regrid_survey_monthly_export.py` | G-drive CSV archive snapshot (not the daily source) |
-| 7:00 AM daily | `\GIS Automations` | `refresh_landcare_dashboard.ps1` in this repo | `docs/landcare/data/*` → GitHub Pages |
+| 7:00 AM daily | `\GIS Automations` | `refresh_landcare_dashboard.ps1` in this repo | `docs/landcare/data/*` â†’ GitHub Pages |
 
 The dashboard refresh runs three hours after the daily Regrid pipeline so incremental survey submissions are available in GISDB before export. The web app also queries AGOL directly at page load, so returned survey evidence can update even between 7:00 AM publishes.
 
@@ -32,7 +32,7 @@ The read-only export in `prototype/sql/export_prototype_data_readonly.sql` joins
 
 - **Surveys:** GISDB (`gis.regrid_survey_submissions`) is the source of truth. G-drive CSV files are monthly archives only.
 - **Assignments:** Still loaded monthly from bundle exports; assignment denominator updates on the 15th.
-- **AGOL survey layer:** `gisdb_gis_regrid_surveys` ([ArcGIS item](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d)) is refreshed daily from the `gis.regrid_surveys` PostGIS view. The monitoring map and KPI dashboard query this layer directly for returned survey evidence and freshness metadata. Historical assignment denominators still come from the published Postgres export in this repo.
+- **AGOL current-period survey layer:** `gisdb_gis_regrid_surveys_current_period` ([ArcGIS item](https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1)) was created as an Oscar-hosted current-period Regrid layer. The monitoring map and KPI dashboard query this layer directly for current-period returned survey evidence and freshness metadata. Historical assignment denominators still come from the published Postgres export in this repo. The upstream `ura-gis-user` publisher should be aligned before treating this item as the official scheduled publish target.
 
 ## Current Upstream Assessment
 
@@ -56,7 +56,7 @@ The dashboard should not read the monthly G-drive survey CSV as a freshness sour
 
 ## Service Period Convention
 
-LandCare service periods run from the **15th of one month through the 14th of the next**. Both assignments and surveys store the period as the 15th of the start month (for example, `2026-06-15` for the June–July period).
+LandCare service periods run from the **15th of one month through the 14th of the next**. Both assignments and surveys store the period as the 15th of the start month (for example, `2026-06-15` for the Juneâ€“July period).
 
 ## Daily Incremental Updates
 

@@ -1,4 +1,4 @@
-# LandCare Task Scheduler VM Operations
+﻿# LandCare Task Scheduler VM Operations
 
 Last updated: 2026-07-02
 
@@ -21,7 +21,7 @@ flowchart TB
         RegridMonthly["regrid_survey_monthly_export.py"]
         SurveyTable["gis.regrid_survey_submissions"]
         SurveyView["gis.regrid_surveys"]
-        SurveyAgol["AGOL gisdb_gis_regrid_surveys"]
+        SurveyAgol["AGOL gisdb_gis_regrid_surveys_current_period"]
     end
 
     subgraph dashboard ["C:\\srv\\GISWebApp\\land-care-assurance"]
@@ -168,7 +168,7 @@ flowchart LR
 ```mermaid
 flowchart TD
     Regrid["Regrid survey submissions"] --> GISDBSurvey["gis.regrid_survey_submissions"]
-    GISDBSurvey --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
+    GISDBSurvey --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys_current_period"]
     Bundle["Bundle assignments"] --> GISDBAssign["gis.regrid_bundle_assignments"]
     Workbook["Finance workbook"] --> FinanceJson["finance_summary.json"]
     GISDBSurvey --> Export["LandCare Postgres export"]
@@ -180,7 +180,7 @@ flowchart TD
 ```
 
 - Daily survey source of truth: `gis.regrid_survey_submissions`.
-- Runtime returned survey map layer: AGOL `gisdb_gis_regrid_surveys`.
+- Runtime returned survey map layer: AGOL `gisdb_gis_regrid_surveys_current_period`.
 - Assignment denominator source: `gis.regrid_bundle_assignments`.
 - Finance source: LandCare budgeting workbook.
 - G-drive survey CSV: archive only.

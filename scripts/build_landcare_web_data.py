@@ -177,6 +177,8 @@ def build_data(source: Path, output_dir: Path) -> None:
         "available_months": months,
         "latest_assignment_period": metadata.get("latest_assignment_period"),
         "latest_survey_period": metadata.get("latest_survey_period"),
+        "survey_submission_count": metadata.get("survey_submission_count"),
+        "survey_distinct_parcels": metadata.get("survey_distinct_parcels"),
         "source_note": source_note,
         "generated_on": generated_on,
         "geometry_mode": metadata.get("geometry_mode", "postgres_readonly_export"),
@@ -197,7 +199,12 @@ def build_data(source: Path, output_dir: Path) -> None:
         "latest_month_metrics": latest_metric,
         "source_contract": {
             "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
-            "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to survey submissions and parcel ownership tables.",
+            "historical_assignments": (
+                "PostgreSQL export from gis.regrid_bundle_assignments joined to "
+                "gis.regrid_survey_submissions and parcel ownership tables. "
+                "Surveys are ingested daily by URA-Data-Repository into gis.regrid_survey_submissions and published to ArcGIS Online gisdb_gis_regrid_surveys_current_period, which the web app queries live for current-period returned evidence. "
+                "Bundle assignments are loaded monthly via bundle_assignment_creation.py and BundlesDriveToSQL.py."
+            ),
             "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json.",
         },
     }
@@ -232,6 +239,8 @@ def build_data(source: Path, output_dir: Path) -> None:
             "latest_month_feature_count": len(latest_features),
             "latest_assignment_period": metadata.get("latest_assignment_period"),
             "latest_survey_period": metadata.get("latest_survey_period"),
+            "survey_submission_count": metadata.get("survey_submission_count"),
+            "survey_distinct_parcels": metadata.get("survey_distinct_parcels"),
             "note": (
                 f"Dashboard data refreshed for assignments through {metadata.get('latest_assignment_period')} "
                 f"and survey completion through {metadata.get('latest_survey_period')}."
