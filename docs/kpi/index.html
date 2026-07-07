@@ -33,162 +33,104 @@
         <button type="button" data-tab="maintenanceExpenses">Maintenance Expenses</button>
       </nav>
 
-      <section class="report-context source-strip" aria-label="Report context">
+      <section class="report-context compact" aria-label="Report context">
         <div>
-          <span class="eyebrow">Assignments</span>
-          <strong id="assignmentSourceKpi">VM export</strong>
+          <span class="eyebrow">Period</span>
+          <strong id="periodKpi">Loading...</strong>
         </div>
         <div>
-          <span class="eyebrow">Surveys</span>
-          <strong id="surveySourceKpi">ArcGIS live</strong>
+          <span class="eyebrow">Refreshed</span>
+          <strong id="reportUpdatedKpi">Checking data...</strong>
         </div>
-        <div>
-          <span class="eyebrow">Assignment Period</span>
-          <strong id="assignmentPeriodKpi">Loading...</strong>
-        </div>
-        <div>
-          <span class="eyebrow">Survey Period</span>
-          <strong id="surveyPeriodKpi">Loading...</strong>
-        </div>
-        <div>
-          <span class="eyebrow">AGOL Surveys</span>
-          <strong id="agolSurveyKpi">Checking...</strong>
-        </div>
-        <div>
-          <span class="eyebrow">Dashboard Refresh</span>
-          <strong id="reportUpdatedKpi">Checking...</strong>
-        </div>
-        <p class="source-strip-status" id="liveUniverseNote">Loading sources...</p>
+        <p class="source-footnote" id="liveUniverseNote">Loading sources...</p>
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
-        <section class="insight-grid leader-grid" aria-label="Leadership insights">
-          <article class="insight-card">
-            <span class="eyebrow">Monthly Completion</span>
+        <section class="insight-grid" aria-label="Key metrics">
+          <article class="insight-card featured">
+            <div class="card-top">
+              <span class="eyebrow">Completion</span>
+              <span class="card-icon-slot" data-icon="completion" data-icon-label="%" aria-hidden="true"></span>
+            </div>
             <strong id="completionReadoutInsight">--</strong>
-            <p id="completionReadoutCopy">Loading completion trend...</p>
-          </article>
-          <article class="insight-card">
-            <span class="eyebrow">Open Active Work</span>
-            <strong id="openParcelInsight">--</strong>
-            <p id="openParcelCopy">Loading open parcel count...</p>
-          </article>
-          <article class="insight-card">
-            <span class="eyebrow">Surveys Returned</span>
-            <strong id="returnedSurveyInsight">--</strong>
-            <p id="returnedSurveyCopy">Loading returned count...</p>
+            <p class="card-trend" id="completionReadoutCopy">Loading...</p>
           </article>
           <article class="insight-card warning">
-            <span class="eyebrow">Largest Follow-Up</span>
-            <strong id="problemContractorInsight">--</strong>
-            <p id="problemContractorCopy">Loading contractor review...</p>
+            <div class="card-top">
+              <span class="eyebrow">Open Active</span>
+              <span class="card-icon-slot" data-icon="open-active" data-icon-label="!" aria-hidden="true"></span>
+            </div>
+            <strong id="openParcelInsight">--</strong>
+            <p class="card-trend" id="openParcelCopy">Loading...</p>
+          </article>
+          <article class="insight-card">
+            <div class="card-top">
+              <span class="eyebrow">Budget Run Rate</span>
+              <span class="card-icon-slot" data-icon="budget" data-icon-label="$" aria-hidden="true"></span>
+            </div>
+            <strong id="budgetRunRateInsight">--</strong>
+            <p class="card-trend" id="budgetRunRateCopy">Loading...</p>
           </article>
         </section>
 
-        <section class="metric-groups" aria-label="LandCare metrics">
-          <article class="panel metric-group">
-            <div class="panel-head">
-              <div>
-                <span class="eyebrow">Full LandCare Inventory</span>
-                <h1>All Current URA-Owned LandCare Parcels</h1>
-              </div>
-            </div>
-            <div class="reference-card-grid four-up">
-              <div class="reference-card primary"><span>Total Inventory Parcels</span><strong id="currentParcelsKpi">--</strong></div>
-              <div class="reference-card"><span>Active Inventory</span><strong id="currentActiveKpi">--</strong></div>
-              <div class="reference-card"><span>Request-Only Inventory</span><strong id="currentRequestOnlyKpi">--</strong></div>
-              <div class="reference-card"><span>Contractors</span><strong id="currentContractorsKpi">--</strong></div>
-            </div>
-          </article>
-
-          <article class="panel metric-group">
-            <div class="panel-head">
-              <div>
-                <span class="eyebrow">Assignment Scope</span>
-                <h1>Latest Assignment Month</h1>
-              </div>
-            </div>
-            <div class="reference-card-grid four-up">
-              <div class="reference-card primary"><span>Monthly Assigned Parcels</span><strong id="latestAssignedKpi">--</strong></div>
-              <div class="reference-card"><span>Monthly Active Assigned</span><strong id="latestActiveAssignedKpi">--</strong></div>
-              <div class="reference-card"><span>Surveys Returned</span><strong id="latestReturnedKpi">--</strong></div>
-              <div class="reference-card warning"><span>Completion Rate</span><strong id="latestCompletionKpi">--</strong></div>
-            </div>
-          </article>
-
-          <article class="panel metric-group">
-            <div class="panel-head">
-              <div>
-                <span class="eyebrow">Multi-Month View</span>
-                <h1>Historical Survey Coverage</h1>
-              </div>
-            </div>
-            <div class="reference-card-grid four-up">
-              <div class="reference-card"><span>Months Available</span><strong id="monthCountKpi">--</strong></div>
-              <div class="reference-card"><span>Assignment Rows</span><strong id="assignmentRowsKpi">--</strong></div>
-              <div class="reference-card"><span>YTD Returned</span><strong id="ytdReturnedKpi">--</strong></div>
-              <div class="reference-card"><span>Current Acres</span><strong id="currentAcresKpi">--</strong></div>
-            </div>
-          </article>
+        <section class="stat-strip" aria-label="Snapshot">
+          <h2 class="stat-strip-title">Snapshot</h2>
+          <div class="reference-card-grid six-up">
+            <div class="reference-card featured"><span>Inventory</span><strong id="currentParcelsKpi">--</strong></div>
+            <div class="reference-card"><span>Active</span><strong id="currentActiveKpi">--</strong></div>
+            <div class="reference-card warning"><span>Completion</span><strong id="latestCompletionKpi">--</strong></div>
+            <div class="reference-card"><span>Returned</span><strong id="latestReturnedKpi">--</strong></div>
+            <div class="reference-card"><span>Assigned</span><strong id="latestAssignedKpi">--</strong></div>
+            <div class="reference-card"><span>YTD Returned</span><strong id="ytdReturnedKpi">--</strong></div>
+          </div>
         </section>
 
-        <section class="powerbi-grid" aria-label="Landing charts">
+        <section class="powerbi-grid landing-charts" aria-label="Landing charts">
+          <article class="panel powerbi-panel trend-panel">
+            <div class="panel-head">
+              <div>
+                <h1>Completion Trend</h1>
+                <p class="panel-sub" id="trendSummary">Loading trend...</p>
+              </div>
+            </div>
+            <div class="chart-legend chart-legend-inline">
+              <span class="legend-line rate"></span> Active completion %
+              <span class="legend-line target"></span> 80% target
+            </div>
+            <div class="line-chart" id="completionLineChart" aria-label="Monthly completion line chart"></div>
+          </article>
+
           <article class="panel powerbi-panel contractor-panel">
             <div class="panel-head">
               <div>
-                <span class="eyebrow">Contractor Follow-Up Queue</span>
-                <h1>Latest Month Returned vs Open Active</h1>
+                <h1>Contractor Queue</h1>
+                <p class="panel-sub" id="contractorQueueSummary">Latest month</p>
               </div>
               <select id="contractorSelect" aria-label="Contractor filter">
                 <option value="all">All contractors</option>
               </select>
             </div>
-            <div class="chart-legend"><span class="legend-line returned"></span> Returned <span class="legend-line open"></span> Open active</div>
-            <div class="contractor-chart-head" aria-hidden="true">
-              <span>Contractor</span>
-              <span>Returned / Open</span>
-              <span>Open</span>
-              <span>Returned</span>
-              <span>Assigned</span>
-              <span>Rate</span>
-            </div>
+            <div class="chart-legend chart-legend-inline"><span class="legend-line returned"></span> Returned <span class="legend-line open"></span> Open</div>
             <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
-          </article>
-
-          <article class="panel powerbi-panel trend-panel">
-            <div class="panel-head">
-              <div>
-                <span class="eyebrow">Survey Trend</span>
-                <h1>Monthly Completion Rate</h1>
-              </div>
-            </div>
-            <div class="line-chart compact" id="completionLineChart" aria-label="Monthly completion line chart"></div>
-            <div class="timeline-list" id="timelineBars"></div>
           </article>
         </section>
       </section>
 
       <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
         <article class="panel metric-group">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Budget Control</span>
-              <h1>Land Care Budget</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Land Care Budget</h1>
           </div>
           <div class="reference-card-grid four-up">
-            <div class="reference-card primary"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong></div>
+            <div class="reference-card featured"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong></div>
             <div class="reference-card"><span>Monthly Invoice Total</span><strong id="monthlyInvoiceKpi">--</strong></div>
             <div class="reference-card"><span>Total Contract Amount</span><strong id="totalContractKpi">--</strong></div>
             <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong></div>
           </div>
         </article>
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Current Cycle</span>
-              <h1>Annual Contract Amount by Contractor</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Contract Amount by Contractor</h1>
           </div>
           <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
         </article>
@@ -196,30 +138,20 @@
 
       <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Workbook History</span>
-              <h1>Check Request History</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Check Request History</h1>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="checkRequestTable"></table>
           </div>
-        </article>
-        <article class="panel source-note-panel">
-          <span class="eyebrow">Data Integrity</span>
-          <h1>Check Request History</h1>
-          <p id="financeSourceNote">Checking finance records...</p>
+          <p class="source-footnote" id="financeSourceNote">Checking finance records...</p>
         </article>
       </section>
 
       <section class="tab-panel" data-panel="submissionRate" aria-label="Survey Submission Rate">
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Monthly History</span>
-              <h1>Survey Submission Rate by Month</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Submission Rate by Month</h1>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="submissionRateTable"></table>
@@ -229,11 +161,8 @@
 
       <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Full LandCare Inventory</span>
-              <h1>Current Parcel Area by Contractor</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Parcel Area by Contractor</h1>
           </div>
           <div class="grouped-chart" id="areaDistributionChart" aria-label="Current parcel acreage by contractor"></div>
         </article>
@@ -241,11 +170,8 @@
 
       <section class="tab-panel" data-panel="parcelDetails" aria-label="Parcel Details">
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Operational Detail</span>
-              <h1>Contractor Detail</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Contractor Detail</h1>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="parcelDetailsTable"></table>
@@ -255,43 +181,30 @@
 
       <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
         <article class="panel metric-group">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Maintenance Expenses</span>
-              <h1>Current Cycle Cost Distribution</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Maintenance Expenses</h1>
           </div>
           <div class="reference-card-grid four-up">
-            <div class="reference-card primary"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong></div>
+            <div class="reference-card featured"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong></div>
             <div class="reference-card"><span>Monthly Cost / Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong></div>
             <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong></div>
             <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong></div>
           </div>
         </article>
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Cost Intensity</span>
-              <h1>Annual Cost per Acre by Contractor</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Cost per Acre by Contractor</h1>
           </div>
           <div class="grouped-chart" id="expenseIntensityChart" aria-label="Annual cost per acre by contractor"></div>
         </article>
         <article class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow">Contract Detail</span>
-              <h1>Maintenance Expense Detail</h1>
-            </div>
+          <div class="panel-head compact-head">
+            <h1>Expense Detail</h1>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="maintenanceExpenseTable"></table>
           </div>
-        </article>
-        <article class="panel source-note-panel">
-          <span class="eyebrow">Data Integrity</span>
-          <h1>Maintenance Expenses</h1>
-          <p id="expenseSourceNote">Checking expense records...</p>
+          <p class="source-footnote" id="expenseSourceNote">Checking expense records...</p>
         </article>
       </section>
     </main>

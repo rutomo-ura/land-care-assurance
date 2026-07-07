@@ -10,12 +10,10 @@ import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Basem
 import {
   SURVEY_LAYER_URL,
   SURVEY_AGOL_ITEM_URL,
-  SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
-  fetchSurveyRecordsForPeriod,
   enrichSummaryWithSurveyLayer,
   loadSurveyEvidenceByPeriod,
   mergeAvailableMonths,
@@ -28,7 +26,7 @@ const EPP_LAYER_URL =
 const COUNCIL_DISTRICT_LAYER_URL =
   "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
-const CARTO_LIGHT_ATTRIBUTION = "(c) OpenStreetMap contributors (c) CARTO";
+const CARTO_LIGHT_ATTRIBUTION = "© OpenStreetMap contributors © CARTO";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
   "parcel_number",
@@ -82,14 +80,10 @@ const state = {
   colorMode: "status",
   selectedMonth: null,
   dataView: "current",
-  surveyLayerMode: "matched",
   mapFocusLabel: "",
   currentDataWarning: "",
   surveyLayerInfo: null,
-  surveyPeriodStats: [],
-  surveyRecordsByPeriod: {},
-  matchedSurveyParcelnumbsByPeriod: {},
-  matchedSurveyFilterWarning: ""
+  surveyPeriodStats: []
 };
 
 const formatter = new Intl.NumberFormat("en-US");
@@ -410,78 +404,9 @@ function surveyPeriodClause(month = state.selectedMonth) {
   return safeMonth ? `period_label = '${safeMonth}'` : "1=1";
 }
 
-function selectedHistoryMonth() {
-  return state.selectedMonth || state.datasets?.history?.summary?.latest_month || state.summary?.latest_month;
-}
-
-function surveyStatsForMonth(month = selectedHistoryMonth()) {
-  return (state.surveyPeriodStats || []).find((row) => row.period_label === month) || null;
-}
-
-function rawSurveyRecordCount(month = selectedHistoryMonth()) {
-  return Number(surveyStatsForMonth(month)?.record_count || 0);
-}
-
-function returnedAssignmentParcelDigits(month = selectedHistoryMonth()) {
-  return new Set(
-    (state.datasets?.history?.geojson?.features || [])
-      .filter((feature) => {
-        const props = feature.properties || {};
-        return props.period_month === month && props.maintenance_level === "Active" && props.returned_flag;
-      })
-      .map((feature) => parcelDigits(feature.properties?.parcel_key))
-      .filter(Boolean)
-  );
-}
-
-function matchedSurveyRecordCount(month = selectedHistoryMonth()) {
-  const records = state.matchedSurveyParcelnumbsByPeriod[month];
-  if (records) return records.length;
-  return returnedAssignmentParcelDigits(month).size;
-}
-
-async function ensureSurveyRecordsForPeriod(month = selectedHistoryMonth()) {
-  if (!month) return [];
-  if (!state.surveyRecordsByPeriod[month]) {
-    state.surveyRecordsByPeriod[month] = fetchSurveyRecordsForPeriod(month).catch((error) => {
-      console.warn(`Could not load ArcGIS survey records for ${month}`, error);
-      delete state.surveyRecordsByPeriod[month];
-      throw error;
-    });
-  }
-  return state.surveyRecordsByPeriod[month];
-}
-
-async function prepareMatchedSurveyFilter(month = selectedHistoryMonth()) {
-  if (state.dataView !== "history" || state.surveyLayerMode !== "matched" || !month) return;
-  if (state.matchedSurveyParcelnumbsByPeriod[month]) return;
-  state.matchedSurveyFilterWarning = "";
-  try {
-    const returnedKeys = returnedAssignmentParcelDigits(month);
-    const records = await ensureSurveyRecordsForPeriod(month);
-    const matchedParcelnumbs = [
-      ...new Set(
-        records
-          .filter((record) => returnedKeys.has(parcelDigits(record.parcelnumb)))
-          .map((record) => String(record.parcelnumb || "").trim())
-          .filter(Boolean)
-      )
-    ];
-    state.matchedSurveyParcelnumbsByPeriod[month] = matchedParcelnumbs;
-  } catch (error) {
-    state.matchedSurveyFilterWarning = "Matched survey filter unavailable";
-    state.matchedSurveyParcelnumbsByPeriod[month] = [];
-  }
-}
-
 function surveyWhereForFilter(mode = state.dataView) {
   if (mode !== "history") return "1=1";
   const clauses = [surveyPeriodClause()];
-  if (state.surveyLayerMode === "matched") {
-    const month = selectedHistoryMonth();
-    const parcelnumbs = state.matchedSurveyParcelnumbsByPeriod[month] || [];
-    clauses.push(parcelnumbs.length ? `parcelnumb IN (${parcelnumbs.map(sqlValue).join(", ")})` : "1=0");
-  }
   if (state.contractorFilter !== "all") {
     clauses.push(`maintained_by LIKE '%${String(state.contractorFilter).replace(/'/g, "''")}%'`);
   }
@@ -538,21 +463,6 @@ function renderMonthOptions() {
     .map((month) => `<option value="${escapeHtml(month)}">${escapeHtml(month)}</option>`)
     .join("");
   select.value = state.selectedMonth;
-}
-
-function renderSurveyLayerOptions() {
-  const field = document.getElementById("surveyLayerField");
-  const select = document.getElementById("surveyLayerSelect");
-  if (!field || !select) return;
-  field.style.display = state.dataView === "history" ? "grid" : "none";
-  const month = selectedHistoryMonth();
-  const matchedCount = matchedSurveyRecordCount(month);
-  const rawCount = rawSurveyRecordCount(month);
-  select.innerHTML = `
-    <option value="matched">Matched returned (${formatNumber(matchedCount)})</option>
-    <option value="all">All survey records (${formatNumber(rawCount)})</option>
-  `;
-  select.value = state.surveyLayerMode;
 }
 
 function renderDistrictOptions() {
@@ -766,8 +676,8 @@ function contractorPerformanceRows(features) {
 }
 
 function renderFreshness() {
+  document.getElementById("freshnessNote").textContent = "Current LandCare universe";
   if (state.dataView === "current") {
-    document.getElementById("freshnessNote").textContent = "Current LandCare universe";
     const visibleFeatures = filteredFeatures();
     const districtText = state.districtFilter === "all" ? "all council districts" : `Council District ${state.districtFilter}`;
     const contractorText =
@@ -780,30 +690,12 @@ function renderFreshness() {
     `;
     return;
   }
-  const month = selectedHistoryMonth();
-  const monthFeatures = currentMonthFeatures();
-  const activeAssignments = uniqueCount(monthFeatures, (feature) => feature.properties.maintenance_level === "Active");
-  const openAssignments = uniqueCount(monthFeatures, (feature) => (
-    feature.properties.maintenance_level === "Active" && feature.properties.completion_status === "missing"
-  ));
-  const matchedCount = matchedSurveyRecordCount(month);
-  const rawCount = rawSurveyRecordCount(month);
-  const surveyLayerText =
-    state.surveyLayerMode === "all"
-      ? `${formatNumber(rawCount)} ArcGIS survey records`
-      : `${formatNumber(matchedCount)} matched returned surveys`;
-  document.getElementById("freshnessNote").textContent =
-    state.surveyLayerMode === "all" ? "All live survey records" : "Matched survey evidence";
   document.getElementById("mapBadge").textContent =
-    `${surveyLayerText} - ${month} - ${formatNumber(openAssignments)} open of ${formatNumber(activeAssignments)} active`;
+    `${formatNumber(currentMonthFeatures().length)} monthly survey parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
   const surveyEdited = state.surveyLayerInfo?.dataLastEdit || state.datasets?.history?.summary?.survey_layer_summary?.data_last_edit;
-  const modeText =
-    state.surveyLayerMode === "all"
-      ? "Full live ArcGIS survey layer for the selected period"
-      : "Returned surveys matched to exported assignments";
   document.getElementById("mapCallout").innerHTML = `
-    <strong>URA-owned ${month} LandCare parcels</strong>
-    <span>${escapeHtml(modeText)}${surveyEdited ? ` - updated ${escapeHtml(surveyEdited)}` : ""}${state.matchedSurveyFilterWarning ? ` - ${escapeHtml(state.matchedSurveyFilterWarning)}` : ""}</span>
+    <strong>URA-owned ${state.selectedMonth} LandCare parcels</strong>
+    <span>Returned surveys from live ArcGIS layer${surveyEdited ? ` updated ${escapeHtml(surveyEdited)}` : ""}; open assignments from published export. Colored by ${state.colorMode === "contractor" ? "contractor" : "survey status"}.</span>
   `;
 }
 
@@ -1018,7 +910,6 @@ async function setContractorFilter(name, { zoom = false } = {}) {
     state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
   }
   if (state.dataView === "history") {
-    await prepareMatchedSurveyFilter();
     syncHistoryLayerFilters();
   } else if (state.layers.current) {
     state.layers.current.definitionExpression = whereForFilter("current");
@@ -1031,18 +922,6 @@ async function setContractorFilter(name, { zoom = false } = {}) {
     await zoomToSelectedExtent();
     renderFreshness();
   }
-}
-
-async function setSurveyLayerMode(mode, { zoom = true } = {}) {
-  state.surveyLayerMode = mode === "all" ? "all" : "matched";
-  state.dataView = "history";
-  setActiveDataset();
-  if (state.layers.current) state.layers.current.visible = false;
-  setHistoryLayerVisibility(true);
-  await prepareMatchedSurveyFilter();
-  syncHistoryLayerFilters();
-  renderAll();
-  if (zoom) await zoomToSelectedExtent({ duration: 450 });
 }
 
 function setActiveDataset() {
@@ -1082,7 +961,6 @@ function historyLayers() {
 
 function renderAll() {
   renderMonthOptions();
-  renderSurveyLayerOptions();
   renderDistrictOptions();
   renderKpis();
   renderStatusSummary();
@@ -1108,7 +986,6 @@ async function setDataView(mode) {
       state.layers.current.renderer = state.colorMode === "contractor" ? contractorRenderer() : statusRenderer();
     }
   }
-  await prepareMatchedSurveyFilter();
   syncHistoryLayerFilters();
   if (state.layers.historyAssignments) {
     state.layers.historyAssignments.renderer =
@@ -1128,7 +1005,6 @@ async function setMonthFilter(month) {
   state.mapFocusLabel = "";
   setHistoryLayerVisibility(true);
   if (state.layers.current) state.layers.current.visible = false;
-  await prepareMatchedSurveyFilter();
   syncHistoryLayerFilters();
   updateDistrictHighlight();
   renderAll();
@@ -1156,7 +1032,6 @@ function wireControls() {
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
-  document.getElementById("surveyLayerSelect").addEventListener("change", (event) => setSurveyLayerMode(event.target.value));
   document.getElementById("exportPdfButton").addEventListener("click", exportPrintPdf);
 }
 
@@ -1555,7 +1430,7 @@ function summarizeCurrentDataset(features, options) {
       source_note: sourceNote,
       source_layer: "gisdb_gis_epp_parcels_full",
       source_layer_url: EPP_LAYER_URL.replace(/\/0$/, ""),
-      survey_layer: SURVEY_LAYER_NAME,
+      survey_layer: "gisdb_gis_regrid_surveys_current_period",
       survey_layer_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
       survey_layer_item_url: SURVEY_AGOL_ITEM_URL,
       ownership_scope: "URA owned only",
@@ -1831,7 +1706,7 @@ async function initMap() {
         returned_flag: true,
         period_month: graphic.attributes.period_label,
         ownership_type: graphic.attributes.owner || "URA",
-        survey_source: SURVEY_LAYER_NAME
+        survey_source: "gisdb_gis_regrid_surveys_current_period"
       });
       return;
     }

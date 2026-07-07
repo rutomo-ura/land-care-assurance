@@ -1,9 +1,9 @@
 export const SURVEY_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
-export const SURVEY_AGOL_ITEM_ID = "a4012693d5d74dd8998610c4d235068d";
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys_current_period/FeatureServer/0";
+export const SURVEY_AGOL_ITEM_ID = "1f29883ea3bb4d6aa834c6a9feeeb6f1";
 export const SURVEY_AGOL_ITEM_URL =
-  "https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d";
-export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys";
+  "https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1";
+export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys_current_period";
 
 export function parcelDigits(value) {
   return String(value || "").replace(/\D/g, "");
@@ -145,8 +145,6 @@ export function enrichSummaryWithSurveyLayer(summary, surveyMetadata, periodStat
   const surveyPeriods = (periodStats || [])
     .map((row) => row.period_label)
     .filter(Boolean);
-  const periodRecordCount = (periodStats || [])
-    .reduce((sum, row) => sum + Number(row.record_count || 0), 0);
   return {
     ...summary,
     latest_survey_period: latestSurveyPeriod,
@@ -154,7 +152,7 @@ export function enrichSummaryWithSurveyLayer(summary, surveyMetadata, periodStat
     available_months: summary?.available_months || [],
     survey_layer_summary: {
       data_last_edit: surveyMetadata?.dataLastEdit,
-      record_count: surveyMetadata?.recordCount ?? periodRecordCount,
+      record_count: surveyMetadata?.recordCount,
       service_url: surveyMetadata?.serviceUrl,
       item_url: SURVEY_AGOL_ITEM_URL,
       available_periods: surveyPeriods
