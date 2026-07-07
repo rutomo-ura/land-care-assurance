@@ -1,6 +1,6 @@
 # Agent Handoff Knowledge
 
-Last updated: June 23, 2026
+Last updated: July 7, 2026
 
 This is the living handoff document for future Codex or analyst sessions. Update it at the end of each meaningful work session so the next agent can continue without rediscovering the project.
 
@@ -130,22 +130,21 @@ Prototype app data after the read-only PostgreSQL export:
 Current public monitoring app values after narrowing the app to URA-owned LandCare parcels:
 
 - Default monitoring data view: live current ArcGIS universe from `gisdb_gis_epp_parcels_full`
-- Current ArcGIS live URA-owned LandCare records: `1,125`
-- Current ArcGIS unique URA-owned LandCare parcel keys: `1,124`
-- Current ArcGIS Active unique parcel keys: `1,035`
-- Current ArcGIS Request Only unique parcel keys: `89`
-- Current ArcGIS contractors: `9`
+- Current ArcGIS live URA-owned LandCare records: `1,125` as of the July 7 REST check
 - KPI headline current-universe cards use the same live ArcGIS query as the monitoring page.
-- Latest map layer: April 2026
-- Assignment freshness: May 15, 2026
-- Survey completion freshness: April 15, 2026
-- Available map months: May 2025, June 2025, July 2025, September 2025, October 2025, November 2025, December 2025, January 2026, February 2026, March 2026, and April 2026
-- All-month URA-owned parcel-month records: `2,415`
-- URA-owned latest-month assigned parcels: `218`
-- Returned surveys matched to URA-owned assigned parcels: `14`
-- Active completion: `7.7%`
-- Open active assignments: `167`
-- Request Only assignments: `37`
+- Latest map layer: June 2026
+- Assignment freshness: June 15, 2026
+- Survey completion freshness in published export: June 15, 2026
+- Available map months: May 2025, June 2025, July 2025, September 2025, October 2025, November 2025, December 2025, January 2026, February 2026, March 2026, April 2026, May 2026, and June 2026
+- All-month URA-owned parcel-month records: `2,776`
+- URA-owned latest-month assigned parcels: `210`
+- Active assigned: `176`
+- Returned assigned in static KPI export: `8`
+- Active completion: `4.5%`
+- Open active assignments: `168`
+- Request Only assignments: `34`
+- Live AGOL all-period survey layer: `30` periods, `13,415` records, latest period `2026-06` with `57` raw survey records
+- Monitoring survey toggle: `Matched returned` shows `5` exact live AGOL survey parcel records for `2026-06`; `All survey records` shows all `57`
 - Main app data files for monthly history: `docs/landcare/data/all_months.geojson`, `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, `docs/landcare/data/contractor_monthly.json`, and `docs/landcare/data/refresh_manifest.json`. Current parcel-universe data is not committed as a snapshot; the monitoring and KPI pages query ArcGIS live. Do not recreate `current_universe.geojson` unless there is a deliberate offline fallback requirement.
 
 ## Important Implementation Details
@@ -248,8 +247,8 @@ Most recent pushed commits at the time this file was created:
 - Confirm production deployment path.
 - Reconcile ownership definitions with Power BI and URA/PLB business rules.
 - Reconcile ArcGIS `gisdb_gis_epp_parcels_full` and `gisdb_gis_regrid_surveys` with PostgreSQL and decide whether to build a hosted monthly assurance layer from them.
-- Add contractor-colored parcel map mode.
-- Add last surveyed period as a map mode or coordinated filter.
+- Keep contractor-colored map mode and contextual PDF legend covered by smoke tests.
+- Keep the survey-layer toggle (`Matched returned` vs `All survey records`) covered by smoke tests.
 - Add reassignment planning that balances contractor workload by total parcel area.
 - Decide when to move from static GeoJSON to vector tiles or a backend map API.
 - Build a repeatable refresh checklist for PostgreSQL export, validation, review, and deployment.

@@ -1,6 +1,6 @@
 # LandCare Data Engineering Flow
 
-This note is the quick visual reference for the LandCare monitoring data pipeline. See [`docs/landcare-architecture.md`](landcare-architecture.md) for the full platform architecture.
+This note is the quick visual reference for the LandCare monitoring data pipeline. See [`docs/landcare-architecture.md`](landcare-architecture.md) for the full platform architecture and [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) for metric definitions.
 
 ## End-to-End Architecture
 
@@ -59,7 +59,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A["User opens monitoring or KPI app"] --> B{"Which data is needed?"}
+    A["User opens monitoring or KPI app"] --> B{"Which data is needed-"}
 
     B --> C["Current URA-owned LandCare universe"]
     B --> D["Monthly survey history"]
@@ -156,6 +156,18 @@ flowchart TD
 
 Survey ingestion and AGOL publish run upstream at 4:00 AM. The web app reads returned surveys directly from AGOL at page load; the 7:00 AM job publishes assignment denominators and finance data from Postgres.
 
+## Reconciliation View
+
+| Count | July 7 value | Meaning |
+|---|---:|---|
+| Live AGOL survey records for `2026-06` | 57 | Raw all-period survey layer rows for the selected period |
+| Monitoring matched survey records for `2026-06` | 5 | Live AGOL rows whose normalized `parcelnumb` matches returned Active assignment parcel keys |
+| Published returned assigned for latest month | 8 | Static Postgres export evidence used by the KPI summary |
+| Published Active assigned for latest month | 176 | Active assignment denominator |
+| Published open active for latest month | 168 | Active assigned minus returned assigned |
+
+The first three values are intentionally different. AGOL raw records show survey volume; matched survey records show the map evidence that joins to returned assignments; KPI returned assigned comes from the checked-in export until the next VM refresh publishes new static data.
+
 ## Data Contract Checklist
 
 | Field | Primary source at runtime | Published fallback |
@@ -171,8 +183,9 @@ Survey ingestion and AGOL publish run upstream at 4:00 AM. The web app reads ret
 
 ## Related Documents
 
-- [`docs/landcare-architecture.md`](landcare-architecture.md) — canonical architecture
-- [`docs/landcare-production-data-engineering-plan.md`](landcare-production-data-engineering-plan.md) — VM setup and refresh plan
+- [`docs/landcare-architecture.md`](landcare-architecture.md) - canonical architecture
+- [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) - metric definitions and denominator rules
+- [`docs/landcare-production-data-engineering-plan.md`](landcare-production-data-engineering-plan.md) - VM setup and refresh plan
 - [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
 - [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI / Codex / Power Platform option
 

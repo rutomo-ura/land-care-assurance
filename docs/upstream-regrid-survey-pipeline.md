@@ -32,7 +32,7 @@ The read-only export in `prototype/sql/export_prototype_data_readonly.sql` joins
 
 - **Surveys:** GISDB (`gis.regrid_survey_submissions`) is the source of truth. G-drive CSV files are monthly archives only.
 - **Assignments:** Still loaded monthly from bundle exports; assignment denominator updates on the 15th.
-- **AGOL all-period survey layer:** `gisdb_gis_regrid_surveys` ([ArcGIS item](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d)) is the live all-period Regrid survey layer. The monitoring map and KPI dashboard query this layer directly for returned survey evidence and freshness metadata. Historical assignment denominators still come from the published Postgres export in this repo.
+- **AGOL all-period survey layer:** `gisdb_gis_regrid_surveys` ([ArcGIS item](https://urap.maps.arcgis.com/home/item.html-id=a4012693d5d74dd8998610c4d235068d)) is the live all-period Regrid survey layer. The monitoring map and KPI dashboard query this layer directly for returned survey evidence and freshness metadata. Historical assignment denominators still come from the published Postgres export in this repo.
 
 ## Current Upstream Assessment
 
@@ -73,8 +73,8 @@ After each refresh, `C:\srv\logs\land-care-assurance\daily-refresh-status.json` 
   "upstream": {
     "regrid_survey_pipeline": "URA-Data-Repository daily 4:00 AM",
     "latest_survey_period": "2026-06-15",
-    "survey_submission_count": 412,
-    "latest_returned_assigned": 96
+    "survey_submission_count": null,
+    "latest_returned_assigned": 8
   }
 }
 ```

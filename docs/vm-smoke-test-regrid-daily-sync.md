@@ -46,7 +46,7 @@ Expected: exit code 0; log at `C:\srv\logs\land-care-assurance\daily-refresh-YYY
 
 ```powershell
 Get-Content docs\landcare\data\refresh_manifest.json | ConvertFrom-Json |
-  Select-Object generated_on, latest_survey_period, survey_submission_count, survey_distinct_parcels, latest_returned_assigned
+  Select-Object generated_on, latest_month, latest_assignment_period, latest_survey_period, all_month_feature_count, latest_month_feature_count
 ```
 
 Also check KPI summary:
@@ -56,11 +56,22 @@ $kpi = Get-Content docs\landcare\data\kpi_summary.json | ConvertFrom-Json
 $kpi.latest_month_metrics
 ```
 
+Optional raw AGOL period count check:
+
+```powershell
+$period = "2026-06"
+$where = [uri]::EscapeDataString("period_label = '$period'")
+$uri = "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0/query?f=json&where=$where&returnCountOnly=true"
+Invoke-RestMethod $uri | Select-Object count
+```
+
 Expected:
 
 - `generated_on` matches today's date
-- `survey_submission_count` is present and positive for the latest survey period
+- Latest assignment and survey periods do not move backward
+- Feature counts are positive
 - `latest_month_metrics.returned_assigned` reflects current survey evidence
+- Optional upstream count fields may be absent from the manifest; use AGOL period counts when reconciling raw survey volume.
 
 ## 5. Verify Status JSON Upstream Block
 
@@ -77,7 +88,7 @@ Expected:
   "upstream": {
     "regrid_survey_pipeline": "URA-Data-Repository daily 4:00 AM",
     "latest_survey_period": "...",
-    "survey_submission_count": ...,
+    "survey_submission_count": null,
     "latest_returned_assigned": ...
   }
 }
@@ -87,7 +98,7 @@ Expected:
 
 After the 4:00 AM Regrid run on a day with new survey submissions:
 
-1. Note `survey_submission_count` and `returned_assigned` from step 4.
+1. Note AGOL period count for the latest survey period and `latest_month_metrics.returned_assigned` from step 4.
 2. Wait for the 7:00 AM dashboard refresh (or run manually).
 3. Confirm counts stayed the same or increased; they must not decrease within the same survey period.
 

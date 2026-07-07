@@ -1,14 +1,15 @@
 # LandCare Platform Architecture
 
-Last updated: 2026-07-02
+Last updated: 2026-07-07
 
 This is the canonical architecture reference for the LandCare monitoring platform in this repository. Related docs:
 
 - [`docs/upstream-regrid-survey-pipeline.md`](upstream-regrid-survey-pipeline.md) — upstream Regrid ingestion in `URA-Data-Repository`
 - [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
 - [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI + Codex + Power Platform option; not the current ops path
-- [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) — pipeline diagrams and data contract
-- [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) — source inventory and QA checklist
+- [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) - pipeline diagrams and data contract
+- [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) - metric definitions and denominator rules
+- [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) - source inventory and QA checklist
 
 ## System Overview
 
@@ -74,11 +75,13 @@ flowchart TB
 
 The 7:00 AM job runs after upstream survey load so Postgres export and manifest metadata reflect the latest GISDB state.
 
+Current July 7 snapshot: `docs/landcare/data` was generated on 2026-07-07; latest month is 2026-06; latest assignment and survey periods are 2026-06-15; live AGOL surveys expose 30 periods and 13,415 records, including 57 records in 2026-06. See [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) for count definitions.
+
 ## ArcGIS Online Layers
 
 | Layer | Item / service | Cadence | Web app use |
 |---|---|---|---|
-| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
+| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html-id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
 | EPP parcels | `gisdb_gis_epp_parcels_full` | Live | Current URA-owned LandCare universe, geometry alignment, council district filters |
 | Council districts | `CouncilDistricts2022` | Reference | District highlight and filter |
 
@@ -146,12 +149,12 @@ Survey **returned** counts for the selected service period can change daily in t
 
 | Question | Authoritative source |
 |---|---|
-| What surveys were submitted for a service period? | GISDB `gis.regrid_survey_submissions`, published daily to AGOL `gisdb_gis_regrid_surveys` |
-| What does the web map show for returned surveys? | Live AGOL survey layer (daily refresh from upstream) |
-| What parcels were assigned for a reporting month? | GISDB `gis.regrid_bundle_assignments` → published export in this repo |
-| What is the current LandCare parcel universe today? | Live AGOL `gisdb_gis_epp_parcels_full` |
-| What are finance and contract totals? | LandCare budgeting workbook → `finance_summary.json` |
-| What should Power BI consume? | Same published JSON contract; consider mirroring live survey layer for latest-month returned counts |
+| What surveys were submitted for a service period- | GISDB `gis.regrid_survey_submissions`, published daily to AGOL `gisdb_gis_regrid_surveys` |
+| What does the web map show for returned surveys- | Live AGOL survey layer (daily refresh from upstream) |
+| What parcels were assigned for a reporting month- | GISDB `gis.regrid_bundle_assignments` → published export in this repo |
+| What is the current LandCare parcel universe today- | Live AGOL `gisdb_gis_epp_parcels_full` |
+| What are finance and contract totals- | LandCare budgeting workbook → `finance_summary.json` |
+| What should Power BI consume- | Same published JSON contract; consider mirroring live survey layer for latest-month returned counts |
 
 ## Platform Responsibilities
 

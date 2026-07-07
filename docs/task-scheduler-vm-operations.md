@@ -1,6 +1,6 @@
 # LandCare Task Scheduler VM Operations
 
-Last updated: 2026-07-02
+Last updated: 2026-07-07
 
 This is the operational runbook now that Power Automate is not available. Windows Task Scheduler, local logs, and local status JSON are the control plane.
 
@@ -53,7 +53,7 @@ flowchart TD
     H --> I["Build docs/landcare/data JSON and GeoJSON"]
     I --> J["Build finance_summary.json from workbook"]
     J --> K["Run QA/QC validation"]
-    K --> L{"Generated data changed?"}
+    K --> L{"Generated data changed-"}
     L -->|No| M["Write success log/status: checked and unchanged"]
     L -->|Yes| N["Commit docs/landcare/data"]
     N --> O["Push to GitHub"]
@@ -78,17 +78,17 @@ flowchart TD
     A["Copy bundle ZIP to VM staging folder"] --> B["Extract ZIP"]
     B --> C["Open PowerShell in extracted bundle folder"]
     C --> D["Run install_landcare_daily_refresh.ps1"]
-    D --> E{"Target repo exists?"}
+    D --> E{"Target repo exists-"}
     E -->|No or empty| F["Clone rutomo-ura/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
     E -->|Git repo| G["Fetch, checkout master, pull --ff-only"]
     E -->|Non-empty non-git| H["Stop without changing folder"]
     F --> I["Copy refresh scripts and docs with backups"]
     G --> I
     I --> J["Write VM-local .env if credentials supplied"]
-    J --> K{"-RegisterTask supplied?"}
+    J --> K{"-RegisterTask supplied-"}
     K -->|Yes| L["Register 7:00 AM Task Scheduler job"]
     K -->|No| M["Skip task registration"]
-    L --> N{"-RunOnce supplied?"}
+    L --> N{"-RunOnce supplied-"}
     M --> N
     N -->|Yes| O["Run one checked refresh immediately"]
     N -->|No| P["Install/update complete"]
@@ -127,7 +127,7 @@ git pull --ff-only origin master
 ```mermaid
 flowchart TD
     A["Dashboard stale or Task Scheduler reports failure"] --> B["Open latest C:\\srv\\logs\\land-care-assurance\\daily-refresh-YYYY-MM-DD.log"]
-    B --> C{"Failed stage?"}
+    B --> C{"Failed stage-"}
     C -->|Pull latest repository changes| D["Check git auth, dirty worktree, network, branch"]
     C -->|PostgreSQL export| E["Check .env PG_HOST/PG_DB/PG_USER/PG_PASSWORD and GISDB availability"]
     C -->|Web data rebuild| F["Check exported GeoJSON and build script errors"]
@@ -184,3 +184,4 @@ flowchart TD
 - Assignment denominator source: `gis.regrid_bundle_assignments`.
 - Finance source: LandCare budgeting workbook.
 - G-drive survey CSV: archive only.
+- Metric definitions and denominator rules: [`docs/landcare-metrics-context.md`](landcare-metrics-context.md).
