@@ -853,6 +853,22 @@ textarea {
   background-position: center;
 }
 
+.card-icon-slot[data-icon="completion"] {
+  background-image: url("./assets/icons/icon-completion.svg");
+}
+
+.insight-card.featured .card-icon-slot[data-icon="completion"] {
+  background-image: url("./assets/icons/icon-completion-white.svg");
+}
+
+.card-icon-slot[data-icon="open-active"] {
+  background-image: url("./assets/icons/icon-open-active.svg");
+}
+
+.card-icon-slot[data-icon="budget"] {
+  background-image: url("./assets/icons/icon-budget.svg");
+}
+
 .stat-strip {
   display: grid;
   gap: 12px;
@@ -872,7 +888,39 @@ textarea {
 
 .powerbi-grid.landing-charts {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  align-items: start;
+  align-items: stretch;
+}
+
+.powerbi-grid.landing-charts .powerbi-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 360px;
+}
+
+.powerbi-grid.landing-charts .panel-head,
+.powerbi-grid.landing-charts .chart-legend-inline {
+  flex: 0 0 auto;
+}
+
+.powerbi-grid.landing-charts .line-chart,
+.powerbi-grid.landing-charts .grouped-chart {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.powerbi-grid.landing-charts .line-chart {
+  display: flex;
+  align-items: center;
+}
+
+.powerbi-grid.landing-charts .line-chart-shell {
+  width: 100%;
+}
+
+.powerbi-grid.landing-charts .grouped-chart {
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .contractor-panel {
@@ -884,7 +932,6 @@ textarea {
 }
 
 .trend-panel {
-  min-height: 300px;
   overflow: visible;
 }
 
@@ -1029,7 +1076,6 @@ select {
 }
 
 .line-chart {
-  min-height: 300px;
   overflow: visible;
 }
 
