@@ -1,6 +1,7 @@
 import {
   SURVEY_LAYER_URL,
   SURVEY_AGOL_ITEM_URL,
+  SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
   fetchSurveyLayerMetadata,
@@ -279,7 +280,7 @@ function renderSourceSummary(summary, currentMetrics) {
   document.getElementById("reportUpdatedKpi").textContent =
     `Updated ${summary.generated_on || currentMetrics.eppEdited || "today"}; surveys live ${surveyEdited || "from ArcGIS"}`;
   document.getElementById("liveUniverseNote").textContent =
-    `Survey submissions load daily from ArcGIS Online gisdb_gis_regrid_surveys_current_period. Latest survey month: ${shortMonth(latestSurveyMonth || latestMonth)}. Assignments still refresh from the published Postgres export.`;
+    `Survey submissions load daily from ArcGIS Online ${SURVEY_LAYER_NAME}. Latest survey month: ${shortMonth(latestSurveyMonth || latestMonth)}. Assignments still refresh from the published Postgres export.`;
 }
 
 function appendFinanceSourceToSummary(financeSummary) {

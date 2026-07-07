@@ -10,6 +10,7 @@ import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Basem
 import {
   SURVEY_LAYER_URL,
   SURVEY_AGOL_ITEM_URL,
+  SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
   fetchSurveyLayerMetadata,
@@ -1430,7 +1431,7 @@ function summarizeCurrentDataset(features, options) {
       source_note: sourceNote,
       source_layer: "gisdb_gis_epp_parcels_full",
       source_layer_url: EPP_LAYER_URL.replace(/\/0$/, ""),
-      survey_layer: "gisdb_gis_regrid_surveys_current_period",
+      survey_layer: SURVEY_LAYER_NAME,
       survey_layer_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
       survey_layer_item_url: SURVEY_AGOL_ITEM_URL,
       ownership_scope: "URA owned only",
@@ -1706,7 +1707,7 @@ async function initMap() {
         returned_flag: true,
         period_month: graphic.attributes.period_label,
         ownership_type: graphic.attributes.owner || "URA",
-        survey_source: "gisdb_gis_regrid_surveys_current_period"
+        survey_source: SURVEY_LAYER_NAME
       });
       return;
     }

@@ -202,7 +202,7 @@ def build_data(source: Path, output_dir: Path) -> None:
             "historical_assignments": (
                 "PostgreSQL export from gis.regrid_bundle_assignments joined to "
                 "gis.regrid_survey_submissions and parcel ownership tables. "
-                "Surveys are ingested daily by URA-Data-Repository into gis.regrid_survey_submissions and published to ArcGIS Online gisdb_gis_regrid_surveys_current_period, which the web app queries live for current-period returned evidence. "
+                "Surveys are ingested daily by URA-Data-Repository into gis.regrid_survey_submissions and published to ArcGIS Online gisdb_gis_regrid_surveys, which the web app queries live for all-period returned evidence. "
                 "Bundle assignments are loaded monthly via bundle_assignment_creation.py and BundlesDriveToSQL.py."
             ),
             "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json.",

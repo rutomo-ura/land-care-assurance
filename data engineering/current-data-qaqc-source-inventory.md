@@ -1,4 +1,4 @@
-﻿# LandCare Current Data QA/QC and Source Inventory
+# LandCare Current Data QA/QC and Source Inventory
 
 Last updated: 2026-07-02  
 Review scope: current checked-in dashboard data, live public ArcGIS REST metadata, repository SQL/scripts, generated JSON/GeoJSON manifests, and upstream Regrid daily pipeline in `URA-Data-Repository`.  
@@ -10,9 +10,9 @@ The current LandCare dashboard uses a **hybrid architecture**:
 
 | Source family | What it supplies | Cadence | Web app access |
 |---|---|---|---|
-| ArcGIS Online `gisdb_gis_regrid_surveys_current_period` | Returned survey submissions, period list, history-map survey polygons | Daily upstream publish | **Live query at page load** via `docs/landcare/survey-layer.js` |
+| ArcGIS Online `gisdb_gis_regrid_surveys` | Returned survey submissions across all service periods, period list, history-map survey polygons | Daily upstream publish | **Live query at page load** via `docs/landcare/survey-layer.js` |
 | ArcGIS Online `gisdb_gis_epp_parcels_full` | Current URA-owned LandCare universe, geometry, districts | Live | Live query in monitoring/KPI apps |
-| PostgreSQL export â†’ `docs/landcare/data` | Assignment denominator, owner classification, finance, historical GeoJSON | VM refresh daily 7:00 AM | Static JSON/GeoJSON |
+| PostgreSQL export -> `docs/landcare/data` | Assignment denominator, owner classification, finance, historical GeoJSON | VM refresh daily 7:00 AM | Static JSON/GeoJSON |
 | Excel workbook | Contract/budget, invoice metrics | Manual edits | `finance_summary.json` |
 
 Full architecture: [`docs/landcare-architecture.md`](../docs/landcare-architecture.md)
@@ -21,7 +21,7 @@ Full architecture: [`docs/landcare-architecture.md`](../docs/landcare-architectu
 
 | Source family | What it supplies | Current refresh evidence | Current QA/QC status | Owner action |
 |---|---|---:|---|---|
-| ArcGIS Online current-period survey layer | Returned survey evidence for the active service period, `period_label`, history-map survey polygons for the current period | Oscar-hosted AGOL item `1f29883ea3bb4d6aa834c6a9feeeb6f1`; service `gisdb_gis_regrid_surveys_current_period`; current observed period `2026-06` with 57 records | **Primary runtime source** for current-period returned surveys in web app | Monitor via AGOL `dataLastEditDate`; align upstream publisher docs/scripts if this becomes the official scheduled publish target |
+| ArcGIS Online all-period survey layer | Returned survey evidence for all service periods, `period_label`, history-map survey polygons | AGOL item `a4012693d5d74dd8998610c4d235068d`; service `gisdb_gis_regrid_surveys`; observed periods `2023-11` through `2026-06`, with 57 records in `2026-06` | **Primary runtime source** for returned surveys in web app | Monitor via AGOL `dataLastEditDate` and period counts; narrower companion layers can remain convenience layers, not the dashboard contract |
 | GIS / ArcGIS Online EPP | Live current parcel universe, current URA-owned LandCare record counts, parcel tags, current contractor assignment, neighborhood/council district context, map geometry for live current view | `gisdb_gis_epp_parcels_full` data last edited 2026-06-30 02:11:41 ET; live query returned 25,022 total records, 1,221 LandCare records, 1,125 URA-owned LandCare records | Usable for current universe. Not sufficient for monthly assurance history by itself | Keep querying live for current-universe cards; reconcile against Postgres monthly facts after each refresh |
 | PostgreSQL / PostGIS read-only export | Monthly parcel-assignment denominator, returned survey matching, owner classification, historical monthly GeoJSON, dashboard metrics | `docs/landcare/data/refresh_manifest.json` generated 2026-07-02; assignments through 2026-06-15; survey completion through 2026-05-15 | Usable for published monthly history. Daily Regrid survey ingestion is upstream, but published static history still depends on the 7:00 AM VM export | Run read-only export on configured VM; fail refresh on count drift, stale periods, duplicate parcel-month rows, or missing geometry spikes |
 | Excel workbook | Contract/budget, parcel count by contractor for finance view, square footage/acres, invoices, check-request history | `docs/landcare/data/finance_summary.json` generated 2026-07-02 from `\\ura-fs\share\Public\LandCare\Land Care Annual Budgeting and Contracting.xlsx` | Usable for finance view. Manual workbook edits remain a control risk | Validate workbook sheet names, required columns, totals, and parity with `gis.land_care_budgeting_contracts` after loader runs |
@@ -50,7 +50,7 @@ Upstream VM prerequisites before the 7:00 AM LandCare refresh:
 | Upstream repo | `C:\srv\URA-Data-Repository` pulled from `URA-GIS-User/URA-Data-Repository` `main` |
 | Daily Regrid task | `\GIS Automations\REGRID` runs `regrid_survey_daily_pipeline.py` at 4:00 AM Eastern |
 | SQL migration | `sql\regrid_survey_pipeline_migration.sql` applied once to create the raw-submission uniqueness constraint, `gis.regrid_surveys`, and `gis.regrid_survey_unmatched_parcels` |
-| AGOL current-period item | Oscar-hosted item `1f29883ea3bb4d6aa834c6a9feeeb6f1` is available and queryable; upstream `ura-gis-user` publisher still needs alignment if this becomes the official scheduled publish target |
+| AGOL all-period survey item | Item `a4012693d5d74dd8998610c4d235068d` is available and queryable as `gisdb_gis_regrid_surveys`; dashboard runtime reads this item for all service periods |
 | Monthly archive | `regrid_survey_monthly_export.py` runs at 4:15 AM on the 15th; G-drive CSV is an archive, not the daily source |
 
 Daily QA/QC fails the run when:
@@ -72,7 +72,7 @@ For the broader ESRI + Codex + Task Scheduler operating model, see [`docs/task-s
 | Data product | Final file or endpoint | GIS source | PostgreSQL export source | Excel source | How it is sourced |
 |---|---|---|---|---|---|
 | Current parcel universe | Runtime query from `gisdb_gis_epp_parcels_full` FeatureServer | `gisdb_gis_epp_parcels_full` ArcGIS Online layer | Source layer appears to mirror `gis.epp_parcels_full` / `gis.epp_snapshot` context, but dashboard consumes ArcGIS REST directly | None | Monitoring and KPI pages query ArcGIS live with LandCare tag and `inventory_type = 'URA Owned'` filters |
-| Historical monthly parcel map | `docs/landcare/data/all_months.geojson` plus live ArcGIS `gisdb_gis_regrid_surveys_current_period` in the web app | Geometry originates from `gis.pgh_parcels` and `gis.epp_parcels_full`; current-period returned survey evidence refreshed from AGOL at page load | `prototype/sql/export_prototype_data_readonly.sql` joins assignment, survey, geometry, and owner tables; `docs/landcare/survey-layer.js` merges live current-period survey evidence | None | Postgres export plus live current-period survey layer query in `docs/landcare/monitoring.js` and `docs/landcare/kpi.js` |
+| Historical monthly parcel map | `docs/landcare/data/all_months.geojson` plus live ArcGIS `gisdb_gis_regrid_surveys` in the web app | Geometry originates from `gis.pgh_parcels` and `gis.epp_parcels_full`; returned survey evidence for every selected period is refreshed from AGOL at page load | `prototype/sql/export_prototype_data_readonly.sql` joins assignment, survey, geometry, and owner tables; `docs/landcare/survey-layer.js` merges live survey evidence by `period_label` | None | Postgres export plus live all-period survey layer query in `docs/landcare/monitoring.js` and `docs/landcare/kpi.js` |
 | Latest monthly parcel map | `docs/landcare/data/latest_month.geojson` | Same as historical monthly map | Derived from the same app-ready Postgres export | None | Filtered by latest available `period_month` during `scripts/build_landcare_web_data.py` |
 | Monthly metrics | `docs/landcare/data/monthly_metrics.json` | None directly after export; geometry already attached upstream | Derived from exported parcel-month rows | None | Counts distinct parcel keys by month, Active assigned, total assigned, returned assigned, and completion rate |
 | Contractor monthly metrics | `docs/landcare/data/contractor_monthly.json` | None directly after export | Derived from exported parcel-month rows | None | Counts distinct Active assigned and returned parcel keys by contractor and month |
@@ -86,7 +86,7 @@ For the broader ESRI + Codex + Task Scheduler operating model, see [`docs/task-s
 | Area | Latest observed update | Evidence | Interpretation |
 |---|---:|---|---|
 | Live ArcGIS current EPP parcel layer | 2026-06-30 02:11:41 ET | ArcGIS REST `editingInfo.dataLastEditDate` for `gisdb_gis_epp_parcels_full` | Current live parcel universe appears fresh as of this review date |
-| Live ArcGIS current-period Regrid survey layer | Current observed period `2026-06`, 57 records | Oscar-hosted AGOL item `gisdb_gis_regrid_surveys_current_period`; item ID `1f29883ea3bb4d6aa834c6a9feeeb6f1` | Runtime current-period survey evidence; historical assurance denominators still come from Postgres export in this repo |
+| Live ArcGIS all-period Regrid survey layer | Observed periods `2023-11` through `2026-06`; `2026-06` has 57 records | AGOL item `gisdb_gis_regrid_surveys`; item ID `a4012693d5d74dd8998610c4d235068d` | Runtime survey evidence across dashboard months; historical assurance denominators still come from Postgres export in this repo |
 | Published monthly dashboard data | Generated 2026-07-02 | `docs/landcare/data/refresh_manifest.json` on `origin/master` | Current daily refresh artifact exists for July 2; key periods did not move from the July 1 run |
 | Latest assignment period in published data | 2026-06-15 | `refresh_manifest.json` and `kpi_summary.json` | Assignment denominator includes the June 15 load date, while comparable monthly dashboard history is through May 2026 |
 | Latest survey completion period in published data | 2026-05-15 | `refresh_manifest.json` and `kpi_summary.json` | Survey-completion evidence is current through the May 15 survey period in the checked-in export |
@@ -162,7 +162,7 @@ For the broader ESRI + Codex + Task Scheduler operating model, see [`docs/task-s
 | Gap | Why it matters | Current control | Recommended next control |
 |---|---|---|---|
 | ArcGIS current universe is live, but monthly history is checked-in static JSON | Live cards can differ from monthly history after source edits | `source_contract` in `kpi_summary.json` documents this split | Add a reconciliation panel or refresh log that shows live count versus latest exported monthly count |
-| ArcGIS Regrid survey layer vs Postgres survey periods | AGOL layer is rebuilt daily upstream from `gis.regrid_surveys`; Postgres raw submissions remain the source of truth | `docs/upstream-regrid-survey-pipeline.md` and upstream `docs/regrid-survey-pipeline.md` document the split | Compare AGOL `gisdb_gis_regrid_surveys_current_period` max `period` to `gis.regrid_survey_submissions`; monitor `gis.regrid_survey_unmatched_parcels` for geometry-match issues |
+| ArcGIS Regrid survey layer vs Postgres survey periods | AGOL layer is rebuilt daily upstream from `gis.regrid_surveys`; Postgres raw submissions remain the source of truth | `docs/upstream-regrid-survey-pipeline.md` and upstream `docs/regrid-survey-pipeline.md` document the split | Compare AGOL `gisdb_gis_regrid_surveys` period counts and max `period` to `gis.regrid_survey_submissions`; monitor `gis.regrid_survey_unmatched_parcels` for geometry-match issues |
 | Finance workbook is manually maintained | Manual edits can change totals or column names | Script validates workbook existence and reads fixed sheet names | Add schema validation for required columns and an exception report for null dates, null organizations, and negative amounts |
 | Ownership definitions differ by source and dashboard | URA-owned counts can differ across ArcGIS, Postgres export, finance contract list, and Power BI | Owner-name normalization in SQL and explicit `ownership_scope` metadata | Create a single ownership QA query with URA/PLB/City/Other counts before each export |
 | Missing geometry rows exist in Postgres export | Parcels without geometry are absent from map outputs | Export metadata records `missing_geometry_rows = 103` | Log missing parcel keys to a separate QA artifact for GIS repair |

@@ -1,4 +1,4 @@
-﻿# LandCare Monitoring Production Data Engineering Plan
+# LandCare Monitoring Production Data Engineering Plan
 
 See [`docs/landcare-architecture.md`](landcare-architecture.md) for the canonical platform architecture.
 
@@ -11,7 +11,7 @@ The LandCare monitoring site has two production-facing views:
 
 **Runtime data model (2026-07):**
 
-- **Returned surveys:** live ArcGIS Online [`gisdb_gis_regrid_surveys_current_period`](https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1), queried at page load via `docs/landcare/survey-layer.js`.
+- **Returned surveys:** live ArcGIS Online [`gisdb_gis_regrid_surveys`](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d), queried at page load via `docs/landcare/survey-layer.js`.
 - **Current parcel universe:** live AGOL `gisdb_gis_epp_parcels_full`.
 - **Assignment denominators and finance:** published JSON/GeoJSON under `docs/landcare/data`, rebuilt daily at 7:00 AM from PostgreSQL and the budgeting workbook.
 
@@ -21,12 +21,12 @@ Upstream surveys ingest daily at 4:00 AM into GISDB and AGOL. Bundle assignments
 
 ```mermaid
 flowchart LR
-    Regrid["Regrid â€” daily 4 AM"] --> Upstream["URA-Data-Repository"]
+    Regrid["Regrid — daily 4 AM"] --> Upstream["URA-Data-Repository"]
     Upstream --> PG["PostgreSQL gisdb"]
-    Upstream --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys_current_period"]
+    Upstream --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
     Bundle["Monthly bundle export"] --> Upstream
     BudgetWorkbook["LandCare budgeting workbook"] --> FinanceBuild["Finance build"]
-    PG --> Export["Postgres export â€” daily 7 AM"]
+    PG --> Export["Postgres export — daily 7 AM"]
     Export --> DataFiles["docs/landcare/data"]
     FinanceBuild --> DataFiles
     AGOLSurvey --> WebApp["Web app live survey queries"]
@@ -38,25 +38,25 @@ flowchart LR
 
 ## What Is In Place
 
-1. **VM refresh environment** â€” Python venv, `.env` credentials, Task Scheduler at 7:00 AM Eastern.
+1. **VM refresh environment** — Python venv, `.env` credentials, Task Scheduler at 7:00 AM Eastern.
 
-2. **Daily Postgres-to-web exports** â€” `export_landcare_postgres_data.py` + `build_landcare_web_data.py` publish assignment and metric JSON/GeoJSON.
+2. **Daily Postgres-to-web exports** — `export_landcare_postgres_data.py` + `build_landcare_web_data.py` publish assignment and metric JSON/GeoJSON.
 
-3. **Finance in the same refresh cycle** â€” `build_landcare_finance_data.py` from the LandCare budgeting workbook.
+3. **Finance in the same refresh cycle** — `build_landcare_finance_data.py` from the LandCare budgeting workbook.
 
-4. **Upstream daily Regrid pipeline** â€” `regrid_survey_daily_pipeline.py` at 4:00 AM in `URA-Data-Repository` loads GISDB and publishes AGOL survey layer.
+4. **Upstream daily Regrid pipeline** — `regrid_survey_daily_pipeline.py` at 4:00 AM in `URA-Data-Repository` loads GISDB and publishes AGOL survey layer.
 
-5. **Live survey layer in web app** â€” `survey-layer.js`, `monitoring.js`, and `kpi.js` query AGOL for returned survey evidence at page load.
+5. **Live survey layer in web app** — `survey-layer.js`, `monitoring.js`, and `kpi.js` query AGOL for returned survey evidence at page load.
 
 6. **QA and monitoring hooks** - `validate_landcare_daily_refresh.py`, `daily-refresh-status.json`, transcript logs, and Task Scheduler history.
 
 ## What Still Needs To Be Built
 
-1. **Power BI consumption contract** â€” align semantic model with published JSON and live AGOL survey layer for latest-month returned counts.
+1. **Power BI consumption contract** — align semantic model with published JSON and live AGOL survey layer for latest-month returned counts.
 
 2. **Task Scheduler monitoring discipline** - review Task Scheduler history and `C:\srv\logs\land-care-assurance\daily-refresh-status.json` after failures or stale dashboard reports.
 
-3. **GitHub Actions smoke checks** â€” JavaScript syntax and JSON validity before Pages deploy.
+3. **GitHub Actions smoke checks** — JavaScript syntax and JSON validity before Pages deploy.
 
 ## VM Setup
 
@@ -114,7 +114,7 @@ Expected upstream outputs:
 | `gis.regrid_survey_submissions` | Raw survey rows loaded daily; duplicate prevention is `period + parcelnumb + created_at + image_original` |
 | `gis.regrid_surveys` | AGOL-facing polygon view joined to `gis.pgh_parcels` geometry |
 | `gis.regrid_survey_unmatched_parcels` | QA view for submissions without parcel geometry |
-| AGOL `gisdb_gis_regrid_surveys_current_period` | Oscar-hosted current-period item `1f29883ea3bb4d6aa834c6a9feeeb6f1` available for runtime survey evidence; upstream publisher should be aligned before treating this as the official scheduled target |
+| AGOL `gisdb_gis_regrid_surveys` | AGOL all-period item `a4012693d5d74dd8998610c4d235068d` available for runtime survey evidence and survey polygons |
 
 Task Scheduler should show:
 

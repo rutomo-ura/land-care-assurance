@@ -1,4 +1,4 @@
-﻿# LandCare Data Engineering Flow
+# LandCare Data Engineering Flow
 
 This note is the quick visual reference for the LandCare monitoring data pipeline. See [`docs/landcare-architecture.md`](landcare-architecture.md) for the full platform architecture.
 
@@ -13,7 +13,7 @@ flowchart LR
         Budget["LandCare budget / contract workbook"]
     end
 
-    subgraph Upstream["URA-Data-Repository â€” daily + monthly"]
+    subgraph Upstream["URA-Data-Repository — daily + monthly"]
         SurveyPipe["regrid_survey_daily_pipeline.py"]
         BundlePipe["bundle_assignment_creation.py"]
         AgolPub["publish_regrid_snapshot.py"]
@@ -21,11 +21,11 @@ flowchart LR
 
     subgraph Store["Authoritative stores"]
         PG["PostgreSQL gisdb"]
-        AGOLSurvey["AGOL gisdb_gis_regrid_surveys_current_period"]
+        AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
         AGOLEpp["AGOL gisdb_gis_epp_parcels_full"]
     end
 
-    subgraph Publish["land-care-assurance â€” 7 AM daily"]
+    subgraph Publish["land-care-assurance — 7 AM daily"]
         Export["Postgres export"]
         Build["Build JSON / GeoJSON"]
         Validate["QA validation"]
@@ -33,7 +33,7 @@ flowchart LR
     end
 
     subgraph Runtime["Web app at page load"]
-        SurveyLive["survey-layer.js â†’ AGOL surveys"]
+        SurveyLive["survey-layer.js → AGOL surveys"]
         EppLive["Live EPP query"]
         StaticJSON["docs/landcare/data"]
     end
@@ -66,7 +66,7 @@ flowchart TD
     B --> E["Finance and contract metrics"]
 
     C --> F["Live AGOL gisdb_gis_epp_parcels_full"]
-    D --> G["Live AGOL gisdb_gis_regrid_surveys_current_period by period_label"]
+    D --> G["Live AGOL gisdb_gis_regrid_surveys by period_label"]
     D --> H["Published assignment GeoJSON from docs/landcare/data"]
     E --> I["Published finance_summary.json"]
 
@@ -83,7 +83,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph upstream ["URA-Data-Repository â€” 4:00 AM daily"]
+    subgraph upstream ["URA-Data-Repository — 4:00 AM daily"]
         RegridDL["regrid_survey_download.py"]
         SurveyLoad["SurveysDriveToSQL.py"]
         AgolPub["publish_regrid_snapshot.py"]
@@ -92,16 +92,16 @@ flowchart TD
 
     subgraph gisdb ["PostgreSQL gisdb + ArcGIS Online"]
         SurveyTable["gis.regrid_survey_submissions"]
-        SurveyLayer["gisdb_gis_regrid_surveys_current_period"]
+        SurveyLayer["gisdb_gis_regrid_surveys"]
         SurveyLoad --> SurveyTable
         AgolPub --> SurveyLayer
     end
 
-    subgraph downstream ["land-care-assurance â€” 7:00 AM daily"]
+    subgraph downstream ["land-care-assurance — 7:00 AM daily"]
         Export["export_landcare_postgres_data.py"]
         Build["build_landcare_web_data.py"]
         Validate["validate_landcare_daily_refresh.py"]
-        Publish["git push â†’ GitHub Pages"]
+        Publish["git push → GitHub Pages"]
         Export --> Build --> Validate --> Publish
     end
 
@@ -118,7 +118,7 @@ The upstream `URA-GIS-User/URA-Data-Repository` repo now treats Regrid survey su
 |---|---|---|
 | Daily survey ingestion | `regrid_survey_daily_pipeline.py` runs `regrid_survey_download.py`, `SurveysDriveToSQL.py`, and `publish_regrid_snapshot.py` | The 7:00 AM LandCare refresh should run after this, and should treat GISDB/AGOL as the survey source, not the G-drive archive |
 | Source table | Raw submissions are upserted into `gis.regrid_survey_submissions` | Monthly completion metrics should reconcile against this table when the dashboard rebuilds static data |
-| AGOL current-period map layer | Oscar-hosted item `1f29883ea3bb4d6aa834c6a9feeeb6f1` exposes `gisdb_gis_regrid_surveys_current_period` from Regrid/PostGIS survey data | Monitoring/KPI runtime can query current-period returned survey evidence from `gisdb_gis_regrid_surveys_current_period` |
+| AGOL all-period map layer | AGOL item `a4012693d5d74dd8998610c4d235068d` exposes `gisdb_gis_regrid_surveys` from Regrid/PostGIS survey data | Monitoring/KPI runtime can query all-period returned survey evidence from `gisdb_gis_regrid_surveys` |
 | QA view | `gis.regrid_survey_unmatched_parcels` identifies submissions without parcel geometry | This should be part of upstream QA and should also be watched if dashboard returned counts drift |
 | Monthly CSV | `regrid_survey_monthly_export.py` writes a prior-period snapshot to the G drive on the 15th | This is an archive/export only; it should not drive daily dashboard freshness |
 
@@ -167,12 +167,12 @@ Survey ingestion and AGOL publish run upstream at 4:00 AM. The web app reads ret
 | `completion_status` | Merged: assignments + live AGOL survey match | Published GeoJSON |
 | `returned_flag` | **Live AGOL survey layer** | Postgres export |
 | `ownership_type` | Postgres owner join | Published GeoJSON |
-| Finance totals | Workbook â†’ `finance_summary.json` | Same |
+| Finance totals | Workbook → `finance_summary.json` | Same |
 
 ## Related Documents
 
-- [`docs/landcare-architecture.md`](landcare-architecture.md) â€” canonical architecture
-- [`docs/landcare-production-data-engineering-plan.md`](landcare-production-data-engineering-plan.md) â€” VM setup and refresh plan
+- [`docs/landcare-architecture.md`](landcare-architecture.md) — canonical architecture
+- [`docs/landcare-production-data-engineering-plan.md`](landcare-production-data-engineering-plan.md) — VM setup and refresh plan
 - [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
 - [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI / Codex / Power Platform option
 

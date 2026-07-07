@@ -1,14 +1,14 @@
-﻿# LandCare Platform Architecture
+# LandCare Platform Architecture
 
 Last updated: 2026-07-02
 
 This is the canonical architecture reference for the LandCare monitoring platform in this repository. Related docs:
 
-- [`docs/upstream-regrid-survey-pipeline.md`](upstream-regrid-survey-pipeline.md) â€” upstream Regrid ingestion in `URA-Data-Repository`
+- [`docs/upstream-regrid-survey-pipeline.md`](upstream-regrid-survey-pipeline.md) — upstream Regrid ingestion in `URA-Data-Repository`
 - [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
 - [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI + Codex + Power Platform option; not the current ops path
-- [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) â€” pipeline diagrams and data contract
-- [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) â€” source inventory and QA checklist
+- [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) — pipeline diagrams and data contract
+- [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) — source inventory and QA checklist
 
 ## System Overview
 
@@ -22,14 +22,14 @@ LandCare assurance data moves through three layers:
 
 ```mermaid
 flowchart TB
-    subgraph upstream ["URA-Data-Repository â€” VM Task Scheduler"]
+    subgraph upstream ["URA-Data-Repository — VM Task Scheduler"]
         Regrid["Regrid web export"]
-        DailyPipe["regrid_survey_daily_pipeline.py â€” 4:00 AM daily"]
-        BundlePipe["bundle_assignment_creation.py â€” monthly 15th"]
+        DailyPipe["regrid_survey_daily_pipeline.py — 4:00 AM daily"]
+        BundlePipe["bundle_assignment_creation.py — monthly 15th"]
         Regrid --> DailyPipe
         BundlePipe --> PGAssign["gis.regrid_bundle_assignments"]
         DailyPipe --> PGSurvey["gis.regrid_survey_submissions"]
-        DailyPipe --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys_current_period"]
+        DailyPipe --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
     end
 
     subgraph store ["Authoritative stores"]
@@ -39,7 +39,7 @@ flowchart TB
         AGOLEpp["AGOL gisdb_gis_epp_parcels_full"]
     end
 
-    subgraph downstream ["land-care-assurance â€” 7:00 AM daily"]
+    subgraph downstream ["land-care-assurance — 7:00 AM daily"]
         Export["Postgres read-only export"]
         Build["Build docs/landcare/data"]
         GitPages["GitHub Pages"]
@@ -47,8 +47,8 @@ flowchart TB
     end
 
     subgraph runtime ["Web app at page load"]
-        Monitor["docs/monitoring â€” map monitor"]
-        KPI["docs/kpi â€” KPI dashboard"]
+        Monitor["docs/monitoring — map monitor"]
+        KPI["docs/kpi — KPI dashboard"]
         SurveyJS["docs/landcare/survey-layer.js"]
         GitPages --> Monitor
         GitPages --> KPI
@@ -67,9 +67,9 @@ flowchart TB
 
 | Time | Task | Output |
 |---|---|---|
-| 4:00 AM | `\GIS Automations\REGRID` â†’ `regrid_survey_daily_pipeline.py` | Regrid CSV â†’ `gis.regrid_survey_submissions` â†’ AGOL survey layer |
+| 4:00 AM | `\GIS Automations\REGRID` → `regrid_survey_daily_pipeline.py` | Regrid CSV → `gis.regrid_survey_submissions` → AGOL survey layer |
 | 4:15 AM on 15th | `regrid_survey_monthly_export.py` | G-drive CSV archive only |
-| 7:00 AM | `\GIS Automations` â†’ `refresh_landcare_dashboard.ps1` | `docs/landcare/data/*` committed/pushed when changed |
+| 7:00 AM | `\GIS Automations` → `refresh_landcare_dashboard.ps1` | `docs/landcare/data/*` committed/pushed when changed |
 | After 7:00 AM | Human/Task Scheduler review when needed | Read `daily-refresh-status.json` and transcript log |
 
 The 7:00 AM job runs after upstream survey load so Postgres export and manifest metadata reflect the latest GISDB state.
@@ -78,14 +78,14 @@ The 7:00 AM job runs after upstream survey load so Postgres export and manifest 
 
 | Layer | Item / service | Cadence | Web app use |
 |---|---|---|---|
-| Current-period survey submissions | [gisdb_gis_regrid_surveys_current_period](https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1) | Oscar-hosted current-period Regrid layer | **Primary live source** for current-period returned survey evidence and survey polygons |
+| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
 | EPP parcels | `gisdb_gis_epp_parcels_full` | Live | Current URA-owned LandCare universe, geometry alignment, council district filters |
 | Council districts | `CouncilDistricts2022` | Reference | District highlight and filter |
 
 Survey layer REST endpoint:
 
 ```text
-https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys_current_period/FeatureServer/0
+https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0
 ```
 
 ## Web App Runtime Model
@@ -101,7 +101,7 @@ flowchart TD
 
     Current --> EppLive["Live query gisdb_gis_epp_parcels_full"]
     History --> AssignStatic["Published assignment GeoJSON from docs/landcare/data"]
-    History --> SurveyLive["Live query gisdb_gis_regrid_surveys_current_period by period_label"]
+    History --> SurveyLive["Live query gisdb_gis_regrid_surveys by period_label"]
 
     AssignStatic --> Merge["survey-layer.js merges returned evidence"]
     SurveyLive --> Merge
@@ -115,16 +115,16 @@ flowchart TD
 | Data need | Runtime source | Static fallback |
 |---|---|---|
 | Current URA-owned LandCare parcels | AGOL `gisdb_gis_epp_parcels_full` | Latest month from published GeoJSON |
-| Returned survey evidence | AGOL `gisdb_gis_regrid_surveys_current_period` via [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) for current-period evidence | Postgres export in published GeoJSON |
+| Returned survey evidence | AGOL `gisdb_gis_regrid_surveys` via [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) for all-period evidence | Postgres export in published GeoJSON |
 | Assignment denominator (org, level, open count) | Published `all_months.geojson` / export JSON | None |
 | Finance, contract, invoice metrics | Published `finance_summary.json` | None |
 | Available survey months | AGOL `period_label` stats + published manifest | Published manifest only |
 
 Implementation files:
 
-- [`docs/landcare/monitoring.js`](../docs/landcare/monitoring.js) â€” map monitor; history mode uses live survey FeatureLayer + assignment GeoJSON overlay
-- [`docs/landcare/kpi.js`](../docs/landcare/kpi.js) â€” KPI dashboard; latest-month completion recomputed from live survey layer
-- [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) â€” shared ArcGIS survey queries and merge helpers
+- [`docs/landcare/monitoring.js`](../docs/landcare/monitoring.js) — map monitor; history mode uses live survey FeatureLayer + assignment GeoJSON overlay
+- [`docs/landcare/kpi.js`](../docs/landcare/kpi.js) — KPI dashboard; latest-month completion recomputed from live survey layer
+- [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) — shared ArcGIS survey queries and merge helpers
 
 ## Published Data Contract (`docs/landcare/data`)
 
@@ -140,17 +140,17 @@ Generated daily by the VM refresh when Postgres or finance inputs change:
 | `finance_summary.json` | Budget and contract totals | Finance tabs |
 | `refresh_manifest.json` | Freshness, counts, survey metadata | QA validation; status JSON upstream block |
 
-Survey **returned** counts for the active service period can change daily in the browser even when these files are unchanged, because the web app queries AGOL at load time.
+Survey **returned** counts for the selected service period can change daily in the browser even when these files are unchanged, because the web app queries AGOL at load time.
 
 ## Source-of-Truth Rules
 
 | Question | Authoritative source |
 |---|---|
-| What surveys were submitted for a service period? | GISDB `gis.regrid_survey_submissions`, published daily to AGOL `gisdb_gis_regrid_surveys_current_period` |
+| What surveys were submitted for a service period? | GISDB `gis.regrid_survey_submissions`, published daily to AGOL `gisdb_gis_regrid_surveys` |
 | What does the web map show for returned surveys? | Live AGOL survey layer (daily refresh from upstream) |
-| What parcels were assigned for a reporting month? | GISDB `gis.regrid_bundle_assignments` â†’ published export in this repo |
+| What parcels were assigned for a reporting month? | GISDB `gis.regrid_bundle_assignments` → published export in this repo |
 | What is the current LandCare parcel universe today? | Live AGOL `gisdb_gis_epp_parcels_full` |
-| What are finance and contract totals? | LandCare budgeting workbook â†’ `finance_summary.json` |
+| What are finance and contract totals? | LandCare budgeting workbook → `finance_summary.json` |
 | What should Power BI consume? | Same published JSON contract; consider mirroring live survey layer for latest-month returned counts |
 
 ## Platform Responsibilities
