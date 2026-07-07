@@ -453,8 +453,8 @@ const COMPLETION_TARGET = 80;
 function renderLineChart(monthlyMetrics) {
   const container = document.getElementById("completionLineChart");
   const width = 720;
-  const height = 300;
-  const margin = { top: 28, right: 42, bottom: 58, left: 50 };
+  const height = 240;
+  const margin = { top: 18, right: 42, bottom: 48, left: 50 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
@@ -467,37 +467,56 @@ function renderLineChart(monthlyMetrics) {
   const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
   const yTicks = [0, COMPLETION_TARGET, maxValue].filter((tick, index, arr) => index === 0 || tick !== arr[index - 1]);
 
+  const hitMarkup = points.map(([x, y], index) => {
+    const row = monthlyMetrics[index];
+    const rate = values[index];
+    const returned = Number(row.returned_assigned || 0);
+    const assigned = Number(row.assigned_active || 0);
+    const priorRate = index > 0 ? values[index - 1] : null;
+    const delta = priorRate !== null ? rate - priorRate : null;
+    const deltaClass = delta === null ? "" : delta >= 0 ? " up" : " down";
+    const deltaText = delta === null ? "Baseline month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`;
+    const leftPct = (x / width) * 100;
+    const topPct = (y / height) * 100;
+    return `
+      <button
+        type="button"
+        class="chart-hit"
+        style="left:${leftPct.toFixed(2)}%; top:${topPct.toFixed(2)}%"
+        aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
+      >
+        <span class="chart-hit-dot" aria-hidden="true"></span>
+        <div class="chart-tooltip-card" role="tooltip">
+          <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
+          <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
+          <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
+          <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
+        </div>
+      </button>
+    `;
+  }).join("");
+
   container.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Active completion rate over time with returned counts">
-      ${yTicks.map((tick) => {
-        const y = toY(tick);
-        const isTarget = tick === COMPLETION_TARGET;
-        return `
-          <line class="${isTarget ? "chart-target" : "chart-grid"}" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>
-          <text class="chart-tick${isTarget ? " chart-tick-target" : ""}" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>
-        `;
-      }).join("")}
-      <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
-      <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
-      <path class="chart-area" d="${areaPath}"></path>
-      <path class="chart-line" d="${linePath}"></path>
-      ${points.map(([x, y], index) => {
-        const row = monthlyMetrics[index];
-        const rate = values[index];
-        const returned = Number(row.returned_assigned || 0);
-        const assigned = Number(row.assigned_active || 0);
-        const priorRate = index > 0 ? values[index - 1] : null;
-        const delta = priorRate !== null ? rate - priorRate : null;
-        const labelY = y - 14;
-        return `
-          <circle class="chart-marker" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"></circle>
-          <text class="chart-value-label" x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
-          ${delta !== null ? `<text class="chart-delta${delta >= 0 ? " up" : " down"}" x="${x.toFixed(1)}" y="${(labelY - 13).toFixed(1)}" text-anchor="middle">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}</text>` : ""}
-          <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 34).toFixed(1)}" text-anchor="middle">${shortMonth(row.period_month)}</text>
-          <text class="chart-count-label muted" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${formatNumber(returned)}/${formatNumber(assigned)}</text>
-        `;
-      }).join("")}
-    </svg>
+    <div class="line-chart-shell">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Active completion rate over time">
+        ${yTicks.map((tick) => {
+          const y = toY(tick);
+          const isTarget = tick === COMPLETION_TARGET;
+          return `
+            <line class="${isTarget ? "chart-target" : "chart-grid"}" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>
+            <text class="chart-tick${isTarget ? " chart-tick-target" : ""}" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>
+          `;
+        }).join("")}
+        <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
+        <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
+        <path class="chart-area" d="${areaPath}"></path>
+        <path class="chart-line" d="${linePath}"></path>
+        ${points.map(([x, y], index) => `
+          <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(monthlyMetrics[index].period_month)}</text>
+        `).join("")}
+      </svg>
+      <div class="chart-overlay">${hitMarkup}</div>
+    </div>
   `;
 }
 
