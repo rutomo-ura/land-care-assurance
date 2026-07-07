@@ -281,6 +281,7 @@ function renderKpis(monthlyMetrics, summary, currentMetrics) {
   document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
   document.getElementById("latestAssignedKpi").textContent = formatNumber(latest.assigned_active);
   document.getElementById("latestReturnedKpi").textContent = formatNumber(latest.returned_assigned);
+  document.getElementById("latestCompletionKpi").textContent = formatPct(latest.active_completion_rate_pct);
   document.getElementById("ytdReturnedKpi").textContent = formatNumber(ytdReturned);
 }
 
@@ -306,18 +307,18 @@ function renderSemiGauge(containerId, value, options = {}) {
   const label = options.label || "Active completion";
   const featured = Boolean(options.featured);
   const compact = Boolean(options.compact);
-  const width = compact ? 96 : 120;
-  const height = compact ? 58 : 72;
-  const radius = compact ? 34 : 46;
+  const width = compact ? 112 : 188;
+  const height = compact ? 68 : 112;
+  const radius = compact ? 40 : 74;
   const cx = width / 2;
-  const cy = compact ? 46 : 58;
-  const stroke = compact ? 7 : 10;
+  const cy = compact ? 54 : 90;
+  const stroke = compact ? 9 : 14;
   const arcLength = Math.PI * radius;
   const dash = (pct / 100) * arcLength;
-  const valueSize = compact ? 13 : 18;
-  const labelSize = compact ? 8 : 9;
-  const labelY = compact ? cy + 8 : cy + 10;
-  const valueY = compact ? cy - 4 : cy - 6;
+  const valueSize = compact ? 16 : 30;
+  const labelSize = compact ? 9 : 12;
+  const labelY = compact ? cy + 10 : cy + 16;
+  const valueY = compact ? cy - 2 : cy - 2;
 
   container.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" class="gauge-svg${featured ? " featured" : ""}${compact ? " compact" : ""}" role="img" aria-label="${escapeHtml(label)}: ${formatPct(pct)}">
@@ -344,11 +345,51 @@ function renderSemiGauge(containerId, value, options = {}) {
 
 const COMPLETION_TARGET = 80;
 
-function barToneClass(rate, isLatest) {
-  if (isLatest) return "is-latest";
-  if (rate >= COMPLETION_TARGET) return "is-strong";
-  if (rate >= 50) return "is-mid";
-  return "is-soft";
+function chartPointTooltip(row, rate, delta) {
+  const deltaClass = delta === null ? "" : delta >= 0 ? " up" : " down";
+  const deltaText = delta === null ? "Baseline month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`;
+  const returned = Number(row.returned_assigned || 0);
+  const assigned = Number(row.assigned_active || 0);
+  return `
+    <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
+    <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
+    <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
+    <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
+  `;
+}
+
+function bindLineChartTooltips(container, monthlyMetrics) {
+  const shell = container.querySelector(".line-chart-shell");
+  const tooltip = container.querySelector(".chart-floating-tooltip");
+  if (!shell || !tooltip) return;
+
+  const show = (hit) => {
+    const index = Number(hit.dataset.pointIndex);
+    const row = monthlyMetrics[index];
+    if (!row) return;
+    const rate = Number(row.active_completion_rate_pct || 0);
+    const priorRate = index > 0 ? Number(monthlyMetrics[index - 1].active_completion_rate_pct || 0) : null;
+    const delta = priorRate !== null ? rate - priorRate : null;
+    tooltip.innerHTML = chartPointTooltip(row, rate, delta);
+    tooltip.removeAttribute("hidden");
+    tooltip.classList.add("is-visible");
+    const shellRect = shell.getBoundingClientRect();
+    const hitRect = hit.getBoundingClientRect();
+    tooltip.style.left = `${hitRect.left - shellRect.left + hitRect.width / 2}px`;
+    tooltip.style.top = `${hitRect.top - shellRect.top}px`;
+  };
+
+  const hide = () => {
+    tooltip.setAttribute("hidden", "");
+    tooltip.classList.remove("is-visible");
+  };
+
+  for (const hit of container.querySelectorAll(".chart-hit")) {
+    hit.addEventListener("mouseenter", () => show(hit));
+    hit.addEventListener("focus", () => show(hit));
+    hit.addEventListener("mouseleave", hide);
+    hit.addEventListener("blur", hide);
+  }
 }
 
 function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary) {
@@ -365,7 +406,6 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
 
   renderSemiGauge("completionGauge", latestRate, { label: "Active completion", featured: true });
-  renderSemiGauge("snapshotCompletionGauge", latestRate, { compact: true });
   const completionCopy = document.getElementById("completionReadoutCopy");
   completionCopy.textContent = prior
     ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${shortMonth(prior.period_month)}`
@@ -487,7 +527,7 @@ function renderFinance(financeSummary) {
 }
 
 function renderTimeline(monthlyMetrics) {
-  renderCompletionBarChart(monthlyMetrics);
+  renderLineChart(monthlyMetrics);
   const latest = monthlyMetrics.at(-1);
   const prior = monthlyMetrics.at(-2);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
@@ -500,46 +540,92 @@ function renderTimeline(monthlyMetrics) {
   }
 }
 
-function renderCompletionBarChart(monthlyMetrics) {
+function renderLineChart(monthlyMetrics) {
   const container = document.getElementById("completionLineChart");
-  const latestIndex = monthlyMetrics.length - 1;
-  const columns = monthlyMetrics.map((row, index) => {
-    const rate = Number(row.active_completion_rate_pct || 0);
+  const width = 720;
+  const height = 280;
+  const margin = { top: 24, right: 42, bottom: 58, left: 50 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const values = monthlyMetrics.map((row) => Number(row.active_completion_rate_pct || 0));
+  const maxValue = 100;
+  const toX = (index) =>
+    margin.left + (monthlyMetrics.length === 1 ? plotWidth / 2 : (index / (monthlyMetrics.length - 1)) * plotWidth);
+  const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(maxValue, Number(value || 0))) / maxValue) * plotHeight;
+  const points = monthlyMetrics.map((row, index) => [toX(index), toY(row.active_completion_rate_pct)]);
+  const linePath = points.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${points.at(-1)[0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} L${points[0][0].toFixed(1)},${(margin.top + plotHeight).toFixed(1)} Z`;
+  const yTicks = [0, COMPLETION_TARGET, maxValue];
+
+  const hitMarkup = points.map(([x, y], index) => {
+    const row = monthlyMetrics[index];
+    const rate = values[index];
     const returned = Number(row.returned_assigned || 0);
     const assigned = Number(row.assigned_active || 0);
-    const priorRate = index > 0 ? Number(monthlyMetrics[index - 1].active_completion_rate_pct || 0) : null;
+    const priorRate = index > 0 ? values[index - 1] : null;
     const delta = priorRate !== null ? rate - priorRate : null;
-    const deltaClass = delta === null ? "" : delta >= 0 ? " up" : " down";
-    const deltaText = delta === null ? "Baseline month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`;
-    const toneClass = barToneClass(rate, index === latestIndex);
+    const leftPct = (x / width) * 100;
+    const topPct = (y / height) * 100;
     return `
-      <div class="bar-chart-column ${toneClass}">
-        <button
-          type="button"
-          class="bar-chart-hit"
-          aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
-        >
-          <span class="bar-chart-bar" style="height:${Math.max(rate, 2).toFixed(1)}%"></span>
-          <div class="chart-tooltip-card" role="tooltip">
-            <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
-            <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
-            <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
-            <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
-          </div>
-        </button>
-        <span class="bar-chart-label">${escapeHtml(shortMonth(row.period_month))}</span>
-      </div>
+      <button
+        type="button"
+        class="chart-hit"
+        style="left:${leftPct.toFixed(2)}%; top:${topPct.toFixed(2)}%"
+        data-point-index="${index}"
+        aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
+      >
+        <span class="chart-hit-dot" aria-hidden="true"></span>
+      </button>
     `;
   }).join("");
 
   container.innerHTML = `
-    <div class="bar-chart-shell">
-      <div class="bar-chart-plot">
-        <div class="bar-chart-target" style="bottom:${COMPLETION_TARGET}%"></div>
-        <div class="bar-chart-columns">${columns}</div>
-      </div>
+    <div class="line-chart-shell">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Active completion rate over time">
+        <defs>
+          <linearGradient id="completionAreaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0098d3" stop-opacity="0.34"></stop>
+            <stop offset="100%" stop-color="#0098d3" stop-opacity="0.04"></stop>
+          </linearGradient>
+          <linearGradient id="completionLineGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#006c9f"></stop>
+            <stop offset="100%" stop-color="#0098d3"></stop>
+          </linearGradient>
+        </defs>
+        ${yTicks.map((tick) => {
+          const y = toY(tick);
+          const isTarget = tick === COMPLETION_TARGET;
+          return `
+            <line class="${isTarget ? "chart-target" : "chart-grid"}" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>
+            <text class="chart-tick${isTarget ? " chart-tick-target" : ""}" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>
+          `;
+        }).join("")}
+        <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
+        <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
+        <path class="chart-area" d="${areaPath}"></path>
+        <path class="chart-line" d="${linePath}"></path>
+        ${points.map(([x, y], index) => {
+          const row = monthlyMetrics[index];
+          const rate = values[index];
+          const returned = Number(row.returned_assigned || 0);
+          const assigned = Number(row.assigned_active || 0);
+          const priorRate = index > 0 ? values[index - 1] : null;
+          const delta = priorRate !== null ? rate - priorRate : null;
+          return `
+            <circle class="chart-marker" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"></circle>
+            <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 14).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
+            ${delta !== null ? `<text class="chart-delta${delta >= 0 ? " up" : " down"}" x="${x.toFixed(1)}" y="${(y - 27).toFixed(1)}" text-anchor="middle">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}</text>` : ""}
+            <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 34).toFixed(1)}" text-anchor="middle">${shortMonth(row.period_month)}</text>
+            <text class="chart-count-label muted" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${formatNumber(returned)}/${formatNumber(assigned)}</text>
+          `;
+        }).join("")}
+      </svg>
+      <div class="chart-overlay">${hitMarkup}</div>
+      <div class="chart-floating-tooltip" hidden></div>
     </div>
   `;
+
+  bindLineChartTooltips(container, monthlyMetrics);
 }
 
 function renderTable(table, columns, rows) {

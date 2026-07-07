@@ -813,36 +813,28 @@ textarea {
 }
 
 .insight-card.has-gauge {
-  gap: 6px;
+  gap: 8px;
+  min-height: 240px;
+  padding-top: 18px;
+  padding-bottom: 20px;
 }
 
 .gauge-kpi {
   display: grid;
   place-items: center;
   width: 100%;
-}
-
-.gauge-kpi-compact {
-  margin-top: 2px;
+  min-height: 118px;
 }
 
 .gauge-svg {
   display: block;
   width: 100%;
-  max-width: 132px;
+  max-width: 188px;
   height: auto;
 }
 
 .gauge-svg.compact {
-  max-width: 96px;
-}
-
-.gauge-track {
-  stroke: #e2eaef;
-}
-
-.gauge-fill {
-  stroke: var(--ura-blue);
+  max-width: 112px;
 }
 
 .gauge-value {
@@ -880,6 +872,14 @@ textarea {
 
 .reference-card.has-gauge span {
   width: 100%;
+}
+
+.gauge-track {
+  stroke: #e2eaef;
+}
+
+.gauge-fill {
+  stroke: var(--ura-blue);
 }
 
 .insight-card:not(.has-gauge) strong {
@@ -972,22 +972,21 @@ textarea {
   flex: 0 0 auto;
 }
 
-.powerbi-grid.landing-charts .bar-chart,
 .powerbi-grid.landing-charts .line-chart,
 .powerbi-grid.landing-charts .grouped-chart {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.powerbi-grid.landing-charts .bar-chart,
 .powerbi-grid.landing-charts .line-chart {
   display: flex;
   align-items: stretch;
+  overflow: visible;
 }
 
-.powerbi-grid.landing-charts .bar-chart-shell,
 .powerbi-grid.landing-charts .line-chart-shell {
   width: 100%;
+  overflow: visible;
 }
 
 .powerbi-grid.landing-charts .grouped-chart {
@@ -1151,13 +1150,51 @@ select {
   overflow: visible;
 }
 
-.bar-chart-shell,
 .line-chart-shell {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 200px;
+  min-height: 220px;
   overflow: visible;
+}
+
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.chart-floating-tooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 148px;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hover);
+  pointer-events: none;
+  text-align: center;
+  transform: translate(-50%, calc(-100% - 14px));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+.chart-floating-tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.chart-floating-tooltip[hidden] {
+  display: none;
+}
+
+.chart-floating-tooltip.is-visible {
+  display: block;
+  opacity: 1;
+  visibility: visible;
 }
 
 .bar-chart-plot {
@@ -1277,12 +1314,6 @@ select {
 
 .line-chart {
   overflow: visible;
-}
-
-.chart-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
 }
 
 .chart-hit {
@@ -1433,16 +1464,16 @@ select {
   fill: #2e7d32;
 }
 
+.chart-area {
+  fill: url(#completionAreaGradient);
+}
+
 .chart-line {
   fill: none;
-  stroke: var(--ura-blue);
+  stroke: url(#completionLineGradient);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 4;
-}
-
-.chart-area {
-  fill: rgba(0, 152, 211, 0.12);
 }
 
 .chart-marker {
