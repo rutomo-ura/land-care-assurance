@@ -28,21 +28,21 @@
   },
   {
     "period_month": "2025-09",
-    "assigned_active": 169,
+    "assigned_active": 168,
     "assigned_total": 214,
-    "returned_assigned": 111,
-    "active_completion_rate_pct": 65.7,
-    "blended_completion_rate_pct": 51.9,
-    "survey_rows_raw": 111
+    "returned_assigned": 110,
+    "active_completion_rate_pct": 65.5,
+    "blended_completion_rate_pct": 51.4,
+    "survey_rows_raw": 110
   },
   {
     "period_month": "2025-10",
-    "assigned_active": 169,
+    "assigned_active": 168,
     "assigned_total": 214,
-    "returned_assigned": 111,
-    "active_completion_rate_pct": 65.7,
-    "blended_completion_rate_pct": 51.9,
-    "survey_rows_raw": 111
+    "returned_assigned": 110,
+    "active_completion_rate_pct": 65.5,
+    "blended_completion_rate_pct": 51.4,
+    "survey_rows_raw": 110
   },
   {
     "period_month": "2025-11",

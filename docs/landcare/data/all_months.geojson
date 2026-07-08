@@ -19,8 +19,10 @@
     ],
     "latest_assignment_period": "2026-06-15",
     "latest_survey_period": "2026-06-15",
+    "survey_submission_count": 67,
+    "survey_distinct_parcels": 67,
     "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
-    "generated_on": "2026-07-07",
+    "generated_on": "2026-07-08",
     "geometry_mode": "postgres_readonly_export",
     "source_tables": [
       "gis.regrid_bundle_assignments",
@@ -38851,11 +38853,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-09",
         "assigned_flag": true,
-        "returned_flag": true,
+        "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "returned",
-        "maintenance_level": "Active"
+        "completion_status": "missing",
+        "maintenance_level": "Unknown"
       },
       "geometry": {
         "type": "Polygon",
@@ -49577,11 +49579,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-10",
         "assigned_flag": true,
-        "returned_flag": true,
+        "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "returned",
-        "maintenance_level": "Active"
+        "completion_status": "missing",
+        "maintenance_level": "Unknown"
       },
       "geometry": {
         "type": "Polygon",
