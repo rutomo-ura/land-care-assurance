@@ -717,8 +717,8 @@
     "period_month": "2026-06",
     "organization": "KRJ Enterprises",
     "assigned_parcel_keys": 59,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
+    "returned_assigned_parcel_keys": 10,
+    "completion_rate_pct": 16.9
   },
   {
     "period_month": "2026-06",
