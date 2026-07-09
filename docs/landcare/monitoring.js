@@ -101,6 +101,7 @@ const state = {
   boundaryLayers: {},
   contractorFilter: "all",
   districtFilter: "all",
+  landcareStatusFilter: "all",
   surveyStatusFilter: "all",
   colorMode: "status",
   selectedMonth: null,
@@ -338,8 +339,17 @@ function districtFilteredFeatures() {
 
 function filteredFeatures() {
   const features = districtFilteredFeatures();
-  if (state.contractorFilter === "all") return features;
-  return features.filter((feature) => feature.properties.organization === state.contractorFilter);
+  return features.filter((feature) => {
+    if (state.contractorFilter !== "all" && feature.properties.organization !== state.contractorFilter) return false;
+    if (
+      state.dataView === "history" &&
+      state.landcareStatusFilter !== "all" &&
+      feature.properties.completion_status !== state.landcareStatusFilter
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function uniqueCount(features, predicate = () => true) {
@@ -499,6 +509,9 @@ function assignmentHistoryWhereForFilter(mode = state.dataView) {
   if (state.contractorFilter !== "all") {
     clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
   }
+  if (state.landcareStatusFilter !== "all") {
+    clauses.push(`completion_status = ${sqlValue(state.landcareStatusFilter)}`);
+  }
   return clauses.join(" AND ");
 }
 
@@ -574,7 +587,7 @@ function renderKpis() {
     document.getElementById("openKpi").textContent = formatNumber(contractors);
     return;
   }
-  document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} monthly survey status`;
+  document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} monthly LandCare status`;
   document.getElementById("assignedKpiLabel").textContent = "Assigned";
   document.getElementById("returnedKpiLabel").textContent = "All survey records";
   document.getElementById("completionKpiLabel").textContent = "Matched returned";
@@ -646,7 +659,7 @@ function renderLegend() {
   const heading = document.getElementById("legendHeading");
   const list = document.getElementById("legendList");
   document.querySelector("[data-color-mode='status']").textContent =
-    state.dataView === "current" ? "LandCare Status" : "Survey Status";
+    "LandCare Status";
   if (state.colorMode === "contractor") {
     heading.textContent = "Legend - Contractor";
     list.innerHTML = contractorItems().map((item) => `
@@ -659,27 +672,11 @@ function renderLegend() {
     return;
   }
 
-  if (state.dataView === "history") {
-    heading.textContent = "Legend - Survey Status";
-    list.innerHTML = [
-      `<button class="legend-item legend-button ${state.surveyStatusFilter === "all" ? "is-active" : ""}" type="button" data-survey-status="all">
-        <span class="legend-swatch" style="background:${statusColors.survey_only}"></span>
-        <strong>All statuses</strong>
-        <span>${formatNumber(surveyRecordCountForSelectedPeriod())}</span>
-      </button>`,
-      ...Object.entries(surveyStatusColors).map(([status, color]) => `
-        <button class="legend-item legend-button ${state.surveyStatusFilter === status ? "is-active" : ""}" type="button" data-survey-status="${escapeHtml(status)}">
-          <span class="legend-swatch" style="background:${color}"></span>
-          <strong>${escapeHtml(status)}</strong>
-          <span></span>
-        </button>
-      `)
-    ].join("");
-    return;
-  }
-
-  heading.textContent = state.dataView === "current" ? "Legend - LandCare Status" : "Legend - Survey Status";
-  const counts = filteredFeatures().reduce((acc, feature) => {
+  heading.textContent = "Legend - LandCare Status";
+  const legendFeatures = districtFilteredFeatures().filter((feature) =>
+    state.contractorFilter === "all" || feature.properties.organization === state.contractorFilter
+  );
+  const counts = legendFeatures.reduce((acc, feature) => {
     const status = feature.properties.completion_status || "missing";
     const parcelKey = feature.properties.parcel_key;
     if (!parcelKey) return acc;
@@ -687,19 +684,36 @@ function renderLegend() {
     acc[status].add(parcelKey);
     return acc;
   }, {});
-  list.innerHTML = Object.entries(statusColors)
+  const statuses = state.dataView === "current"
+    ? ["current_active", "request_only"]
+    : ["returned", "missing", "request_only"];
+  const allCount = uniqueCount(legendFeatures);
+  const allButton = state.dataView === "history"
+    ? `<button class="legend-item legend-button ${state.landcareStatusFilter === "all" ? "is-active" : ""}" type="button" data-landcare-status="all">
+        <span class="legend-swatch" style="background:#8a8f98"></span>
+        <strong>All LandCare status</strong>
+        <span>${formatNumber(allCount)}</span>
+      </button>`
+    : "";
+  list.innerHTML = allButton + statuses
+    .map((status) => [status, statusColors[status]])
     .filter(([status]) => {
-      if (status === "survey_only") return false;
       if (counts[status]?.size) return true;
       return state.dataView === "history" && ["returned", "missing", "request_only"].includes(status);
     })
-    .map(([status, color]) => `
-      <div class="legend-item">
+    .map(([status, color]) => {
+      const tag = state.dataView === "history" ? "button" : "div";
+      const attrs = state.dataView === "history"
+        ? `class="legend-item legend-button ${state.landcareStatusFilter === status ? "is-active" : ""}" type="button" data-landcare-status="${escapeHtml(status)}"`
+        : `class="legend-item"`;
+      return `
+      <${tag} ${attrs}>
         <span class="legend-swatch" style="background:${color}"></span>
         <strong>${statusLabel(status)}</strong>
-        <span>${formatNumber(status === "survey_only" ? surveyOnlyCount() : counts[status]?.size || 0)}</span>
-      </div>
-    `).join("");
+        <span>${formatNumber(counts[status]?.size || 0)}</span>
+      </${tag}>
+    `;
+    }).join("");
 }
 
 function renderActionFocus() {
@@ -795,16 +809,18 @@ function renderFreshness() {
     `;
     return;
   }
+  const visibleFeatures = filteredFeatures();
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(surveyRecordCountForSelectedPeriod())} live survey records - ${state.selectedMonth}`;
+    `${formatNumber(uniqueCount(visibleFeatures))} assigned parcels - ${state.selectedMonth}`;
   const rawSurveys = surveyRecordCountForSelectedPeriod();
-  const matchedReturned = matchedReturnedCount(currentMonthFeatures());
-  const surveyOnly = surveyOnlyCount(currentMonthFeatures());
-  const statusText = state.surveyStatusFilter === "all" ? "all statuses" : state.surveyStatusFilter;
-  const colorText = state.colorMode === "contractor" ? "contractor" : "survey status";
+  const monthFeatures = currentMonthFeatures();
+  const matchedReturned = matchedReturnedCount(monthFeatures);
+  const openActive = uniqueCount(monthFeatures, (feature) => feature.properties.completion_status === "missing");
+  const requestOnly = uniqueCount(monthFeatures, (feature) => feature.properties.maintenance_level === "Request Only");
+  const colorText = state.colorMode === "contractor" ? "contractor" : "LandCare status";
   document.getElementById("mapCallout").innerHTML = `
     <strong>${escapeHtml(state.selectedMonth)} LandCare coverage</strong>
-    <span>${formatNumber(rawSurveys)} live surveys, ${formatNumber(assignmentRecordCountForSelectedPeriod())} assignments, ${formatNumber(matchedReturned)} matched returned, ${formatNumber(surveyOnly)} survey-only. Colored by ${escapeHtml(colorText)}; filtered to ${escapeHtml(statusText)}.</span>
+    <span>${formatNumber(matchedReturned)} survey complete, ${formatNumber(openActive)} open active, ${formatNumber(requestOnly)} request only. ${formatNumber(rawSurveys)} live survey records. Colored by ${escapeHtml(colorText)}.</span>
   `;
 }
 
@@ -989,9 +1005,6 @@ function setColorMode(mode) {
     button.classList.toggle("is-active", button.dataset.colorMode === state.colorMode);
   });
   if (state.dataView === "history") {
-    if (state.layers.historySurveys) {
-      state.layers.historySurveys.renderer = surveyRenderer();
-    }
     if (state.layers.historyAssignments) {
       state.layers.historyAssignments.renderer =
         state.colorMode === "contractor" ? contractorRenderer("history") : statusRenderer("history");
@@ -1049,6 +1062,18 @@ async function setSurveyStatusFilter(status, { zoom = false } = {}) {
   if (zoom) await zoomToSelectedExtent({ duration: 450 });
 }
 
+async function setLandcareStatusFilter(status, { zoom = false } = {}) {
+  state.landcareStatusFilter = status || "all";
+  syncHistoryLayerFilters();
+  renderKpis();
+  renderStatusSummary();
+  renderContractors();
+  renderLegend();
+  renderActionFocus();
+  renderFreshness();
+  if (zoom) await zoomToSelectedExtent({ duration: 450 });
+}
+
 function setActiveDataset() {
   const dataset = state.datasets[state.dataView];
   state.summary = dataset.summary;
@@ -1071,17 +1096,17 @@ function syncHistoryLayerFilters() {
 }
 
 function setHistoryLayerVisibility(visible) {
-  if (state.layers.historyAssignments) state.layers.historyAssignments.visible = false;
-  if (state.layers.historySurveys) state.layers.historySurveys.visible = visible;
+  if (state.layers.historyAssignments) state.layers.historyAssignments.visible = visible;
+  if (state.layers.historySurveys) state.layers.historySurveys.visible = false;
 }
 
 function activeLayer() {
   if (state.dataView === "current") return state.layers.current;
-  return state.layers.historySurveys || state.layers.historyAssignments;
+  return state.layers.historyAssignments || state.layers.historySurveys;
 }
 
 function historyLayers() {
-  return [state.layers.historySurveys].filter(Boolean);
+  return [state.layers.historyAssignments].filter(Boolean);
 }
 
 function renderAll() {
@@ -1098,6 +1123,7 @@ function renderAll() {
 async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
   state.contractorFilter = "all";
+  state.landcareStatusFilter = "all";
   state.districtFilter = state.dataView === "current" ? state.districtFilter : "all";
   state.mapFocusLabel = "";
   setActiveDataset();
@@ -1127,6 +1153,7 @@ async function setMonthFilter(month) {
   state.selectedMonth = month || state.summary.latest_month;
   state.contractorFilter = "all";
   state.districtFilter = "all";
+  state.landcareStatusFilter = "all";
   state.surveyStatusFilter = "all";
   state.mapFocusLabel = "";
   setHistoryLayerVisibility(true);
@@ -1154,6 +1181,12 @@ function wireControls() {
     if (surveyStatusButton) {
       const status = surveyStatusButton.dataset.surveyStatus;
       setSurveyStatusFilter(state.surveyStatusFilter === status ? "all" : status, { zoom: true });
+    }
+
+    const landcareStatusButton = event.target.closest("[data-landcare-status]");
+    if (landcareStatusButton) {
+      const status = landcareStatusButton.dataset.landcareStatus;
+      setLandcareStatusFilter(state.landcareStatusFilter === status ? "all" : status, { zoom: true });
     }
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
@@ -1215,15 +1248,15 @@ function printLegendHtml() {
   `).join("");
   }
   if (state.dataView === "history") {
-    const statuses = state.surveyStatusFilter === "all"
-      ? Object.entries(surveyStatusColors)
-      : Object.entries(surveyStatusColors).filter(([status]) => status === state.surveyStatusFilter);
-    return statuses.map(([status, color]) => `
+    const statuses = state.landcareStatusFilter === "all"
+      ? ["returned", "missing", "request_only"]
+      : [state.landcareStatusFilter];
+    return statuses.map((status) => `
     <div class="print-legend-row">
       <svg class="legend-chip" viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${color}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
+        <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${statusColors[status]}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
       </svg>
-      <strong>${escapeHtml(status)}</strong>
+      <strong>${escapeHtml(statusLabel(status))}</strong>
     </div>
   `).join("");
   }
@@ -1782,7 +1815,7 @@ async function initMap() {
     visible: state.dataView === "history"
   });
   const historySurveyLayer = buildHistorySurveyLayer({
-    visible: state.dataView === "history"
+    visible: false
   });
   const currentLayer = buildCurrentLayer({
     visible: state.dataView === "current"
