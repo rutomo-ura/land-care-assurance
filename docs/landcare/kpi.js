@@ -317,6 +317,15 @@ function contractorRowsForMonth(contractorMonthly, month) {
     .sort((a, b) => b.assigned - a.assigned);
 }
 
+function metricForMonth(monthlyMetrics, month) {
+  return monthlyMetrics.find((row) => row.period_month === month) || monthlyMetrics.at(-1);
+}
+
+function priorMetricForMonth(monthlyMetrics, month) {
+  const index = monthlyMetrics.findIndex((row) => row.period_month === month);
+  return index > 0 ? monthlyMetrics[index - 1] : null;
+}
+
 function buildContractorDetailRows(currentRows, latestRows) {
   const byName = new Map();
   for (const row of currentRows) {
@@ -346,8 +355,17 @@ function buildContractorDetailRows(currentRows, latestRows) {
   return Array.from(byName.values()).sort((a, b) => b.currentParcels - a.currentParcels);
 }
 
-function renderSourceSummary(summary, currentMetrics) {
-  const latestMonth = summary.latest_month;
+function renderMonthOptions(monthlyMetrics, selectedMonth) {
+  const select = document.getElementById("kpiMonthSelect");
+  if (!select) return;
+  select.innerHTML = monthlyMetrics
+    .map((row) => `<option value="${escapeHtml(row.period_month)}">${escapeHtml(shortMonth(row.period_month))}</option>`)
+    .join("");
+  select.value = selectedMonth;
+}
+
+function renderSourceSummary(summary, currentMetrics, selectedMonth) {
+  const latestMonth = selectedMonth;
   const surveyEdited = summary.survey_layer_summary?.data_last_edit || currentMetrics.surveyEdited;
   document.getElementById("freshnessNote").textContent = "Ready";
   document.getElementById("periodKpi").textContent =
@@ -362,9 +380,13 @@ function appendFinanceSourceToSummary(financeSummary) {
   if (!financeSummary?.metadata) return;
 }
 
-function renderKpis(monthlyMetrics, summary, currentMetrics) {
-  const latest = monthlyMetrics.at(-1);
-  const latestSurveyRecords = Number(summary.live_latest_survey_record_count ?? latest.survey_rows_raw ?? 0);
+function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth) {
+  const latest = metricForMonth(monthlyMetrics, selectedMonth);
+  const latestSurveyRecords = Number(
+    latest.period_month === summary.latest_month
+      ? summary.live_latest_survey_record_count ?? latest.survey_rows_raw ?? 0
+      : latest.survey_rows_raw ?? 0
+  );
 
   document.getElementById("currentParcelsKpi").textContent = formatNumber(currentMetrics.uniqueParcels);
   document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
@@ -487,9 +509,9 @@ function bindLineChartTooltips(container, monthlyMetrics) {
   }
 }
 
-function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary) {
-  const latest = monthlyMetrics.at(-1);
-  const prior = monthlyMetrics.at(-2);
+function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary, selectedMonth) {
+  const latest = metricForMonth(monthlyMetrics, selectedMonth);
+  const prior = priorMetricForMonth(monthlyMetrics, selectedMonth);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
   const priorRate = Number(prior?.active_completion_rate_pct || 0);
   const delta = latestRate - priorRate;
@@ -621,17 +643,17 @@ function renderFinance(financeSummary) {
   document.getElementById("expenseSourceNote").textContent = note;
 }
 
-function renderTimeline(monthlyMetrics) {
+function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
   renderLineChart(monthlyMetrics);
-  const latest = monthlyMetrics.at(-1);
-  const prior = monthlyMetrics.at(-2);
+  const latest = metricForMonth(monthlyMetrics, selectedMonth);
+  const prior = priorMetricForMonth(monthlyMetrics, selectedMonth);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
   const priorRate = Number(prior?.active_completion_rate_pct || 0);
   const delta = latestRate - priorRate;
   const avgRate = monthlyMetrics.reduce((sum, row) => sum + Number(row.active_completion_rate_pct || 0), 0) / monthlyMetrics.length;
   const summaryEl = document.getElementById("trendSummary");
   if (summaryEl) {
-    summaryEl.textContent = `${monthlyMetrics.length} months · avg ${formatPct(avgRate)} · latest ${formatPct(latestRate)}${prior ? ` (${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts)` : ""}`;
+    summaryEl.textContent = `${monthlyMetrics.length} months · avg ${formatPct(avgRate)} · selected ${formatPct(latestRate)}${prior ? ` (${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts)` : ""}`;
   }
 }
 
@@ -744,9 +766,9 @@ function renderParcelDetailsTable(rows) {
       { label: "Contractor", value: (row) => shortContractor(row.organization) },
       { label: "Inventory Parcels", value: (row) => formatNumber(row.currentParcels) },
       { label: "Current Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` },
-      { label: "Latest Assigned", value: (row) => formatNumber(row.latestAssigned) },
-      { label: "Latest Returned", value: (row) => formatNumber(row.latestReturned) },
-      { label: "Latest Rate", value: (row) => formatPct(row.latestRate) }
+      { label: "Period Assigned", value: (row) => formatNumber(row.latestAssigned) },
+      { label: "Period Returned", value: (row) => formatNumber(row.latestReturned) },
+      { label: "Period Rate", value: (row) => formatPct(row.latestRate) }
     ],
     rows
   );
@@ -862,24 +884,35 @@ async function loadData() {
 async function main() {
   setupTabs();
   const { monthlyMetrics, contractorMonthly, financeSummary, summary, currentMetrics } = await loadData();
-  const latestMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
-  const latestContractorRows = contractorRowsForMonth(contractorMonthly, latestMonth);
-  const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, latestContractorRows);
+  let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
 
-  renderSourceSummary(summary, currentMetrics);
-  appendFinanceSourceToSummary(financeSummary);
-  renderKpis(monthlyMetrics, summary, currentMetrics);
-  renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary);
-  renderContractorOptions(latestContractorRows);
-  renderContractorGroupedChart(latestContractorRows, "all", latestMonth);
-  renderTimeline(monthlyMetrics);
+  const renderSelectedMonth = () => {
+    const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
+    const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, selectedContractorRows);
+
+    renderMonthOptions(monthlyMetrics, selectedMonth);
+    renderSourceSummary(summary, currentMetrics, selectedMonth);
+    appendFinanceSourceToSummary(financeSummary);
+    renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth);
+    renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth);
+    renderContractorOptions(selectedContractorRows);
+    renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
+    renderTimeline(monthlyMetrics, selectedMonth);
+    renderParcelDetailsTable(detailRows);
+
+    document.getElementById("contractorSelect").onchange = (event) => {
+      renderContractorGroupedChart(selectedContractorRows, event.target.value, selectedMonth);
+    };
+  };
+
+  renderSelectedMonth();
   renderSubmissionRateTable(monthlyMetrics);
   renderAreaDistribution(currentMetrics.contractorRows);
-  renderParcelDetailsTable(detailRows);
   renderFinance(financeSummary);
 
-  document.getElementById("contractorSelect").addEventListener("change", (event) => {
-    renderContractorGroupedChart(latestContractorRows, event.target.value, latestMonth);
+  document.getElementById("kpiMonthSelect").addEventListener("change", (event) => {
+    selectedMonth = event.target.value;
+    renderSelectedMonth();
   });
 }
 

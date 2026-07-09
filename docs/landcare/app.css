@@ -623,6 +623,7 @@ textarea {
 }
 
 .report-context div,
+.report-context label,
 .report-context p {
   margin: 0;
   padding: 16px 18px;
@@ -642,8 +643,8 @@ textarea {
 }
 
 .report-context.compact {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 520px;
+  grid-template-columns: minmax(150px, .9fr) minmax(150px, .8fr) minmax(190px, 1.1fr);
+  max-width: 760px;
 }
 
 .app-footer {

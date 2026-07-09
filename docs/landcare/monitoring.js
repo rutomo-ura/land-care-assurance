@@ -102,7 +102,6 @@ const state = {
   contractorFilter: "all",
   districtFilter: "all",
   landcareStatusFilter: "all",
-  surveyStatusFilter: "all",
   colorMode: "status",
   selectedMonth: null,
   dataView: "history",
@@ -495,9 +494,6 @@ function surveyWhereForFilter(mode = state.dataView) {
   const clauses = [surveyPeriodClause()];
   if (state.contractorFilter !== "all") {
     clauses.push(`maintained_by LIKE '%${String(state.contractorFilter).replace(/'/g, "''")}%'`);
-  }
-  if (state.surveyStatusFilter !== "all") {
-    clauses.push(`status = ${sqlValue(state.surveyStatusFilter)}`);
   }
   return clauses.join(" AND ");
 }
@@ -1052,16 +1048,6 @@ async function setContractorFilter(name, { zoom = false } = {}) {
   }
 }
 
-async function setSurveyStatusFilter(status, { zoom = false } = {}) {
-  state.surveyStatusFilter = status || "all";
-  if (state.layers.historySurveys) {
-    state.layers.historySurveys.definitionExpression = surveyWhereForFilter("history");
-  }
-  renderLegend();
-  renderFreshness();
-  if (zoom) await zoomToSelectedExtent({ duration: 450 });
-}
-
 async function setLandcareStatusFilter(status, { zoom = false } = {}) {
   state.landcareStatusFilter = status || "all";
   syncHistoryLayerFilters();
@@ -1154,7 +1140,6 @@ async function setMonthFilter(month) {
   state.contractorFilter = "all";
   state.districtFilter = "all";
   state.landcareStatusFilter = "all";
-  state.surveyStatusFilter = "all";
   state.mapFocusLabel = "";
   setHistoryLayerVisibility(true);
   if (state.layers.current) state.layers.current.visible = false;
@@ -1175,12 +1160,6 @@ function wireControls() {
     if (contractorButton) {
       const name = contractorButton.dataset.contractor;
       setContractorFilter(state.contractorFilter === name ? "all" : name, { zoom: true });
-    }
-
-    const surveyStatusButton = event.target.closest("[data-survey-status]");
-    if (surveyStatusButton) {
-      const status = surveyStatusButton.dataset.surveyStatus;
-      setSurveyStatusFilter(state.surveyStatusFilter === status ? "all" : status, { zoom: true });
     }
 
     const landcareStatusButton = event.target.closest("[data-landcare-status]");
