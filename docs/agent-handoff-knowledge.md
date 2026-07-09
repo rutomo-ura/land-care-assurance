@@ -143,8 +143,8 @@ Current public monitoring app values after narrowing the app to URA-owned LandCa
 - Active completion: `4.5%`
 - Open active assignments: `168`
 - Request Only assignments: `34`
-- Live AGOL all-period survey layer: `30` periods, `13,415` records, latest period `2026-06` with `57` raw survey records
-- Monitoring survey toggle: `Matched returned` shows `5` exact live AGOL survey parcel records for `2026-06`; `All survey records` shows all `57`
+- Live AGOL all-period survey layer: `13,577` records, latest period `2026-06` with `219` raw survey records
+- Monitoring history map defaults to all live survey records; matched returned assigned is a reconciliation/completion count, not the default map coverage count
 - Main app data files for monthly history: `docs/landcare/data/all_months.geojson`, `docs/landcare/data/latest_month.geojson`, `docs/landcare/data/latest_month_summary.json`, `docs/landcare/data/kpi_summary.json`, `docs/landcare/data/monthly_metrics.json`, `docs/landcare/data/contractor_monthly.json`, and `docs/landcare/data/refresh_manifest.json`. Current parcel-universe data is not committed as a snapshot; the monitoring and KPI pages query ArcGIS live. Do not recreate `current_universe.geojson` unless there is a deliberate offline fallback requirement.
 
 ## Important Implementation Details
@@ -248,7 +248,7 @@ Most recent pushed commits at the time this file was created:
 - Reconcile ownership definitions with Power BI and URA/PLB business rules.
 - Reconcile ArcGIS `gisdb_gis_epp_parcels_full` and `gisdb_gis_regrid_surveys` with PostgreSQL and decide whether to build a hosted monthly assurance layer from them.
 - Keep contractor-colored map mode and contextual PDF legend covered by smoke tests.
-- Keep the survey-layer toggle (`Matched returned` vs `All survey records`) covered by smoke tests.
+- Keep the all-survey coverage default and matched-return reconciliation covered by smoke tests.
 - Add reassignment planning that balances contractor workload by total parcel area.
 - Decide when to move from static GeoJSON to vector tiles or a backend map API.
 - Build a repeatable refresh checklist for PostgreSQL export, validation, review, and deployment.

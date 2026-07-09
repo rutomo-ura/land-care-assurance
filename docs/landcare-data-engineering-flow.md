@@ -17,11 +17,15 @@ flowchart LR
         SurveyPipe["regrid_survey_daily_pipeline.py"]
         BundlePipe["bundle_assignment_creation.py"]
         AgolPub["publish_regrid_snapshot.py"]
+        AssignCurrentPub["publish_regrid_bundle_assignments_current_period_snapshot.py"]
+        AssignHistoryPub["publish_regrid_bundle_assignments_history_snapshot.py"]
     end
 
     subgraph Store["Authoritative stores"]
         PG["PostgreSQL gisdb"]
         AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
+        AGOLAssignCurrent["AGOL gisdb_gis_regrid_bundle_assignments_current_period"]
+        AGOLAssignHistory["AGOL gisdb_gis_regrid_bundle_assignments_history"]
         AGOLEpp["AGOL gisdb_gis_epp_parcels_full"]
     end
 
@@ -34,6 +38,7 @@ flowchart LR
 
     subgraph Runtime["Web app at page load"]
         SurveyLive["survey-layer.js → AGOL surveys"]
+        AssignLive["assignment-layer.js -> AGOL assignments"]
         EppLive["Live EPP query"]
         StaticJSON["docs/landcare/data"]
     end
@@ -44,15 +49,22 @@ flowchart LR
     SurveyPipe --> AgolPub
     AgolPub --> AGOLSurvey
     BundlePipe --> PG
+    BundlePipe --> AssignCurrentPub
+    BundlePipe --> AssignHistoryPub
+    AssignCurrentPub --> AGOLAssignCurrent
+    AssignHistoryPub --> AGOLAssignHistory
     Budget --> Build
 
     PG --> Export --> Build --> Validate --> GitHub
     GitHub --> StaticJSON
     AGOLSurvey --> SurveyLive
+    AGOLAssignCurrent --> AssignLive
+    AGOLAssignHistory --> AssignLive
     AGOLEpp --> EppLive
     StaticJSON --> Runtime
     SurveyLive --> Runtime
     EppLive --> Runtime
+    AssignLive --> Runtime
 ```
 
 ## Current Production Behavior
@@ -67,14 +79,16 @@ flowchart TD
 
     C --> F["Live AGOL gisdb_gis_epp_parcels_full"]
     D --> G["Live AGOL gisdb_gis_regrid_surveys by period_label"]
-    D --> H["Published assignment GeoJSON from docs/landcare/data"]
+    D --> H["Live AGOL assignment history by period_label"]
+    D --> H2["Published assignment GeoJSON fallback"]
     E --> I["Published finance_summary.json"]
 
     G --> J["survey-layer.js merges returned evidence"]
     H --> J
+    H2 --> J
     J --> K["Sidebar KPIs, contractor performance, action focus"]
-    G --> L["History map: returned survey polygons"]
-    H --> M["History map: open and request-only assignments"]
+    G --> L["History map default: all survey polygons"]
+    H --> M["Sidebar assignment denominator and matched-return reconciliation"]
     F --> N["Current map: live parcel layer"]
     I --> O["Finance tabs"]
 ```
@@ -118,7 +132,9 @@ The upstream `URA-GIS-User/URA-Data-Repository` repo now treats Regrid survey su
 |---|---|---|
 | Daily survey ingestion | `regrid_survey_daily_pipeline.py` runs `regrid_survey_download.py`, `SurveysDriveToSQL.py`, and `publish_regrid_snapshot.py` | The 7:00 AM LandCare refresh should run after this, and should treat GISDB/AGOL as the survey source, not the G-drive archive |
 | Source table | Raw submissions are upserted into `gis.regrid_survey_submissions` | Monthly completion metrics should reconcile against this table when the dashboard rebuilds static data |
-| AGOL all-period map layer | AGOL item `a4012693d5d74dd8998610c4d235068d` exposes `gisdb_gis_regrid_surveys` from Regrid/PostGIS survey data | Monitoring/KPI runtime can query all-period returned survey evidence from `gisdb_gis_regrid_surveys` |
+| AGOL all-period survey layer | AGOL item `a4012693d5d74dd8998610c4d235068d` exposes `gisdb_gis_regrid_surveys` from Regrid/PostGIS survey data | Monitoring/KPI runtime defaults to all survey coverage from `gisdb_gis_regrid_surveys` |
+| AGOL current assignment layer | AGOL item `0b4733cb5d204da6ab936c9f6d49e401` exposes `gisdb_gis_regrid_bundle_assignments_current_period` | Current-period assignment source and QA context |
+| AGOL history assignment layer | AGOL item `df7d77eb57f14c68b717c2cf3cdaada4` exposes `gisdb_gis_regrid_bundle_assignments_history` | Primary runtime assignment denominator for monthly monitoring; checked-in GeoJSON is fallback/cache |
 | QA view | `gis.regrid_survey_unmatched_parcels` identifies submissions without parcel geometry | This should be part of upstream QA and should also be watched if dashboard returned counts drift |
 | Monthly CSV | `regrid_survey_monthly_export.py` writes a prior-period snapshot to the G drive on the 15th | This is an archive/export only; it should not drive daily dashboard freshness |
 
@@ -154,28 +170,29 @@ flowchart TD
     StatusJSON --> Notify["Task Scheduler history + log review"]
 ```
 
-Survey ingestion and AGOL publish run upstream at 4:00 AM. The web app reads returned surveys directly from AGOL at page load; the 7:00 AM job publishes assignment denominators and finance data from Postgres.
+Survey ingestion and AGOL publish run upstream at 4:00 AM. Assignment snapshots are also published to AGOL by the upstream Regrid/bundle workflow. The web app reads surveys and assignments directly from AGOL at page load; the 7:00 AM job still publishes finance data, QA artifacts, and static fallback data.
 
 ## Reconciliation View
 
 | Count | July 7 value | Meaning |
 |---|---:|---|
-| Live AGOL survey records for `2026-06` | 57 | Raw all-period survey layer rows for the selected period |
-| Monitoring matched survey records for `2026-06` | 5 | Live AGOL rows whose normalized `parcelnumb` matches returned Active assignment parcel keys |
-| Published returned assigned for latest month | 8 | Static Postgres export evidence used by the KPI summary |
+| Live AGOL survey records for `2026-06` | 219 | Raw all-period survey layer rows for the selected period; this is the default supervisor-facing survey coverage count |
+| Live AGOL assignment records for `2026-06` | 1,127 | Raw assignment history snapshot rows for the selected period |
+| Matched returned assigned for `2026-06` | Recomputed in browser | Live AGOL survey rows whose normalized `parcelnumb` matches Active assignment parcel keys |
+| Published returned assigned for latest month | 8 | Checked-in fallback/export evidence until live browser reconciliation replaces it on load |
 | Published Active assigned for latest month | 176 | Active assignment denominator |
 | Published open active for latest month | 168 | Active assigned minus returned assigned |
 
-The first three values are intentionally different. AGOL raw records show survey volume; matched survey records show the map evidence that joins to returned assignments; KPI returned assigned comes from the checked-in export until the next VM refresh publishes new static data.
+These values are intentionally different. AGOL raw survey records show total survey coverage. Matched returned assigned is an inner-join/reconciliation count used for completion math. The map and KPI snapshot now lead with all live survey records so the supervisor-facing view does not understate field coverage.
 
 ## Data Contract Checklist
 
 | Field | Primary source at runtime | Published fallback |
 |---|---|---|
 | `parcel_key` | Normalized across ArcGIS, Regrid, Postgres | `all_months.geojson` |
-| `period_month` / `period_label` | AGOL survey layer + Postgres assignments | `refresh_manifest.json` |
-| `organization` | Postgres assignment export | Published GeoJSON |
-| `maintenance_level` | Postgres export; EPP tags for current view | Published GeoJSON |
+| `period_month` / `period_label` | AGOL survey layer + AGOL assignment history | `refresh_manifest.json` |
+| `organization` | AGOL assignment snapshots (`maintained_by` / `assigned_to`) | Published GeoJSON |
+| `maintenance_level` | AGOL assignment snapshots (`maintain_level`); EPP tags for current view | Published GeoJSON |
 | `completion_status` | Merged: assignments + live AGOL survey match | Published GeoJSON |
 | `returned_flag` | **Live AGOL survey layer** | Postgres export |
 | `ownership_type` | Postgres owner join | Published GeoJSON |

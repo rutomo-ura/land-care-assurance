@@ -264,7 +264,7 @@ function renderSourceSummary(summary, currentMetrics) {
   document.getElementById("reportUpdatedKpi").textContent =
     `${summary.generated_on || currentMetrics.eppEdited || "today"} · surveys ${surveyEdited || "live"}`;
   document.getElementById("liveUniverseNote").textContent =
-    "Surveys: ArcGIS (daily). Assignments: published export.";
+    "Surveys: live ArcGIS all-period layer. Assignments: live ArcGIS snapshots with published fallback.";
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
@@ -273,16 +273,14 @@ function appendFinanceSourceToSummary(financeSummary) {
 
 function renderKpis(monthlyMetrics, summary, currentMetrics) {
   const latest = monthlyMetrics.at(-1);
-  const latestYear = String(latest.period_month).slice(0, 4);
-  const ytdRows = monthlyMetrics.filter((row) => String(row.period_month).startsWith(latestYear));
-  const ytdReturned = ytdRows.reduce((sum, row) => sum + Number(row.returned_assigned || 0), 0);
+  const latestSurveyRecords = Number(summary.live_latest_survey_record_count ?? latest.survey_rows_raw ?? 0);
 
   document.getElementById("currentParcelsKpi").textContent = formatNumber(currentMetrics.uniqueParcels);
   document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
   document.getElementById("latestAssignedKpi").textContent = formatNumber(latest.assigned_active);
-  document.getElementById("latestReturnedKpi").textContent = formatNumber(latest.returned_assigned);
+  document.getElementById("latestReturnedKpi").textContent = formatNumber(latestSurveyRecords);
   document.getElementById("latestCompletionKpi").textContent = formatPct(latest.active_completion_rate_pct);
-  document.getElementById("ytdReturnedKpi").textContent = formatNumber(ytdReturned);
+  document.getElementById("ytdReturnedKpi").textContent = formatNumber(latest.returned_assigned);
 }
 
 function renderContractorOptions(rows) {
@@ -722,6 +720,10 @@ async function loadData() {
   const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
   const mergedGeojson = mergeSurveyEvidenceIntoGeojson(allMonthsGeojson, evidenceByPeriod);
   const latestMonth = enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
+  const liveLatestSurveyRecordCount = Number(
+    surveyPeriodStats.find((row) => row.period_label === latestMonth)?.record_count || 0
+  );
+  enrichedSummary.live_latest_survey_record_count = liveLatestSurveyRecordCount;
   const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
   const enrichedMonthlyMetrics = enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
 

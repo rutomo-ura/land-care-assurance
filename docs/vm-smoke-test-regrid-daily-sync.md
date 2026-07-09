@@ -117,11 +117,11 @@ Expected: passes after a successful refresh on the run date.
 
 Open the monitoring and KPI pages after deploy and confirm:
 
-- History view map shows returned surveys from the live ArcGIS layer (`gisdb_gis_regrid_surveys_current_period`).
+- History view map defaults to all survey records from the live all-period ArcGIS layer (`gisdb_gis_regrid_surveys`).
 - Month selector includes the latest survey period from ArcGIS (for example `2026-06` when upstream has loaded that period).
 - KPI latest-month returned count reflects live survey evidence, not only the last checked-in Postgres export.
 
-ArcGIS item: https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1
+ArcGIS item: https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d
 
 ## Failure Escalation
 

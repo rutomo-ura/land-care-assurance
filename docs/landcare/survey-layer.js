@@ -1,9 +1,9 @@
 export const SURVEY_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys_current_period/FeatureServer/0";
-export const SURVEY_AGOL_ITEM_ID = "1f29883ea3bb4d6aa834c6a9feeeb6f1";
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
+export const SURVEY_AGOL_ITEM_ID = "a4012693d5d74dd8998610c4d235068d";
 export const SURVEY_AGOL_ITEM_URL =
-  "https://urap.maps.arcgis.com/home/item.html?id=1f29883ea3bb4d6aa834c6a9feeeb6f1";
-export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys_current_period";
+  "https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d";
+export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys";
 
 export function parcelDigits(value) {
   return String(value || "").replace(/\D/g, "");

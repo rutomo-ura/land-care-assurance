@@ -75,6 +75,36 @@
             "integer",
             "null"
           ]
+        },
+        "assignment_current_layer": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "assignment_history_layer": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "survey_layer": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "latest_survey_record_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "latest_survey_only_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       }
     }
