@@ -70,6 +70,14 @@ const statusColors = {
   ownership_risk: "#c2410c"
 };
 
+const surveyStatusColors = {
+  Complete: "#2e7d32",
+  Partial: "#d97706",
+  "Needs Addressed": "#c2410c",
+  "Needs Addressing": "#c2410c",
+  Other: "#7b1fa2"
+};
+
 const contractorPalette = [
   "#0098d3",
   "#006c9f",
@@ -93,9 +101,10 @@ const state = {
   boundaryLayers: {},
   contractorFilter: "all",
   districtFilter: "all",
+  surveyStatusFilter: "all",
   colorMode: "status",
   selectedMonth: null,
-  dataView: "current",
+  dataView: "history",
   mapFocusLabel: "",
   currentDataWarning: "",
   surveyLayerInfo: null,
@@ -389,13 +398,28 @@ function surveyOnlyCount(features = currentMonthFeatures()) {
 }
 
 function surveyRenderer() {
+  if (state.colorMode === "contractor") {
+    return {
+      type: "unique-value",
+      field: "maintained_by",
+      defaultSymbol: fillSymbol("#8a8f98"),
+      uniqueValueInfos: contractorItems().map((item) => ({
+        value: item.name,
+        label: item.label,
+        symbol: fillSymbol(item.color)
+      }))
+    };
+  }
+  const infos = Object.entries(surveyStatusColors).map(([value, color]) => ({
+    value,
+    label: value,
+    symbol: fillSymbol(color)
+  }));
   return {
-    type: "simple",
-    symbol: {
-      type: "simple-fill",
-      color: [123, 31, 162, 0.58],
-      outline: { color: [74, 20, 140, 0.95], width: 1.1 }
-    }
+    type: "unique-value",
+    field: "status",
+    defaultSymbol: fillSymbol(surveyStatusColors.Other),
+    uniqueValueInfos: infos
   };
 }
 
@@ -462,6 +486,9 @@ function surveyWhereForFilter(mode = state.dataView) {
   if (state.contractorFilter !== "all") {
     clauses.push(`maintained_by LIKE '%${String(state.contractorFilter).replace(/'/g, "''")}%'`);
   }
+  if (state.surveyStatusFilter !== "all") {
+    clauses.push(`status = ${sqlValue(state.surveyStatusFilter)}`);
+  }
   return clauses.join(" AND ");
 }
 
@@ -512,14 +539,6 @@ function renderMonthOptions() {
     .map((month) => `<option value="${escapeHtml(month)}">${escapeHtml(month)}</option>`)
     .join("");
   select.value = state.selectedMonth;
-}
-
-function renderSurveyLayerMode() {
-  const field = document.getElementById("surveyLayerField");
-  const select = document.getElementById("surveyLayerSelect");
-  if (!field || !select) return;
-  field.style.display = state.dataView === "history" ? "grid" : "none";
-  select.value = state.surveyLayerMode;
 }
 
 function renderDistrictOptions() {
@@ -628,32 +647,34 @@ function renderLegend() {
   const list = document.getElementById("legendList");
   document.querySelector("[data-color-mode='status']").textContent =
     state.dataView === "current" ? "LandCare Status" : "Survey Status";
-  if (state.colorMode === "contractor" && state.dataView !== "history") {
+  if (state.colorMode === "contractor") {
     heading.textContent = "Legend - Contractor";
     list.innerHTML = contractorItems().map((item) => `
-      <div class="legend-item">
+      <button class="legend-item legend-button ${state.contractorFilter === item.name ? "is-active" : ""}" type="button" data-contractor="${escapeHtml(item.name)}">
         <span class="legend-swatch" style="background:${item.color}"></span>
         <strong>${escapeHtml(item.label)}</strong>
         <span>${formatNumber(item.count)}</span>
-      </div>
+      </button>
     `).join("");
     return;
   }
 
   if (state.dataView === "history") {
-    heading.textContent = "Legend - All Survey Records";
-    list.innerHTML = `
-      <div class="legend-item">
+    heading.textContent = "Legend - Survey Status";
+    list.innerHTML = [
+      `<button class="legend-item legend-button ${state.surveyStatusFilter === "all" ? "is-active" : ""}" type="button" data-survey-status="all">
         <span class="legend-swatch" style="background:${statusColors.survey_only}"></span>
-        <strong>Live survey record</strong>
+        <strong>All statuses</strong>
         <span>${formatNumber(surveyRecordCountForSelectedPeriod())}</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-swatch" style="background:${statusColors.returned}"></span>
-        <strong>Matched returned assigned</strong>
-        <span>${formatNumber(matchedReturnedCount())}</span>
-      </div>
-    `;
+      </button>`,
+      ...Object.entries(surveyStatusColors).map(([status, color]) => `
+        <button class="legend-item legend-button ${state.surveyStatusFilter === status ? "is-active" : ""}" type="button" data-survey-status="${escapeHtml(status)}">
+          <span class="legend-swatch" style="background:${color}"></span>
+          <strong>${escapeHtml(status)}</strong>
+          <span></span>
+        </button>
+      `)
+    ].join("");
     return;
   }
 
@@ -775,18 +796,15 @@ function renderFreshness() {
     return;
   }
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(currentMonthFeatures().length)} monthly survey parcels - ${state.selectedMonth} - ${formatNumber(state.geojson.features.length)} eligible records`;
+    `${formatNumber(surveyRecordCountForSelectedPeriod())} live survey records - ${state.selectedMonth}`;
   const rawSurveys = surveyRecordCountForSelectedPeriod();
   const matchedReturned = matchedReturnedCount(currentMonthFeatures());
   const surveyOnly = surveyOnlyCount(currentMonthFeatures());
-  const coverageLabel = {
-    assurance: "assignment assurance",
-    all: "all survey records",
-    combined: "combined assignment + survey coverage"
-  }[state.surveyLayerMode];
+  const statusText = state.surveyStatusFilter === "all" ? "all statuses" : state.surveyStatusFilter;
+  const colorText = state.colorMode === "contractor" ? "contractor" : "survey status";
   document.getElementById("mapCallout").innerHTML = `
     <strong>${escapeHtml(state.selectedMonth)} LandCare coverage</strong>
-    <span>${escapeHtml(coverageLabel)} - ${formatNumber(rawSurveys)} raw surveys, ${formatNumber(matchedReturned)} matched returned, ${formatNumber(surveyOnly)} survey-only. Assignments and surveys are live ArcGIS layers.</span>
+    <span>${formatNumber(rawSurveys)} live surveys, ${formatNumber(assignmentRecordCountForSelectedPeriod())} assignments, ${formatNumber(matchedReturned)} matched returned, ${formatNumber(surveyOnly)} survey-only. Colored by ${escapeHtml(colorText)}; filtered to ${escapeHtml(statusText)}.</span>
   `;
 }
 
@@ -966,11 +984,14 @@ async function zoomToContractorCluster(name) {
 }
 
 function setColorMode(mode) {
-  state.colorMode = state.dataView === "history" ? "status" : mode === "contractor" ? "contractor" : "status";
+  state.colorMode = mode === "contractor" ? "contractor" : "status";
   document.querySelectorAll("[data-color-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.colorMode === state.colorMode);
   });
   if (state.dataView === "history") {
+    if (state.layers.historySurveys) {
+      state.layers.historySurveys.renderer = surveyRenderer();
+    }
     if (state.layers.historyAssignments) {
       state.layers.historyAssignments.renderer =
         state.colorMode === "contractor" ? contractorRenderer("history") : statusRenderer("history");
@@ -997,7 +1018,7 @@ async function setDistrictFilter(district, { zoom = true } = {}) {
 
 async function setContractorFilter(name, { zoom = false } = {}) {
   state.contractorFilter = name || "all";
-  if (state.dataView === "current" && state.contractorFilter !== "all" && state.colorMode !== "contractor") {
+  if (state.contractorFilter !== "all" && state.colorMode !== "contractor") {
     setColorMode("contractor");
   }
   if (state.contractorFilter === "all") {
@@ -1016,6 +1037,16 @@ async function setContractorFilter(name, { zoom = false } = {}) {
     await zoomToSelectedExtent();
     renderFreshness();
   }
+}
+
+async function setSurveyStatusFilter(status, { zoom = false } = {}) {
+  state.surveyStatusFilter = status || "all";
+  if (state.layers.historySurveys) {
+    state.layers.historySurveys.definitionExpression = surveyWhereForFilter("history");
+  }
+  renderLegend();
+  renderFreshness();
+  if (zoom) await zoomToSelectedExtent({ duration: 450 });
 }
 
 function setActiveDataset() {
@@ -1055,7 +1086,6 @@ function historyLayers() {
 
 function renderAll() {
   renderMonthOptions();
-  renderSurveyLayerMode();
   renderDistrictOptions();
   renderKpis();
   renderStatusSummary();
@@ -1069,7 +1099,6 @@ async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
   state.contractorFilter = "all";
   state.districtFilter = state.dataView === "current" ? state.districtFilter : "all";
-  if (state.dataView === "history") state.colorMode = "status";
   state.mapFocusLabel = "";
   setActiveDataset();
   const dataViewSelect = document.getElementById("dataViewSelect");
@@ -1098,7 +1127,7 @@ async function setMonthFilter(month) {
   state.selectedMonth = month || state.summary.latest_month;
   state.contractorFilter = "all";
   state.districtFilter = "all";
-  state.colorMode = "status";
+  state.surveyStatusFilter = "all";
   state.mapFocusLabel = "";
   setHistoryLayerVisibility(true);
   if (state.layers.current) state.layers.current.visible = false;
@@ -1120,11 +1149,13 @@ function wireControls() {
       const name = contractorButton.dataset.contractor;
       setContractorFilter(state.contractorFilter === name ? "all" : name, { zoom: true });
     }
+
+    const surveyStatusButton = event.target.closest("[data-survey-status]");
+    if (surveyStatusButton) {
+      const status = surveyStatusButton.dataset.surveyStatus;
+      setSurveyStatusFilter(state.surveyStatusFilter === status ? "all" : status, { zoom: true });
+    }
   });
-  const dataViewSelect = document.getElementById("dataViewSelect");
-  if (dataViewSelect) {
-    dataViewSelect.addEventListener("change", (event) => setDataView(event.target.value));
-  }
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
@@ -1180,6 +1211,19 @@ function printLegendHtml() {
         <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${item.color}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
       </svg>
       <strong>${escapeHtml(item.label)}</strong>
+    </div>
+  `).join("");
+  }
+  if (state.dataView === "history") {
+    const statuses = state.surveyStatusFilter === "all"
+      ? Object.entries(surveyStatusColors)
+      : Object.entries(surveyStatusColors).filter(([status]) => status === state.surveyStatusFilter);
+    return statuses.map(([status, color]) => `
+    <div class="print-legend-row">
+      <svg class="legend-chip" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="1.5" fill="${color}" stroke="#2b3942" stroke-opacity="0.42" stroke-width="1.2"></rect>
+      </svg>
+      <strong>${escapeHtml(status)}</strong>
     </div>
   `).join("");
   }

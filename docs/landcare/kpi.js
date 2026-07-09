@@ -11,6 +11,20 @@ import {
   loadSurveyEvidenceByPeriod,
   mergeSurveyEvidenceIntoGeojson
 } from "./survey-layer.js";
+import {
+  enrichSummaryWithAssignmentLayers,
+  fetchAssignmentHistoryGeojson,
+  fetchAssignmentLayerMetadata,
+  fetchAssignmentPeriodStats,
+  ASSIGNMENT_CURRENT_LAYER_NAME,
+  ASSIGNMENT_CURRENT_LAYER_URL,
+  ASSIGNMENT_CURRENT_AGOL_ITEM_ID,
+  ASSIGNMENT_CURRENT_AGOL_ITEM_URL,
+  ASSIGNMENT_HISTORY_LAYER_NAME,
+  ASSIGNMENT_HISTORY_LAYER_URL,
+  ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
+  ASSIGNMENT_HISTORY_AGOL_ITEM_URL
+} from "./assignment-layer.js";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -220,6 +234,83 @@ function aggregateContractorMonthly(rows) {
   }));
 }
 
+function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats) {
+  const keyed = new Map();
+  for (const feature of geojson.features || []) {
+    const props = feature.properties || {};
+    const month = props.period_month;
+    const parcelKey = props.parcel_key;
+    if (!month || !parcelKey) continue;
+    const row = keyed.get(month) || {
+      period_month: month,
+      activeKeys: new Set(),
+      totalKeys: new Set(),
+      returnedKeys: new Set(),
+      requestOnlyKeys: new Set()
+    };
+    row.totalKeys.add(parcelKey);
+    if (props.maintenance_level === "Request Only") row.requestOnlyKeys.add(parcelKey);
+    if (props.maintenance_level === "Active") {
+      row.activeKeys.add(parcelKey);
+      if (props.returned_flag) row.returnedKeys.add(parcelKey);
+    }
+    keyed.set(month, row);
+  }
+  return [...keyed.values()]
+    .sort((a, b) => a.period_month.localeCompare(b.period_month))
+    .map((row) => {
+      const assignedActive = row.activeKeys.size;
+      const assignedTotal = row.totalKeys.size;
+      const returned = row.returnedKeys.size;
+      const rawSurveys = Number(
+        (surveyPeriodStats || []).find((stat) => stat.period_label === row.period_month)?.record_count || returned
+      );
+      return {
+        period_month: row.period_month,
+        assigned_active: assignedActive,
+        assigned_total: assignedTotal,
+        returned_assigned: returned,
+        request_only: row.requestOnlyKeys.size,
+        open_active: Math.max(assignedActive - returned, 0),
+        survey_rows_raw: rawSurveys,
+        active_completion_rate_pct: assignedActive ? Math.round((1000 * returned) / assignedActive) / 10 : 0,
+        blended_completion_rate_pct: assignedTotal ? Math.round((1000 * returned) / assignedTotal) / 10 : 0,
+        survey_only_records: Math.max(rawSurveys - returned, 0),
+        source: "live_arcgis_assignment_and_survey_layers"
+      };
+    });
+}
+
+function aggregateLiveContractorMonthly(geojson) {
+  const keyed = new Map();
+  for (const feature of geojson.features || []) {
+    const props = feature.properties || {};
+    if (!props.period_month || !props.parcel_key || props.maintenance_level !== "Active") continue;
+    const organization = normalizeContractorName(props.organization);
+    const key = `${props.period_month}|${organization}`;
+    const row = keyed.get(key) || {
+      period_month: props.period_month,
+      organization,
+      assignedKeys: new Set(),
+      returnedKeys: new Set()
+    };
+    row.assignedKeys.add(props.parcel_key);
+    if (props.returned_flag) row.returnedKeys.add(props.parcel_key);
+    keyed.set(key, row);
+  }
+  return [...keyed.values()].map((row) => {
+    const assigned = row.assignedKeys.size;
+    const returned = row.returnedKeys.size;
+    return {
+      period_month: row.period_month,
+      organization: row.organization,
+      assigned,
+      returned,
+      completionRate: assigned ? (100 * returned) / assigned : 0
+    };
+  });
+}
+
 function contractorRowsForMonth(contractorMonthly, month) {
   return contractorMonthly
     .filter((row) => row.period_month === month)
@@ -264,7 +355,7 @@ function renderSourceSummary(summary, currentMetrics) {
   document.getElementById("reportUpdatedKpi").textContent =
     `${summary.generated_on || currentMetrics.eppEdited || "today"} · surveys ${surveyEdited || "live"}`;
   document.getElementById("liveUniverseNote").textContent =
-    "Surveys: live ArcGIS all-period layer. Assignments: live ArcGIS snapshots with published fallback.";
+    `Surveys: live ArcGIS all-period layer. Assignments: ${summary.assignment_source === "gisdb_gis_regrid_bundle_assignments_history" ? "live ArcGIS history snapshot" : "published fallback"}.`;
 }
 
 function appendFinanceSourceToSummary(financeSummary) {
@@ -705,7 +796,7 @@ function setupTabs() {
 }
 
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics, allMonthsGeojson, surveyPeriodStats] =
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics, allMonthsGeojson, surveyPeriodStats, assignmentCurrentMetadata, assignmentHistoryMetadata, assignmentPeriodStats, assignmentHistoryResult] =
     await Promise.all([
       fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
@@ -713,23 +804,55 @@ async function loadData() {
       fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
       loadCurrentArcgisMetrics(),
       fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
-      fetchSurveyPeriodStats().catch(() => [])
+      fetchSurveyPeriodStats().catch(() => []),
+      fetchAssignmentLayerMetadata(ASSIGNMENT_CURRENT_LAYER_URL, {
+        layerName: ASSIGNMENT_CURRENT_LAYER_NAME,
+        itemId: ASSIGNMENT_CURRENT_AGOL_ITEM_ID,
+        itemUrl: ASSIGNMENT_CURRENT_AGOL_ITEM_URL
+      }).catch(() => null),
+      fetchAssignmentLayerMetadata(ASSIGNMENT_HISTORY_LAYER_URL, {
+        layerName: ASSIGNMENT_HISTORY_LAYER_NAME,
+        itemId: ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
+        itemUrl: ASSIGNMENT_HISTORY_AGOL_ITEM_URL
+      }).catch(() => null),
+      fetchAssignmentPeriodStats().catch(() => []),
+      fetchAssignmentHistoryGeojson().then(
+        (geojson) => ({ geojson }),
+        (error) => ({ error })
+      )
     ]);
 
-  const enrichedSummary = enrichSummaryWithSurveyLayer(summary, await fetchSurveyLayerMetadata().catch(() => null), surveyPeriodStats);
+  const surveyMetadata = await fetchSurveyLayerMetadata().catch(() => null);
+  const withSurveySummary = enrichSummaryWithSurveyLayer(summary, surveyMetadata, surveyPeriodStats);
+  const enrichedSummary = enrichSummaryWithAssignmentLayers(
+    withSurveySummary,
+    assignmentCurrentMetadata,
+    assignmentHistoryMetadata,
+    assignmentPeriodStats
+  );
   const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
-  const mergedGeojson = mergeSurveyEvidenceIntoGeojson(allMonthsGeojson, evidenceByPeriod);
-  const latestMonth = enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
+  const baseGeojson = assignmentHistoryResult.geojson || allMonthsGeojson;
+  const mergedGeojson = mergeSurveyEvidenceIntoGeojson(baseGeojson, evidenceByPeriod);
+  const liveMonthlyMetrics = assignmentHistoryResult.geojson
+    ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats)
+    : null;
+  const latestMonth = enrichedSummary.latest_month || liveMonthlyMetrics?.at(-1)?.period_month || monthlyMetrics.at(-1)?.period_month;
   const liveLatestSurveyRecordCount = Number(
     surveyPeriodStats.find((row) => row.period_label === latestMonth)?.record_count || 0
   );
   enrichedSummary.live_latest_survey_record_count = liveLatestSurveyRecordCount;
+  enrichedSummary.assignment_source = assignmentHistoryResult.geojson
+    ? ASSIGNMENT_HISTORY_LAYER_NAME
+    : "published_assignment_geojson_fallback";
   const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
-  const enrichedMonthlyMetrics = enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+  const enrichedMonthlyMetrics = liveMonthlyMetrics || enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+  const liveContractorMonthly = assignmentHistoryResult.geojson
+    ? aggregateLiveContractorMonthly(mergedGeojson)
+    : null;
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
-    contractorMonthly: aggregateContractorMonthly(contractorMonthlyRaw),
+    contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     summary: enrichedSummary,
     currentMetrics

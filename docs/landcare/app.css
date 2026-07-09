@@ -440,6 +440,22 @@ textarea {
   align-items: center;
 }
 
+.legend-button {
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.legend-button:hover strong,
+.legend-button.is-active strong {
+  color: var(--ura-blue-dark);
+}
+
 .legend-item strong {
   overflow: hidden;
   font-size: 12px;
