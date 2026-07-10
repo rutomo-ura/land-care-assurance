@@ -44,9 +44,9 @@
   {
     "period_month": "2025-05",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 84,
-    "returned_assigned_parcel_keys": 40,
-    "completion_rate_pct": 47.6
+    "assigned_parcel_keys": 85,
+    "returned_assigned_parcel_keys": 41,
+    "completion_rate_pct": 48.2
   },
   {
     "period_month": "2025-05",
@@ -100,9 +100,9 @@
   {
     "period_month": "2025-06",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 84,
+    "assigned_parcel_keys": 85,
     "returned_assigned_parcel_keys": 50,
-    "completion_rate_pct": 59.5
+    "completion_rate_pct": 58.8
   },
   {
     "period_month": "2025-06",
@@ -156,9 +156,9 @@
   {
     "period_month": "2025-07",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 85,
-    "returned_assigned_parcel_keys": 63,
-    "completion_rate_pct": 74.1
+    "assigned_parcel_keys": 84,
+    "returned_assigned_parcel_keys": 62,
+    "completion_rate_pct": 73.8
   },
   {
     "period_month": "2025-07",
@@ -324,9 +324,9 @@
   {
     "period_month": "2025-11",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 61,
-    "returned_assigned_parcel_keys": 35,
-    "completion_rate_pct": 57.4
+    "assigned_parcel_keys": 60,
+    "returned_assigned_parcel_keys": 34,
+    "completion_rate_pct": 56.7
   },
   {
     "period_month": "2025-11",
@@ -380,9 +380,9 @@
   {
     "period_month": "2025-12",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 60,
-    "returned_assigned_parcel_keys": 43,
-    "completion_rate_pct": 71.7
+    "assigned_parcel_keys": 61,
+    "returned_assigned_parcel_keys": 44,
+    "completion_rate_pct": 72.1
   },
   {
     "period_month": "2025-12",
@@ -492,7 +492,7 @@
   {
     "period_month": "2026-02",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 61,
+    "assigned_parcel_keys": 60,
     "returned_assigned_parcel_keys": 0,
     "completion_rate_pct": 0.0
   },
@@ -660,9 +660,9 @@
   {
     "period_month": "2026-05",
     "organization": "KRJ Enterprises",
-    "assigned_parcel_keys": 62,
+    "assigned_parcel_keys": 61,
     "returned_assigned_parcel_keys": 46,
-    "completion_rate_pct": 74.2
+    "completion_rate_pct": 75.4
   },
   {
     "period_month": "2026-05",
@@ -675,15 +675,15 @@
     "period_month": "2026-06",
     "organization": "Amani Christian CDC",
     "assigned_parcel_keys": 10,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 10.0
   },
   {
     "period_month": "2026-06",
     "organization": "Center That CARES",
     "assigned_parcel_keys": 11,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
+    "returned_assigned_parcel_keys": 1,
+    "completion_rate_pct": 9.1
   },
   {
     "period_month": "2026-06",
@@ -717,8 +717,8 @@
     "period_month": "2026-06",
     "organization": "KRJ Enterprises",
     "assigned_parcel_keys": 59,
-    "returned_assigned_parcel_keys": 10,
-    "completion_rate_pct": 16.9
+    "returned_assigned_parcel_keys": 15,
+    "completion_rate_pct": 25.4
   },
   {
     "period_month": "2026-06",

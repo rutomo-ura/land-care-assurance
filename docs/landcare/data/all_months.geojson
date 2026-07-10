@@ -17,12 +17,12 @@
       "2026-05",
       "2026-06"
     ],
-    "latest_assignment_period": "2026-06-15",
+    "latest_assignment_period": "2026-07-15",
     "latest_survey_period": "2026-06-15",
-    "survey_submission_count": 169,
-    "survey_distinct_parcels": 165,
-    "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-06-15.",
-    "generated_on": "2026-07-09",
+    "survey_submission_count": 226,
+    "survey_distinct_parcels": 218,
+    "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-06-15.",
+    "generated_on": "2026-07-10",
     "geometry_mode": "postgres_readonly_export",
     "source_tables": [
       "gis.regrid_bundle_assignments",
@@ -8713,11 +8713,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-05",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
+        "completion_status": "returned",
+        "maintenance_level": "Active"
       },
       "geometry": {
         "type": "Polygon",
@@ -19442,8 +19442,8 @@
         "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
+        "completion_status": "missing",
+        "maintenance_level": "Active"
       },
       "geometry": {
         "type": "Polygon",
@@ -30165,11 +30165,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-07",
         "assigned_flag": true,
-        "returned_flag": true,
+        "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "returned",
-        "maintenance_level": "Active"
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
       },
       "geometry": {
         "type": "Polygon",
@@ -63707,11 +63707,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-11",
         "assigned_flag": true,
-        "returned_flag": true,
+        "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "returned",
-        "maintenance_level": "Active"
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
       },
       "geometry": {
         "type": "Polygon",
@@ -74433,11 +74433,11 @@
         "organization": "KRJ Enterprises",
         "period_month": "2025-12",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "request_only",
-        "maintenance_level": "Request Only"
+        "completion_status": "returned",
+        "maintenance_level": "Active"
       },
       "geometry": {
         "type": "Polygon",
@@ -95888,8 +95888,8 @@
         "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
       },
       "geometry": {
         "type": "Polygon",
@@ -127940,8 +127940,8 @@
         "returned_flag": false,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
-        "maintenance_level": "Active"
+        "completion_status": "request_only",
+        "maintenance_level": "Request Only"
       },
       "geometry": {
         "type": "Polygon",
@@ -128989,10 +128989,10 @@
         "organization": "Amani Christian CDC",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -129609,10 +129609,10 @@
         "organization": "Center That CARES",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -137687,10 +137687,10 @@
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -137729,10 +137729,10 @@
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -137771,10 +137771,10 @@
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -137813,10 +137813,10 @@
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
@@ -137855,10 +137855,10 @@
         "organization": "KRJ Enterprises",
         "period_month": "2026-06",
         "assigned_flag": true,
-        "returned_flag": false,
+        "returned_flag": true,
         "ownership_type": "URA",
         "masked_geometry": false,
-        "completion_status": "missing",
+        "completion_status": "returned",
         "maintenance_level": "Active"
       },
       "geometry": {
