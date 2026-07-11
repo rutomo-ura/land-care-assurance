@@ -111,9 +111,9 @@
     "period_month": "2026-06",
     "assigned_active": 176,
     "assigned_total": 210,
-    "returned_assigned": 25,
-    "active_completion_rate_pct": 14.2,
-    "blended_completion_rate_pct": 11.9,
-    "survey_rows_raw": 25
+    "returned_assigned": 28,
+    "active_completion_rate_pct": 15.9,
+    "blended_completion_rate_pct": 13.3,
+    "survey_rows_raw": 28
   }
 ]
