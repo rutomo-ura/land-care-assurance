@@ -22,7 +22,7 @@
     "survey_submission_count": 260,
     "survey_distinct_parcels": 245,
     "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-06-15.",
-    "generated_on": "2026-07-11",
+    "generated_on": "2026-07-12",
     "geometry_mode": "postgres_readonly_export",
     "source_tables": [
       "gis.regrid_bundle_assignments",
