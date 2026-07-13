@@ -675,8 +675,8 @@
     "period_month": "2026-06",
     "organization": "Amani Christian CDC",
     "assigned_parcel_keys": 10,
-    "returned_assigned_parcel_keys": 1,
-    "completion_rate_pct": 10.0
+    "returned_assigned_parcel_keys": 2,
+    "completion_rate_pct": 20.0
   },
   {
     "period_month": "2026-06",
@@ -717,8 +717,8 @@
     "period_month": "2026-06",
     "organization": "KRJ Enterprises",
     "assigned_parcel_keys": 59,
-    "returned_assigned_parcel_keys": 17,
-    "completion_rate_pct": 28.8
+    "returned_assigned_parcel_keys": 31,
+    "completion_rate_pct": 52.5
   },
   {
     "period_month": "2026-06",
