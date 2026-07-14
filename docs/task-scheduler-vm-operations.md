@@ -62,7 +62,7 @@ flowchart TD
 
 ## Task Registration Standard
 
-Register `\GIS Automations\LandCare Daily Dashboard Refresh` using the approved `DOMAIN\landcare-refresh` service account (or the locally approved equivalent), not an interactive personal account. The registration script requires a password-backed principal, verifies that the stored principal uses `Password` logon, runs at highest privilege, retries three times at 15-minute intervals, starts missed runs when available, and stops a run after two hours.
+Update `\GIS Automations\LandCare-Daily-Dashboard-Refresh.task` using the approved `DOMAIN\landcare-refresh` service account (or the locally approved equivalent), not an interactive personal account. The registration script requires a password-backed principal, verifies that the stored principal uses `Password` logon, runs at highest privilege, retries three times at 15-minute intervals, starts missed runs when available, and stops a run after two hours.
 
 ```powershell
 cd C:\srv\GISWebApp\land-care-assurance
@@ -71,9 +71,9 @@ cd C:\srv\GISWebApp\land-care-assurance
   -TaskUser "DOMAIN\landcare-refresh" `
   -PromptForTaskPassword
 
-Get-ScheduledTask -TaskPath "\GIS Automations\" -TaskName "LandCare Daily Dashboard Refresh" |
+Get-ScheduledTask -TaskPath "\GIS Automations\" -TaskName "LandCare-Daily-Dashboard-Refresh.task" |
   Select-Object TaskName, TaskPath, State, @{Name="RunAs";Expression={$_.Principal.UserId}}, @{Name="LogonType";Expression={$_.Principal.LogonType}}, @{Name="RunLevel";Expression={$_.Principal.RunLevel}}
-Get-ScheduledTaskInfo -TaskPath "\GIS Automations\" -TaskName "LandCare Daily Dashboard Refresh" |
+Get-ScheduledTaskInfo -TaskPath "\GIS Automations\" -TaskName "LandCare-Daily-Dashboard-Refresh.task" |
   Select-Object LastRunTime, LastTaskResult, NextRunTime
 ```
 

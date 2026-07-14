@@ -1,6 +1,6 @@
 param(
   [string]$RepoRoot = "C:\srv\GISWebApp\land-care-assurance",
-  [string]$TaskName = "LandCare Daily Dashboard Refresh",
+  [string]$TaskName = "LandCare-Daily-Dashboard-Refresh.task",
   [string]$TaskPath = "\GIS Automations\",
   [string]$StartTime = "07:00",
   [Parameter(Mandatory=$true)]

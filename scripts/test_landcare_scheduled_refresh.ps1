@@ -1,5 +1,5 @@
 param(
-  [string]$TaskName = "LandCare Daily Dashboard Refresh",
+  [string]$TaskName = "LandCare-Daily-Dashboard-Refresh.task",
   [string]$TaskPath = "\GIS Automations\",
   [string]$LogRoot = "C:\srv\logs\land-care-assurance",
   [int]$TimeoutMinutes = 20

@@ -42,7 +42,7 @@ C:\srv\GISWebApp\land-care-assurance\.env
 
 Existing `.env` files are backed up before replacement. The `.env` file is not part of the bundle and should not be committed.
 
-To also register the daily 7:00 AM Task Scheduler job under `Task Scheduler Library\GIS Automations`:
+To update the existing daily 7:00 AM `LandCare-Daily-Dashboard-Refresh.task` job under `Task Scheduler Library\GIS Automations`:
 
 ```powershell
 .\install_landcare_daily_refresh.ps1 `
