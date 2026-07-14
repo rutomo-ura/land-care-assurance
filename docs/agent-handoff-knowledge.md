@@ -1,8 +1,19 @@
 # Agent Handoff Knowledge
 
-Last updated: July 7, 2026
+Last updated: July 14, 2026
 
 This is the living handoff document for future Codex or analyst sessions. Update it at the end of each meaningful work session so the next agent can continue without rediscovering the project.
+
+## v1.0 handover status
+
+The v1.0 operating package is complete and is the current reference for delivery, operations, and presentations:
+
+- [`docs/v1.0-operational-handover.md`](v1.0-operational-handover.md) - canonical handover, operating logic, owners, diagrams, and release readiness controls
+- [`docs/v1.0-presentation-script.md`](v1.0-presentation-script.md) - meeting-ready narrative and demo script
+- [`docs/v1.0-release-notes.md`](v1.0-release-notes.md) - user-facing scope and known release checks
+- [`docs/landcare-architecture.md`](landcare-architecture.md) - system architecture and data contract
+
+Current production surfaces are the [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/) and [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/). The current Map Monitor uses the ArcGIS Maps SDK with live ArcGIS survey and assignment evidence; older prototype notes that mention Leaflet apply only to the historical `prototype/` implementation.
 
 ## Safety Rule
 

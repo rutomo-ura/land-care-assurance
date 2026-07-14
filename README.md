@@ -1,3 +1,16 @@
+# LandCare Assurance v1.0
+
+Public application: [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/) and [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/).
+
+Start a handover or operational review here:
+
+- [`docs/v1.0-operational-handover.md`](docs/v1.0-operational-handover.md) - system, reasoning, runbook, roles, and readiness controls
+- [`docs/v1.0-presentation-script.md`](docs/v1.0-presentation-script.md) - meeting-ready content and speaker script
+- [`docs/v1.0-release-notes.md`](docs/v1.0-release-notes.md) - release scope and known checks
+- [`docs/landcare-architecture.md`](docs/landcare-architecture.md) - canonical architecture
+
+---
+
 # LandCare Daily Refresh VM Bundle
 
 Architecture: [`docs/landcare-architecture.md`](docs/landcare-architecture.md)

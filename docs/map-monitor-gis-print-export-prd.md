@@ -1,5 +1,15 @@
 # Map Monitor GIS Print Export PRD
 
+## v1.0 implementation status
+
+Implemented in [`docs/landcare/monitoring.js`](landcare/monitoring.js) and the Map Monitor on 2026-07-14.
+
+- The control is labeled **Export Brief** rather than `Export PDF` to distinguish the decision-oriented output from a generic screenshot.
+- Before capture, users choose metrics in a checklist. The default executive set is completion rate, open active parcels, survey evidence returned, active assigned parcels, and annual budget plan.
+- Users can add monthly spend, total assigned, Request Only, selected acres, neighborhoods, and contractor open-work rank. Measures unavailable for the current filters are disabled.
+- The A3 landscape browser print layout is titled **URA LandCare Executive Map Brief** and includes the selected metrics, filtered map, legend, action focus, scale, north arrow, generated time, and source footer.
+- Browser print-preview inspection remains the final visual acceptance check; see [`v1.0-operational-handover.md`](v1.0-operational-handover.md).
+
 ## Brief
 
 Add an `Export PDF` button to the LandCare Map Monitor that generates a print-ready GIS map sheet for the selected survey view. The output should feel like a professional ArcGIS-style A3 landscape print: title, map, selected contractor context, auto-zoomed contractor area, summary stats, north arrow, scale, legend, and export metadata.
