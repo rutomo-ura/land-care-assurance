@@ -9,6 +9,7 @@ This is the canonical implementation reference for the LandCare Assurance data p
 - [Data engineering flow](landcare-data-engineering-flow.md)
 - [Task Scheduler operations](task-scheduler-vm-operations.md)
 - [Current source inventory and QA](../data%20engineering/current-data-qaqc-source-inventory.md)
+- [Reusable presentation visuals](landcare-presentation-assets.md)
 
 ## 1. Production surfaces
 
