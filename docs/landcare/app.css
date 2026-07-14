@@ -643,8 +643,16 @@ textarea {
 }
 
 .report-context.compact {
-  grid-template-columns: minmax(150px, .9fr) minmax(150px, .8fr) minmax(190px, 1.1fr);
-  max-width: 760px;
+  grid-template-columns: minmax(145px, .75fr) minmax(145px, .7fr) minmax(180px, .9fr) minmax(210px, 1fr);
+  max-width: 980px;
+}
+
+.report-context .period-status strong {
+  color: var(--green);
+}
+
+.report-context .period-status.is-pending strong {
+  color: var(--orange);
 }
 
 .app-footer {
@@ -754,7 +762,7 @@ textarea {
 
 .insight-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -949,6 +957,10 @@ textarea {
 
 .card-icon-slot[data-icon="open-active"] {
   background-image: url("./assets/icons/icon-open-active.svg");
+}
+
+.card-icon-slot[data-icon="inventory"] {
+  background-image: url("./assets/icons/icon-inventory.svg");
 }
 
 .card-icon-slot[data-icon="budget"] {
@@ -1892,7 +1904,7 @@ select {
   }
 
   .insight-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .leader-grid {
@@ -1925,6 +1937,11 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .report-context.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+  }
+
   .monitor-sidebar {
     border-right: 0;
   }
@@ -1954,11 +1971,16 @@ select {
 
   .mini-kpis,
   .kpi-grid,
+  .insight-grid,
   .reference-card-grid.two-up,
   .reference-card-grid.three-up,
   .reference-card-grid.four-up,
   .reference-card-grid.six-up,
   .source-contract div {
+    grid-template-columns: 1fr;
+  }
+
+  .report-context.compact {
     grid-template-columns: 1fr;
   }
 

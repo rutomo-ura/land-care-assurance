@@ -49,6 +49,11 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 });
+const compactMoneyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0
+});
 
 function formatNumber(value) {
   return formatter.format(Number(value || 0));
@@ -60,6 +65,10 @@ function formatPct(value) {
 
 function formatMoney(value) {
   return moneyFormatter.format(Number(value || 0));
+}
+
+function formatMoneyCompact(value) {
+  return compactMoneyFormatter.format(Number(value || 0));
 }
 
 function formatAcres(value) {
@@ -86,6 +95,10 @@ function quarterLabel(month) {
   const [year, rawMonth] = String(month).split("-");
   const quarter = Math.ceil(Number(rawMonth) / 3);
   return `Q${quarter} ${year}`;
+}
+
+function hasReportedSurveyData(row) {
+  return Number(row?.survey_rows_raw || 0) > 0;
 }
 
 function shortContractor(name) {
@@ -390,10 +403,11 @@ function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth) {
 
   document.getElementById("currentParcelsKpi").textContent = formatNumber(currentMetrics.uniqueParcels);
   document.getElementById("currentActiveKpi").textContent = formatNumber(currentMetrics.activeParcels);
-  document.getElementById("latestAssignedKpi").textContent = formatNumber(latest.assigned_active);
-  document.getElementById("latestReturnedKpi").textContent = formatNumber(latestSurveyRecords);
-  document.getElementById("latestCompletionKpi").textContent = formatPct(latest.active_completion_rate_pct);
-  document.getElementById("ytdReturnedKpi").textContent = formatNumber(latest.returned_assigned);
+  const periodStatus = document.getElementById("periodStatusKpi");
+  const periodStatusCard = document.getElementById("periodStatusCard");
+  const isReported = hasReportedSurveyData({ ...latest, survey_rows_raw: latestSurveyRecords });
+  periodStatus.textContent = isReported ? "Reported" : "Awaiting submissions";
+  periodStatusCard.classList.toggle("is-pending", !isReported);
 }
 
 function renderContractorOptions(rows) {
@@ -418,6 +432,7 @@ function renderSemiGauge(containerId, value, options = {}) {
   const label = options.label || "Active completion";
   const featured = Boolean(options.featured);
   const compact = Boolean(options.compact);
+  const pending = Boolean(options.pending);
   const width = compact ? 112 : 188;
   const height = compact ? 68 : 112;
   const radius = compact ? 40 : 74;
@@ -430,9 +445,11 @@ function renderSemiGauge(containerId, value, options = {}) {
   const labelSize = compact ? 9 : 12;
   const labelY = compact ? cy + 10 : cy + 16;
   const valueY = compact ? cy - 2 : cy - 2;
+  const displayedValue = pending ? "—" : formatPct(pct);
+  const ariaValue = pending ? "awaiting submissions" : formatPct(pct);
 
   container.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" class="gauge-svg${featured ? " featured" : ""}${compact ? " compact" : ""}" role="img" aria-label="${escapeHtml(label)}: ${formatPct(pct)}">
+    <svg viewBox="0 0 ${width} ${height}" class="gauge-svg${featured ? " featured" : ""}${compact ? " compact" : ""}" role="img" aria-label="${escapeHtml(label)}: ${ariaValue}">
       <path
         class="gauge-track"
         d="M ${(cx - radius).toFixed(1)} ${cy} A ${radius} ${radius} 0 0 1 ${(cx + radius).toFixed(1)} ${cy}"
@@ -448,7 +465,7 @@ function renderSemiGauge(containerId, value, options = {}) {
         stroke-linecap="round"
         stroke-dasharray="${dash.toFixed(2)} ${arcLength.toFixed(2)}"
       ></path>
-      <text class="gauge-value" x="${cx}" y="${valueY}" text-anchor="middle" font-size="${valueSize}">${formatPct(pct)}</text>
+      <text class="gauge-value" x="${cx}" y="${valueY}" text-anchor="middle" font-size="${valueSize}">${displayedValue}</text>
       ${compact ? "" : `<text class="gauge-label" x="${cx}" y="${labelY}" text-anchor="middle" font-size="${labelSize}">${escapeHtml(label)}</text>`}
     </svg>
   `;
@@ -515,6 +532,7 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const latestRate = Number(latest.active_completion_rate_pct || 0);
   const priorRate = Number(prior?.active_completion_rate_pct || 0);
   const delta = latestRate - priorRate;
+  const isReported = hasReportedSurveyData(latest);
   const contractorRows = [...latestContractorRows].map((row) => ({
     ...row,
     open: Math.max(Number(row.assigned || 0) - Number(row.returned || 0), 0)
@@ -522,12 +540,14 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const largestOpen = contractorRows.sort((a, b) => b.open - a.open || a.completionRate - b.completionRate)[0];
   const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
 
-  renderSemiGauge("completionGauge", latestRate, { label: "Active completion", featured: true });
+  renderSemiGauge("completionGauge", latestRate, { label: "Active completion", featured: true, pending: !isReported });
   const completionCopy = document.getElementById("completionReadoutCopy");
-  completionCopy.textContent = prior
+  completionCopy.textContent = !isReported
+    ? `Awaiting ${shortMonth(latest.period_month)} submissions · ${formatNumber(latest.returned_assigned)} of ${formatNumber(latest.assigned_active)} returned`
+    : prior
     ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${shortMonth(prior.period_month)}`
     : `${formatNumber(latest.returned_assigned)} of ${formatNumber(latest.assigned_active)} active`;
-  completionCopy.className = `card-trend${prior ? (delta >= 0 ? " up" : " down") : ""}`;
+  completionCopy.className = `card-trend${isReported && prior ? (delta >= 0 ? " up" : " down") : ""}`;
 
   document.getElementById("openParcelInsight").textContent = formatNumber(openTotal);
   const openCopy = document.getElementById("openParcelCopy");
@@ -537,24 +557,25 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   openCopy.className = "card-trend";
 
   document.getElementById("budgetRunRateInsight").textContent =
-    formatMoney(financeSummary?.summary?.annual_invoice_run_rate || 0);
+    formatMoneyCompact(financeSummary?.summary?.annual_invoice_run_rate || 0);
   const budgetCopy = document.getElementById("budgetRunRateCopy");
   budgetCopy.textContent =
-    `${formatMoney(financeSummary?.summary?.monthly_invoice_total || 0)}/mo · ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors`;
+    `${formatMoneyCompact(financeSummary?.summary?.monthly_invoice_total || 0)}/mo · ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors`;
   budgetCopy.className = "card-trend";
 }
 
 function renderContractorGroupedChart(rows, selected = "all", latestMonth = "") {
-  const chartRows = contractorChartRows(rows, selected);
+  const allChartRows = contractorChartRows(rows, selected);
+  const chartRows = selected === "all" ? allChartRows.slice(0, 5) : allChartRows;
   const maxValue = Math.max(
     1,
     ...chartRows.map((row) => Number(row.assigned || 0))
   );
-  const openTotal = chartRows.reduce((sum, row) => sum + Math.max(Number(row.assigned || 0) - Number(row.returned || 0), 0), 0);
+  const openTotal = allChartRows.reduce((sum, row) => sum + Math.max(Number(row.assigned || 0) - Number(row.returned || 0), 0), 0);
   const summaryEl = document.getElementById("contractorQueueSummary");
   if (summaryEl) {
     summaryEl.textContent = latestMonth
-      ? `${shortMonth(latestMonth)} · ${formatNumber(openTotal)} open across ${chartRows.length} contractors`
+      ? `${shortMonth(latestMonth)} · ${formatNumber(openTotal)} open${allChartRows.length > chartRows.length ? ` · top ${chartRows.length} of ${allChartRows.length} contractors` : ` across ${chartRows.length} contractors`}`
       : `${formatNumber(openTotal)} open`;
   }
   document.getElementById("contractorGroupedChart").innerHTML = chartRows.map((row) => {
@@ -644,16 +665,19 @@ function renderFinance(financeSummary) {
 }
 
 function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
-  renderLineChart(monthlyMetrics);
   const latest = metricForMonth(monthlyMetrics, selectedMonth);
   const prior = priorMetricForMonth(monthlyMetrics, selectedMonth);
+  const reportedMetrics = monthlyMetrics.filter(hasReportedSurveyData);
+  renderLineChart(reportedMetrics.length ? reportedMetrics : monthlyMetrics);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
   const priorRate = Number(prior?.active_completion_rate_pct || 0);
   const delta = latestRate - priorRate;
-  const avgRate = monthlyMetrics.reduce((sum, row) => sum + Number(row.active_completion_rate_pct || 0), 0) / monthlyMetrics.length;
+  const avgRate = reportedMetrics.reduce((sum, row) => sum + Number(row.active_completion_rate_pct || 0), 0) / Math.max(reportedMetrics.length, 1);
   const summaryEl = document.getElementById("trendSummary");
   if (summaryEl) {
-    summaryEl.textContent = `${monthlyMetrics.length} months · avg ${formatPct(avgRate)} · selected ${formatPct(latestRate)}${prior ? ` (${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts)` : ""}`;
+    summaryEl.textContent = hasReportedSurveyData(latest)
+      ? `${reportedMetrics.length} reported months · avg ${formatPct(avgRate)} · selected ${formatPct(latestRate)}${prior ? ` (${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts)` : ""}`
+      : `${reportedMetrics.length} reported months · avg ${formatPct(avgRate)} · ${shortMonth(latest.period_month)} awaiting submissions`;
   }
 }
 
@@ -809,10 +833,25 @@ function setupTabs() {
   const buttons = Array.from(document.querySelectorAll(".report-tabs button"));
   const panels = Array.from(document.querySelectorAll(".tab-panel"));
   for (const button of buttons) {
+    const tab = button.dataset.tab;
+    const panel = panels.find((item) => item.dataset.panel === tab);
+    button.id = `report-tab-${tab}`;
+    if (panel) {
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", button.id);
+      panel.setAttribute("aria-hidden", String(!panel.classList.contains("is-active")));
+    }
     button.addEventListener("click", () => {
-      const tab = button.dataset.tab;
-      buttons.forEach((item) => item.classList.toggle("is-active", item === button));
-      panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
+      buttons.forEach((item) => {
+        const isActive = item === button;
+        item.classList.toggle("is-active", isActive);
+        item.setAttribute("aria-selected", String(isActive));
+      });
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.panel === tab;
+        panel.classList.toggle("is-active", isActive);
+        panel.setAttribute("aria-hidden", String(!isActive));
+      });
     });
   }
 }

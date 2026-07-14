@@ -23,14 +23,14 @@
     </header>
 
     <main class="kpi-shell">
-      <nav class="report-tabs" aria-label="LandCare report sections">
-        <button class="is-active" type="button" data-tab="landing">Landing Page</button>
-        <button type="button" data-tab="budget">Land Care Budget</button>
-        <button type="button" data-tab="checkRequests">Check Request History</button>
-        <button type="button" data-tab="submissionRate">Survey Submission Rate</button>
-        <button type="button" data-tab="areaDistribution">Parcel Area Distribution</button>
-        <button type="button" data-tab="parcelDetails">Parcel Details</button>
-        <button type="button" data-tab="maintenanceExpenses">Maintenance Expenses</button>
+      <nav class="report-tabs" aria-label="LandCare report sections" role="tablist">
+        <button class="is-active" type="button" data-tab="landing" role="tab" aria-selected="true">Overview</button>
+        <button type="button" data-tab="budget" role="tab" aria-selected="false">Budget</button>
+        <button type="button" data-tab="checkRequests" role="tab" aria-selected="false">Requests</button>
+        <button type="button" data-tab="submissionRate" role="tab" aria-selected="false">Submission Rate</button>
+        <button type="button" data-tab="areaDistribution" role="tab" aria-selected="false">Parcel Area</button>
+        <button type="button" data-tab="parcelDetails" role="tab" aria-selected="false">Parcels</button>
+        <button type="button" data-tab="maintenanceExpenses" role="tab" aria-selected="false">Expenses</button>
       </nav>
 
       <section class="report-context compact" aria-label="Report context">
@@ -42,6 +42,10 @@
           <span>Month</span>
           <select id="kpiMonthSelect" aria-label="KPI month"></select>
         </label>
+        <div class="period-status" id="periodStatusCard">
+          <span class="eyebrow">Data Status</span>
+          <strong id="periodStatusKpi">Checking...</strong>
+        </div>
         <div>
           <span class="eyebrow">Refreshed</span>
           <strong id="reportUpdatedKpi">Checking data...</strong>
@@ -49,7 +53,7 @@
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
-        <section class="insight-grid" aria-label="Key metrics">
+        <section class="insight-grid" aria-label="Executive metrics">
           <article class="insight-card featured has-gauge">
             <div class="card-top">
               <span class="eyebrow">Completion</span>
@@ -60,11 +64,19 @@
           </article>
           <article class="insight-card warning">
             <div class="card-top">
-              <span class="eyebrow">Open Active</span>
+              <span class="eyebrow">Open Queue</span>
               <span class="card-icon-slot has-icon" data-icon="open-active" data-icon-label="!" aria-hidden="true"></span>
             </div>
             <strong id="openParcelInsight">--</strong>
             <p class="card-trend" id="openParcelCopy">Loading...</p>
+          </article>
+          <article class="insight-card">
+            <div class="card-top">
+              <span class="eyebrow">LandCare Inventory</span>
+              <span class="card-icon-slot has-icon" data-icon="inventory" data-icon-label="#" aria-hidden="true"></span>
+            </div>
+            <strong id="currentParcelsKpi">--</strong>
+            <p class="card-trend"><span id="currentActiveKpi">--</span> active parcels</p>
           </article>
           <article class="insight-card">
             <div class="card-top">
@@ -76,23 +88,11 @@
           </article>
         </section>
 
-        <section class="stat-strip" aria-label="Snapshot">
-          <h2 class="stat-strip-title">Snapshot</h2>
-          <div class="reference-card-grid six-up">
-            <div class="reference-card featured"><span>Inventory</span><strong id="currentParcelsKpi">--</strong></div>
-            <div class="reference-card"><span>Active</span><strong id="currentActiveKpi">--</strong></div>
-            <div class="reference-card warning"><span>Completion</span><strong id="latestCompletionKpi">--</strong></div>
-            <div class="reference-card"><span>All Surveys</span><strong id="latestReturnedKpi">--</strong></div>
-            <div class="reference-card"><span>Assigned</span><strong id="latestAssignedKpi">--</strong></div>
-            <div class="reference-card"><span>Matched Returned</span><strong id="ytdReturnedKpi">--</strong></div>
-          </div>
-        </section>
-
         <section class="powerbi-grid landing-charts" aria-label="Landing charts">
           <article class="panel powerbi-panel trend-panel">
             <div class="panel-head">
               <div>
-                <h1>Completion Trend</h1>
+                <h1>Reported Completion Trend</h1>
                 <p class="panel-sub" id="trendSummary">Loading trend...</p>
               </div>
             </div>
