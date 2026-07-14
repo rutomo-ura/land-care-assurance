@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Monitoring</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260715-1" />
   </head>
   <body data-page="monitoring">
     <header class="app-header">
@@ -24,6 +24,18 @@
     </header>
 
     <main class="monitoring-shell">
+      <section class="monitoring-masthead" aria-labelledby="monitoringTitle">
+        <div>
+          <span class="section-kicker">Operational control</span>
+          <h1 id="monitoringTitle">LandCare portfolio map</h1>
+          <p>Find open maintenance exposure, verify survey evidence, and focus contractor action by place.</p>
+        </div>
+        <div class="monitoring-reading-guide" aria-label="Map reading guide">
+          <span><i class="key-dot risk"></i>Open work needs follow-up</span>
+          <span><i class="key-dot stable"></i>Filters define the exported brief</span>
+        </div>
+      </section>
+
       <aside class="monitor-sidebar" aria-label="Monitoring controls">
         <section class="sidebar-section compact">
           <span class="eyebrow" id="latestMonthLabel">Latest survey month</span>
@@ -106,7 +118,7 @@
         <section>
           <div class="section-heading">
             <span class="eyebrow">Action Focus</span>
-            <button class="export-button" type="button" id="exportPdfButton">Export PDF</button>
+            <button class="export-button" type="button" id="exportPdfButton">Export Brief</button>
           </div>
           <div class="focus-list" id="actionFocus"></div>
           <div class="export-status" id="exportStatus" role="status"></div>
@@ -114,6 +126,35 @@
       </aside>
     </main>
 
-    <script type="module" src="../landcare/monitoring.js"></script>
+    <dialog class="export-metrics-dialog" id="exportMetricsDialog" aria-labelledby="exportMetricsTitle">
+      <form method="dialog">
+        <header class="export-dialog-head">
+          <span class="section-kicker">Executive map brief</span>
+          <h2 id="exportMetricsTitle">Choose metrics for this PDF</h2>
+          <p>Default selections highlight delivery risk, evidence return, portfolio scope, and financial exposure for the current map filters.</p>
+        </header>
+        <fieldset class="export-metrics-list">
+          <legend>Metrics to include</legend>
+          <label><input type="checkbox" data-export-metric="completionRate" checked /> Completion rate</label>
+          <label><input type="checkbox" data-export-metric="open" checked /> Open active parcels</label>
+          <label><input type="checkbox" data-export-metric="returned" checked /> Survey evidence returned</label>
+          <label><input type="checkbox" data-export-metric="active" checked /> Active assigned parcels</label>
+          <label><input type="checkbox" data-export-metric="annualRunRate" checked /> Annual budget plan</label>
+          <label><input type="checkbox" data-export-metric="monthlyRunRate" /> Monthly budget spend</label>
+          <label><input type="checkbox" data-export-metric="assigned" /> Total assigned parcels</label>
+          <label><input type="checkbox" data-export-metric="requestOnly" /> Request-only parcels</label>
+          <label><input type="checkbox" data-export-metric="acres" /> Selected acres</label>
+          <label><input type="checkbox" data-export-metric="neighborhoods" /> Neighborhoods covered</label>
+          <label><input type="checkbox" data-export-metric="rank" /> Contractor open-work rank</label>
+        </fieldset>
+        <p class="export-metric-validation" id="exportMetricValidation" role="alert"></p>
+        <footer class="export-dialog-actions">
+          <button class="dialog-cancel" type="submit" value="cancel">Cancel</button>
+          <button class="export-button" type="button" id="confirmExportButton">Prepare PDF</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="../landcare/monitoring.js?v=20260715-1"></script>
   </body>
 </html>

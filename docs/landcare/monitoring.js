@@ -114,6 +114,8 @@ const state = {
   surveyLayerMode: "all"
 };
 
+const DEFAULT_EXPORT_METRICS = ["completionRate", "open", "returned", "active", "annualRunRate"];
+
 const formatter = new Intl.NumberFormat("en-US");
 
 function formatNumber(value) {
@@ -1172,7 +1174,55 @@ function wireControls() {
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
-  document.getElementById("exportPdfButton").addEventListener("click", exportPrintPdf);
+  document.getElementById("exportPdfButton").addEventListener("click", openExportMetricsDialog);
+  document.getElementById("confirmExportButton").addEventListener("click", confirmExportMetrics);
+}
+
+function selectedExportMetricKeys() {
+  return Array.from(document.querySelectorAll("[data-export-metric]:checked")).map((input) => input.dataset.exportMetric);
+}
+
+function openExportMetricsDialog() {
+  const dialog = document.getElementById("exportMetricsDialog");
+  const validation = document.getElementById("exportMetricValidation");
+  validation.textContent = "";
+  syncExportMetricAvailability();
+  if (!document.querySelector("[data-export-metric]:checked")) {
+    DEFAULT_EXPORT_METRICS.forEach((key) => {
+      const input = document.querySelector(`[data-export-metric="${key}"]`);
+      if (input && !input.disabled) input.checked = true;
+    });
+  }
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else exportPrintPdf(DEFAULT_EXPORT_METRICS);
+}
+
+function syncExportMetricAvailability() {
+  const budget = exportBudgetStats();
+  const rankAvailable = state.contractorFilter !== "all";
+  const availability = {
+    annualRunRate: Boolean(budget),
+    monthlyRunRate: Boolean(budget),
+    rank: rankAvailable
+  };
+  Object.entries(availability).forEach(([key, available]) => {
+    const input = document.querySelector(`[data-export-metric="${key}"]`);
+    if (!input) return;
+    input.disabled = !available;
+    if (!available) input.checked = false;
+    input.closest("label")?.classList.toggle("is-unavailable", !available);
+  });
+}
+
+function confirmExportMetrics() {
+  const keys = selectedExportMetricKeys();
+  const validation = document.getElementById("exportMetricValidation");
+  if (!keys.length) {
+    validation.textContent = "Select at least one metric for the executive brief.";
+    return;
+  }
+  document.getElementById("exportMetricsDialog").close();
+  exportPrintPdf(keys);
 }
 
 function exportStats(features) {
@@ -1256,6 +1306,23 @@ function statLine(label, value) {
   return `<div class="print-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
 }
 
+function selectedMetricLines(stats, budget, rank, selectedKeys) {
+  const metrics = {
+    completionRate: ["Completion rate", stats.completionRate],
+    open: ["Open active parcels", formatNumber(stats.open)],
+    returned: ["Survey evidence returned", formatNumber(stats.returned)],
+    active: ["Active assigned parcels", formatNumber(stats.active)],
+    annualRunRate: budget ? ["Annual budget plan", formatMoney(budget.annualRunRate)] : null,
+    monthlyRunRate: budget ? ["Monthly budget spend", formatMoney(budget.monthlyRunRate)] : null,
+    assigned: ["Total assigned parcels", formatNumber(stats.assigned)],
+    requestOnly: ["Request-only parcels", formatNumber(stats.requestOnly)],
+    acres: ["Selected acres", formatAcres(stats.acres)],
+    neighborhoods: ["Neighborhoods covered", formatNumber(stats.neighborhoods)],
+    rank: rank ? ["Contractor open-work rank", `#${rank}`] : null
+  };
+  return selectedKeys.map((key) => metrics[key]).filter(Boolean).map(([label, value]) => statLine(label, value)).join("");
+}
+
 function buildPreparingPrintHtml() {
   return `<!doctype html>
 <html>
@@ -1294,7 +1361,7 @@ function updatePrintProgress(printWindow, percent, label) {
   if (step) step.textContent = label;
 }
 
-function buildPrintHtml(mapImage, stats, screenshotScale) {
+function buildPrintHtml(mapImage, stats, screenshotScale, selectedMetricKeys = DEFAULT_EXPORT_METRICS) {
   const contractor = state.contractorFilter === "all" ? "All Contractors" : shortContractor(state.contractorFilter);
   const district = state.districtFilter === "all" ? "All Districts" : `Council District ${state.districtFilter}`;
   const month = state.dataView === "current" ? "Current portfolio" : state.selectedMonth;
@@ -1329,6 +1396,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
       .scale-bar { height: 4mm; border-left: 1px solid #111820; border-right: 1px solid #111820; border-bottom: 3mm solid #111820; background: #fff; margin-bottom: 1mm; }
       aside { display: grid; grid-template-rows: auto auto 1fr; gap: 4mm; min-width: 0; }
       .box { border: 1px solid #d8e4ea; padding: 5mm; background: #f7fbfd; }
+      .box.metrics { border-top: 4px solid #0098d3; background: #fff; }
       .box h2 { margin: 0 0 3mm; color: #00334f; font-size: 10pt; text-transform: uppercase; letter-spacing: .04em; }
       .print-stat { display: grid; grid-template-columns: 1fr auto; gap: 5mm; padding: 2.3mm 0; border-bottom: 1px solid #d8e4ea; font-size: 8pt; }
       .print-stat:last-child { border-bottom: 0; }
@@ -1347,7 +1415,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
     <section class="sheet">
       <header>
         <div>
-          <h1>URA LandCare Survey Map</h1>
+          <h1>URA LandCare Executive Map Brief</h1>
           <div class="subtitle">Survey Month: ${escapeHtml(month)} &nbsp;|&nbsp; Contractor: ${escapeHtml(contractor)} &nbsp;|&nbsp; ${escapeHtml(district)}</div>
         </div>
         <div class="brand">URA</div>
@@ -1359,19 +1427,9 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
           <div class="scale"><div class="scale-bar"></div>Approx. scale 1:${formatNumber(Math.round(screenshotScale || state.view?.scale || 0))}</div>
         </div>
         <aside>
-          <div class="box">
-            <h2>Summary Stats</h2>
-            ${statLine("Assigned parcels", formatNumber(stats.assigned))}
-            ${statLine("Active assigned", formatNumber(stats.active))}
-            ${statLine("Surveys returned", formatNumber(stats.returned))}
-            ${statLine("Open active", formatNumber(stats.open))}
-            ${statLine("Request only", formatNumber(stats.requestOnly))}
-            ${stats.acres ? statLine("Selected acres", formatAcres(stats.acres)) : ""}
-            ${budget ? statLine("Monthly budget spend", formatMoney(budget.monthlyRunRate)) : ""}
-            ${budget ? statLine("Annual budget plan", formatMoney(budget.annualRunRate)) : ""}
-            ${statLine("Completion rate", stats.completionRate)}
-            ${statLine("Neighborhoods", formatNumber(stats.neighborhoods))}
-            ${rank ? statLine("Open parcel rank", `#${rank}`) : ""}
+          <div class="box metrics">
+            <h2>Executive metrics</h2>
+            ${selectedMetricLines(stats, budget, rank, selectedMetricKeys)}
           </div>
           <div class="box">
             <h2>Legend</h2>
@@ -1403,7 +1461,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale) {
 </html>`;
 }
 
-async function exportPrintPdf() {
+async function exportPrintPdf(selectedMetricKeys = DEFAULT_EXPORT_METRICS) {
   const button = document.getElementById("exportPdfButton");
   const status = document.getElementById("exportStatus");
   const priorLabel = button.textContent;
@@ -1429,7 +1487,7 @@ async function exportPrintPdf() {
     updatePrintProgress(printWindow, 86, "Building print layout...");
     const stats = exportStats(filteredFeatures());
     printWindow.document.open();
-    printWindow.document.write(buildPrintHtml(screenshot.dataUrl, stats, screenshotScale));
+    printWindow.document.write(buildPrintHtml(screenshot.dataUrl, stats, screenshotScale, selectedMetricKeys));
     printWindow.document.close();
     status.textContent = "Print layout opened. Choose Save as PDF in the print dialog.";
   } catch (error) {
