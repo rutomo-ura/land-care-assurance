@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260714-3" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260714-4" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -131,29 +131,34 @@
       </section>
 
       <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
-        <article class="panel metric-group">
-          <div class="panel-head compact-head">
-            <h1>Land Care Budget</h1>
-          </div>
-          <div class="reference-card-grid four-up">
-            <div class="reference-card featured"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong></div>
-            <div class="reference-card"><span>Monthly Invoice Total</span><strong id="monthlyInvoiceKpi">--</strong></div>
-            <div class="reference-card"><span>Total Contract Amount</span><strong id="totalContractKpi">--</strong></div>
-            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong></div>
+        <header class="tab-intro">
+          <div><span class="section-kicker">Financial control</span><h2>Budget position and contractor exposure</h2></div>
+          <p>Compare the current invoice pace with committed contract value and supplier concentration.</p>
+        </header>
+        <article class="metric-band metric-group">
+          <div class="reference-card-grid four-up executive-band">
+            <div class="reference-card featured"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong><small>Projected invoice pace</small></div>
+            <div class="reference-card"><span>Monthly Invoice Total</span><strong id="monthlyInvoiceKpi">--</strong><small>Current monthly baseline</small></div>
+            <div class="reference-card"><span>Total Contract Amount</span><strong id="totalContractKpi">--</strong><small>Committed portfolio value</small></div>
+            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong><small>Active supplier base</small></div>
           </div>
         </article>
-        <article class="panel">
+        <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <h1>Contract Amount by Contractor</h1>
+            <div><h1>Contract amount by contractor</h1><p class="panel-sub">Ranked view of annual financial exposure</p></div>
           </div>
           <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
         </article>
       </section>
 
       <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
-        <article class="panel">
+        <header class="tab-intro">
+          <div><span class="section-kicker">Payment operations</span><h2>Check request history</h2></div>
+          <p>Audit invoice timing, payment values, and contractor-level request activity.</p>
+        </header>
+        <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <h1>Check Request History</h1>
+            <div><h1>Request ledger</h1><p class="panel-sub">Most recent finance records in source order</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="checkRequestTable"></table>
@@ -163,9 +168,13 @@
       </section>
 
       <section class="tab-panel" data-panel="submissionRate" aria-label="Survey Submission Rate">
-        <article class="panel">
+        <header class="tab-intro">
+          <div><span class="section-kicker">Delivery assurance</span><h2>Survey submission performance</h2></div>
+          <p>Track monthly evidence return and identify periods that require contractor follow-up.</p>
+        </header>
+        <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <h1>Submission Rate by Month</h1>
+            <div><h1>Submission rate by month</h1><p class="panel-sub">Assigned parcels compared with returned survey evidence</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="submissionRateTable"></table>
@@ -174,18 +183,26 @@
       </section>
 
       <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
-        <article class="panel">
+        <header class="tab-intro">
+          <div><span class="section-kicker">Portfolio allocation</span><h2>Parcel area distribution</h2></div>
+          <p>Understand acreage concentration and balance across the contractor portfolio.</p>
+        </header>
+        <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <h1>Parcel Area by Contractor</h1>
+            <div><h1>Parcel area by contractor</h1><p class="panel-sub">Current contracted acreage, ranked by organization</p></div>
           </div>
           <div class="grouped-chart" id="areaDistributionChart" aria-label="Current parcel acreage by contractor"></div>
         </article>
       </section>
 
       <section class="tab-panel" data-panel="parcelDetails" aria-label="Parcel Details">
-        <article class="panel">
+        <header class="tab-intro">
+          <div><span class="section-kicker">Portfolio register</span><h2>Contractor parcel detail</h2></div>
+          <p>Review assignment volume, acreage, and completion evidence at contractor level.</p>
+        </header>
+        <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <h1>Contractor Detail</h1>
+            <div><h1>Contractor register</h1><p class="panel-sub">Operational scope and current performance detail</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="parcelDetailsTable"></table>
@@ -194,26 +211,27 @@
       </section>
 
       <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
-        <article class="panel metric-group">
-          <div class="panel-head compact-head">
-            <h1>Maintenance Expenses</h1>
-          </div>
-          <div class="reference-card-grid four-up">
-            <div class="reference-card featured"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong></div>
-            <div class="reference-card"><span>Monthly Cost / Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong></div>
-            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong></div>
-            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong></div>
+        <header class="tab-intro">
+          <div><span class="section-kicker">Cost efficiency</span><h2>Maintenance expense intensity</h2></div>
+          <p>Evaluate unit economics across acreage, parcels, and contractor commitments.</p>
+        </header>
+        <article class="metric-band metric-group">
+          <div class="reference-card-grid four-up executive-band">
+            <div class="reference-card featured"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong><small>Portfolio intensity</small></div>
+            <div class="reference-card"><span>Monthly Cost / Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong><small>Normalized monthly cost</small></div>
+            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong><small>Maintained land area</small></div>
+            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong><small>Contracted inventory</small></div>
           </div>
         </article>
-        <article class="panel">
+        <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <h1>Cost per Acre by Contractor</h1>
+            <div><h1>Cost per acre by contractor</h1><p class="panel-sub">Ranked annual cost intensity</p></div>
           </div>
           <div class="grouped-chart" id="expenseIntensityChart" aria-label="Annual cost per acre by contractor"></div>
         </article>
-        <article class="panel">
+        <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <h1>Expense Detail</h1>
+            <div><h1>Expense ledger</h1><p class="panel-sub">Contract-level cost and acreage detail</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="maintenanceExpenseTable"></table>
@@ -227,6 +245,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260714-3"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260714-4"></script>
   </body>
 </html>

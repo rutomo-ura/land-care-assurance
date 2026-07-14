@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Executive BI Design System Example</title>
+    <link rel="stylesheet" href="./executive-bi.css" />
+  </head>
+  <body style="margin:0;background:#f0f4f7">
+    <main class="bi-dashboard">
+      <header class="bi-masthead">
+        <div><span class="bi-kicker">Portfolio control</span><h1>Operating performance</h1><p>Delivery, exposure, portfolio scope, and financial pace in one decision view.</p></div>
+      </header>
+
+      <nav class="bi-tabs" aria-label="Report sections" role="tablist">
+        <button type="button" role="tab" aria-selected="true">Overview</button>
+        <button type="button" role="tab" aria-selected="false">Budget</button>
+        <button type="button" role="tab" aria-selected="false">Operations</button>
+        <button type="button" role="tab" aria-selected="false">Expenses</button>
+      </nav>
+
+      <section class="bi-context" aria-label="Report context">
+        <div><span class="bi-label">Period</span><strong>July 2026</strong></div>
+        <div><span class="bi-label">Status</span><strong>Current</strong></div>
+        <div><span class="bi-label">Refreshed</span><strong>Today, 8:00 AM</strong></div>
+        <div><span class="bi-label">Scope</span><strong>10 contractors</strong></div>
+      </section>
+
+      <header class="bi-section-intro">
+        <div><span class="bi-kicker">Financial control</span><h2>Budget position and supplier exposure</h2></div>
+        <p>Compare current spend pace with committed value and supplier concentration.</p>
+      </header>
+
+      <section class="bi-metric-band" aria-label="Executive metrics">
+        <article class="bi-metric is-featured"><span class="bi-label">Annual run rate</span><strong>$775K</strong><small>Projected invoice pace</small></article>
+        <article class="bi-metric"><span class="bi-label">Monthly total</span><strong>$64.6K</strong><small>Current baseline</small></article>
+        <article class="bi-metric"><span class="bi-label">Committed value</span><strong>$1.12M</strong><small>Portfolio contract value</small></article>
+        <article class="bi-metric"><span class="bi-label">Suppliers</span><strong>10</strong><small>Active contractor base</small></article>
+      </section>
+
+      <article class="bi-workspace">
+        <header class="bi-panel-head"><h3>Contract amount by supplier</h3><p>Ranked view of annual financial exposure</p></header>
+        <div class="bi-chart-placeholder">Connect a source-backed chart here</div>
+      </article>
+
+      <article class="bi-ledger">
+        <header class="bi-panel-head"><h3>Portfolio ledger</h3><p>Operational detail in source order</p></header>
+        <div class="bi-table-wrap">
+          <table class="bi-table">
+            <thead><tr><th>Supplier</th><th>Scope</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Supplier Alpha</td><td>380 parcels</td><td>$280,000</td><td>Active</td></tr>
+              <tr><td>Supplier Beta</td><td>209 parcels</td><td>$192,000</td><td>Active</td></tr>
+              <tr><td>Supplier Gamma</td><td>124 parcels</td><td>$108,000</td><td>Review</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
