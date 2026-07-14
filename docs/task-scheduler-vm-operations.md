@@ -60,6 +60,31 @@ flowchart TD
     O --> P["GitHub Pages serves updated dashboard"]
 ```
 
+## Task Registration Standard
+
+Register `\GIS Automations\LandCare Daily Dashboard Refresh` using the approved `DOMAIN\landcare-refresh` service account (or the locally approved equivalent), not an interactive personal account. The registration script requires a password-backed principal, verifies that the stored principal uses `Password` logon, runs at highest privilege, retries three times at 15-minute intervals, starts missed runs when available, and stops a run after two hours.
+
+```powershell
+cd C:\srv\GISWebApp\land-care-assurance
+.\scripts\register_landcare_daily_refresh_task.ps1 `
+  -RepoRoot C:\srv\GISWebApp\land-care-assurance `
+  -TaskUser "DOMAIN\landcare-refresh" `
+  -PromptForTaskPassword
+
+Get-ScheduledTask -TaskPath "\GIS Automations\" -TaskName "LandCare Daily Dashboard Refresh" |
+  Select-Object TaskName, TaskPath, State, @{Name="RunAs";Expression={$_.Principal.UserId}}, @{Name="LogonType";Expression={$_.Principal.LogonType}}, @{Name="RunLevel";Expression={$_.Principal.RunLevel}}
+Get-ScheduledTaskInfo -TaskPath "\GIS Automations\" -TaskName "LandCare Daily Dashboard Refresh" |
+  Select-Object LastRunTime, LastTaskResult, NextRunTime
+```
+
+Release evidence requires a successful manual run, followed by a successful scheduled invocation (`Start-ScheduledTask`), a `LastTaskResult` of `0`, and a same-day `daily-refresh-status.json` with `status: success`.
+
+Run the proof command after registration. It starts the task, waits for it to finish, checks the exit result and same-day status JSON, and saves a durable verification JSON beside the daily logs:
+
+```powershell
+.\scripts\test_landcare_scheduled_refresh.ps1
+```
+
 ## Monthly Archive Flow
 
 ```mermaid

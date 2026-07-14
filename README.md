@@ -45,8 +45,14 @@ Existing `.env` files are backed up before replacement. The `.env` file is not p
 To also register the daily 7:00 AM Task Scheduler job under `Task Scheduler Library\GIS Automations`:
 
 ```powershell
-.\install_landcare_daily_refresh.ps1 -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance -RegisterTask
+.\install_landcare_daily_refresh.ps1 `
+  -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
+  -RegisterTask `
+  -TaskUser "DOMAIN\landcare-refresh" `
+  -PromptForTaskPassword
 ```
+
+Use the approved VM service account, not an interactive personal account. The password is stored only by Windows Task Scheduler so the job can run whether or not anyone is logged on. Registration configures highest privilege, three 15-minute retries, a two-hour execution limit, and catch-up for a missed start.
 
 To install, create `.env`, register the task, and immediately run one checked refresh:
 
@@ -54,6 +60,8 @@ To install, create `.env`, register the task, and immediately run one checked re
 .\install_landcare_daily_refresh.ps1 `
   -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
   -RegisterTask `
+  -TaskUser "DOMAIN\landcare-refresh" `
+  -PromptForTaskPassword `
   -RunOnce
 ```
 
