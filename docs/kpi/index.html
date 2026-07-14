@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260714-2" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260714-3" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -23,6 +23,17 @@
     </header>
 
     <main class="kpi-shell">
+      <section class="dashboard-masthead" aria-labelledby="dashboardTitle">
+        <div>
+          <span class="section-kicker">Portfolio control</span>
+          <h1 id="dashboardTitle">LandCare operating performance</h1>
+          <p>Completion, contractor exposure, portfolio scope, and financial pace in one decision view.</p>
+        </div>
+        <div class="masthead-key" aria-label="Dashboard reading guide">
+          <span><i class="key-dot risk"></i>Action required</span>
+          <span><i class="key-dot stable"></i>Operating context</span>
+        </div>
+      </section>
       <nav class="report-tabs" aria-label="LandCare report sections" role="tablist">
         <button class="is-active" type="button" data-tab="landing" role="tab" aria-selected="true">Overview</button>
         <button type="button" data-tab="budget" role="tab" aria-selected="false">Budget</button>
@@ -54,34 +65,34 @@
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
         <section class="insight-grid" aria-label="Executive metrics">
-          <article class="insight-card featured has-gauge">
+          <article class="insight-card featured completion-card" id="completionInsightCard">
             <div class="card-top">
-              <span class="eyebrow">Completion</span>
-              <span class="card-icon-slot has-icon" data-icon="completion" data-icon-label="%" aria-hidden="true"></span>
+              <span class="eyebrow">Current Completion</span>
+              <span class="metric-status-chip" id="completionStatusChip" role="status" aria-live="polite">Checking</span>
             </div>
-            <div class="gauge-kpi" id="completionGauge" role="img" aria-label="Active completion gauge"></div>
+            <div class="completion-kpi" id="completionGauge" aria-live="polite"></div>
             <p class="card-trend" id="completionReadoutCopy">Loading...</p>
           </article>
-          <article class="insight-card warning">
+          <article class="insight-card warning" data-tone="risk">
             <div class="card-top">
               <span class="eyebrow">Open Queue</span>
-              <span class="card-icon-slot has-icon" data-icon="open-active" data-icon-label="!" aria-hidden="true"></span>
+              <span class="metric-status-chip">Needs Action</span>
             </div>
             <strong id="openParcelInsight">--</strong>
             <p class="card-trend" id="openParcelCopy">Loading...</p>
           </article>
-          <article class="insight-card">
+          <article class="insight-card" data-tone="scope">
             <div class="card-top">
               <span class="eyebrow">LandCare Inventory</span>
-              <span class="card-icon-slot has-icon" data-icon="inventory" data-icon-label="#" aria-hidden="true"></span>
+              <span class="metric-status-chip">Live Scope</span>
             </div>
             <strong id="currentParcelsKpi">--</strong>
             <p class="card-trend"><span id="currentActiveKpi">--</span> active parcels</p>
           </article>
-          <article class="insight-card">
+          <article class="insight-card" data-tone="finance">
             <div class="card-top">
               <span class="eyebrow">Budget Run Rate</span>
-              <span class="card-icon-slot has-icon" data-icon="budget" data-icon-label="$" aria-hidden="true"></span>
+              <span class="metric-status-chip">Annualized</span>
             </div>
             <strong id="budgetRunRateInsight">--</strong>
             <p class="card-trend" id="budgetRunRateCopy">Loading...</p>
@@ -216,6 +227,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260714-2"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260714-3"></script>
   </body>
 </html>

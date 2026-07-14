@@ -425,49 +425,45 @@ function contractorChartRows(rows, selected = "all") {
     .sort((a, b) => (b.assigned - b.returned) - (a.assigned - a.returned) || b.assigned - a.assigned);
 }
 
-function renderSemiGauge(containerId, value, options = {}) {
+function renderCompletionKpi(containerId, latest, monthlyMetrics, isReported) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  const pct = Math.max(0, Math.min(100, Number(value || 0)));
-  const label = options.label || "Active completion";
-  const featured = Boolean(options.featured);
-  const compact = Boolean(options.compact);
-  const pending = Boolean(options.pending);
-  const width = compact ? 112 : 188;
-  const height = compact ? 68 : 112;
-  const radius = compact ? 40 : 74;
-  const cx = width / 2;
-  const cy = compact ? 54 : 90;
-  const stroke = compact ? 9 : 14;
-  const arcLength = Math.PI * radius;
-  const dash = (pct / 100) * arcLength;
-  const valueSize = compact ? 16 : 30;
-  const labelSize = compact ? 9 : 12;
-  const labelY = compact ? cy + 10 : cy + 16;
-  const valueY = compact ? cy - 2 : cy - 2;
-  const displayedValue = pending ? "—" : formatPct(pct);
-  const ariaValue = pending ? "awaiting submissions" : formatPct(pct);
+  const rate = Math.max(0, Math.min(100, Number(latest.active_completion_rate_pct || 0)));
+  const reportedMetrics = monthlyMetrics.filter(hasReportedSurveyData);
+  const lastReported = reportedMetrics.filter((row) => row.period_month <= latest.period_month).at(-1);
 
+  if (!isReported) {
+    container.setAttribute("aria-label", `Completion for ${shortMonth(latest.period_month)} is awaiting submissions`);
+    container.innerHTML = `
+      <div class="completion-primary">
+        <strong>Pending</strong>
+        <span>${escapeHtml(shortMonth(latest.period_month))}</span>
+      </div>
+      <div class="completion-baseline">
+        <span>Last reported</span>
+        <strong>${lastReported ? `${escapeHtml(shortMonth(lastReported.period_month))} · ${formatPct(lastReported.active_completion_rate_pct)}` : "Not available"}</strong>
+      </div>
+    `;
+    return;
+  }
+
+  const targetGap = COMPLETION_TARGET - rate;
+  const targetContext = targetGap > 0
+    ? `${targetGap.toFixed(1)} pts below`
+    : targetGap < 0
+      ? `${Math.abs(targetGap).toFixed(1)} pts above`
+      : "On target";
+  container.setAttribute("aria-label", `Active completion ${formatPct(rate)} against an ${COMPLETION_TARGET}% target`);
   container.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" class="gauge-svg${featured ? " featured" : ""}${compact ? " compact" : ""}" role="img" aria-label="${escapeHtml(label)}: ${ariaValue}">
-      <path
-        class="gauge-track"
-        d="M ${(cx - radius).toFixed(1)} ${cy} A ${radius} ${radius} 0 0 1 ${(cx + radius).toFixed(1)} ${cy}"
-        fill="none"
-        stroke-width="${stroke}"
-        stroke-linecap="round"
-      ></path>
-      <path
-        class="gauge-fill"
-        d="M ${(cx - radius).toFixed(1)} ${cy} A ${radius} ${radius} 0 0 1 ${(cx + radius).toFixed(1)} ${cy}"
-        fill="none"
-        stroke-width="${stroke}"
-        stroke-linecap="round"
-        stroke-dasharray="${dash.toFixed(2)} ${arcLength.toFixed(2)}"
-      ></path>
-      <text class="gauge-value" x="${cx}" y="${valueY}" text-anchor="middle" font-size="${valueSize}">${displayedValue}</text>
-      ${compact ? "" : `<text class="gauge-label" x="${cx}" y="${labelY}" text-anchor="middle" font-size="${labelSize}">${escapeHtml(label)}</text>`}
-    </svg>
+    <div class="completion-primary">
+      <strong>${formatPct(rate)}</strong>
+      <span>Active completion</span>
+    </div>
+    <progress class="completion-progress" max="100" value="${rate}" aria-label="${formatPct(rate)} of ${COMPLETION_TARGET}% target"></progress>
+    <div class="completion-target-row">
+      <span>${COMPLETION_TARGET}% target</span>
+      <strong>${targetContext}</strong>
+    </div>
   `;
 }
 
@@ -540,10 +536,15 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
   const largestOpen = contractorRows.sort((a, b) => b.open - a.open || a.completionRate - b.completionRate)[0];
   const openTotal = contractorRows.reduce((sum, row) => sum + row.open, 0);
 
-  renderSemiGauge("completionGauge", latestRate, { label: "Active completion", featured: true, pending: !isReported });
+  renderCompletionKpi("completionGauge", latest, monthlyMetrics, isReported);
+  const completionCard = document.getElementById("completionInsightCard");
+  const completionStatus = document.getElementById("completionStatusChip");
+  completionCard.classList.toggle("is-pending", !isReported);
+  completionStatus.classList.toggle("is-pending", !isReported);
+  completionStatus.textContent = isReported ? "Reported" : "Awaiting data";
   const completionCopy = document.getElementById("completionReadoutCopy");
   completionCopy.textContent = !isReported
-    ? `Awaiting ${shortMonth(latest.period_month)} submissions · ${formatNumber(latest.returned_assigned)} of ${formatNumber(latest.assigned_active)} returned`
+    ? `Survey evidence has not arrived · ${formatNumber(latest.assigned_active)} active assignments`
     : prior
     ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts vs ${shortMonth(prior.period_month)}`
     : `${formatNumber(latest.returned_assigned)} of ${formatNumber(latest.assigned_active)} active`;
