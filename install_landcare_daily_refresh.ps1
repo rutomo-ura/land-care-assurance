@@ -30,15 +30,18 @@ function Backup-And-Copy {
 
 if (-not (Test-Path -LiteralPath $TargetRepoRoot)) {
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $TargetRepoRoot) | Out-Null
-}
-$children = Get-ChildItem -LiteralPath $TargetRepoRoot -Force
-$targetGitPath = Join-Path $TargetRepoRoot ".git"
-if (-not (Test-Path -LiteralPath $targetGitPath)) {
-  if ($children.Count -gt 0) {
-    throw "Target exists and is not a Git repository: $TargetRepoRoot"
-  }
   git clone --branch $Branch $RepositoryUrl $TargetRepoRoot
   if ($LASTEXITCODE -ne 0) { throw "git clone failed with exit code $LASTEXITCODE" }
+} else {
+  $children = Get-ChildItem -LiteralPath $TargetRepoRoot -Force
+  $targetGitPath = Join-Path $TargetRepoRoot ".git"
+  if (-not (Test-Path -LiteralPath $targetGitPath)) {
+    if ($children.Count -gt 0) {
+      throw "Target exists and is not a Git repository: $TargetRepoRoot"
+    }
+    git clone --branch $Branch $RepositoryUrl $TargetRepoRoot
+    if ($LASTEXITCODE -ne 0) { throw "git clone failed with exit code $LASTEXITCODE" }
+  }
 }
 
 Set-Location -LiteralPath $TargetRepoRoot
