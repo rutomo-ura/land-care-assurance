@@ -2,6 +2,8 @@
 
 Architecture: [`docs/landcare-architecture.md`](docs/landcare-architecture.md)
 
+Canonical data engineering and visualization logic: [`docs/landcare-data-engineering-and-visualization-logic.md`](docs/landcare-data-engineering-and-visualization-logic.md)
+
 This bundle bootstraps or updates the LandCare dashboard repo on the VM, then installs the daily refresh scripts.
 
 ## What It Includes
