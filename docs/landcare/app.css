@@ -197,7 +197,7 @@ textarea {
 .assignment-check__intro h2 { margin: 5px 0 8px; font-size: 23px; letter-spacing: -.025em; }
 .assignment-check__intro p { max-width: 480px; margin: 0; color: #d9edf7; font-size: 13px; line-height: 1.55; }
 .assignment-check .section-kicker { color: #9fdcf4; }
-.assignment-check__form { display: grid; grid-template-columns: 1fr 1.25fr auto; gap: 10px; align-items: end; }
+.assignment-check__form { display: grid; grid-template-columns: .78fr .92fr 1.25fr auto; gap: 10px; align-items: end; }
 .assignment-check label { display: grid; gap: 6px; color: #d9edf7; font-size: 11px; font-weight: 800; }
 .assignment-check select { width: 100%; min-height: 42px; border: 1px solid transparent; border-radius: 8px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 700; }
 .assignment-check button { min-height: 42px; padding: 0 15px; border: 1px solid #67c7eb; border-radius: 8px; background: #0e9bce; color: #fff; font-weight: 800; white-space: nowrap; cursor: pointer; }
@@ -207,7 +207,7 @@ textarea {
 .assignment-map-card__head { display: grid; gap: 3px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
 .assignment-map-card__head .eyebrow { color: var(--ura-blue-dark); }
 .assignment-map-card__head strong { color: var(--ura-deep); font-size: 15px; }
-.assignment-parcel-map { height: 300px; background: #e9f2f6; }
+.assignment-parcel-map { height: 340px; background: #e9f2f6; }
 .assignment-map-card p { margin: 0; padding: 10px 16px 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
 
 .survey-frame-card { overflow: hidden; }
@@ -2454,6 +2454,8 @@ select {
   .submission-masthead h1 { font-size: 28px; }
   .assignment-check { padding: 20px; }
   .assignment-check__form { grid-template-columns: 1fr; }
+  .assignment-map-card { margin-top: 2px; }
+  .assignment-parcel-map { height: min(56vh, 390px); min-height: 300px; }
   .survey-frame-head { align-items: start; padding: 18px; }
   .survey-embed, .survey-embed iframe { min-height: 650px; }
 

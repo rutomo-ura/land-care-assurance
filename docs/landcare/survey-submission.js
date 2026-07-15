@@ -1,5 +1,5 @@
 import {
-  ASSIGNMENT_CURRENT_LAYER_URL,
+  ASSIGNMENT_HISTORY_LAYER_URL,
   SURVEY123_PREFILL_FIELDS,
   SURVEY123_SHARE_URL
 } from "./survey-submission-config.js";
@@ -10,6 +10,7 @@ import Graphic from "https://js.arcgis.com/4.30/@arcgis/core/Graphic.js";
 const container = document.getElementById("surveyEmbed");
 const link = document.getElementById("openSurveyLink");
 const lookupForm = document.getElementById("assignmentLookupForm");
+const monthSelect = document.getElementById("assignmentMonth");
 const organizationSelect = document.getElementById("assignmentOrganization");
 const parcelSelect = document.getElementById("assignmentParcel");
 const continueButton = document.getElementById("continueToSurvey");
@@ -17,16 +18,59 @@ const status = document.getElementById("assignmentLookupStatus");
 const parcelMapNode = document.getElementById("assignmentParcelMap");
 const selectedParcelLabel = document.getElementById("selectedParcelLabel");
 const selectedParcelMeta = document.getElementById("selectedParcelMeta");
+
 let assignments = [];
 let parcelMapView;
 let selectedParcelGraphic;
 let selectedAssignment;
 
+function isSurvey123Url(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /(^|\.)survey123\.arcgis\.com$/i.test(url.hostname) && /\/share\//.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function escapeSqlText(value) {
+  return String(value || "").replace(/'/g, "''");
+}
+
+function cleanOrganization(value) {
+  return String(value || "").replace(/\s+Primary Contact$/i, "").trim();
+}
+
+function periodWhere(extra = "1=1") {
+  return `period_label = '${escapeSqlText(monthSelect.value)}' AND ${extra}`;
+}
+
+function coordinateFallback(geometry) {
+  const center = geometry?.extent?.center;
+  const latitude = center?.latitude ?? center?.y;
+  const longitude = center?.longitude ?? center?.x;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return "Location not listed";
+  return `Coordinates ${Number(latitude).toFixed(5)}, ${Number(longitude).toFixed(5)}`;
+}
+
+function setOptions(select, options, placeholder) {
+  select.replaceChildren(new Option(placeholder, ""), ...options.map(({ label, value }) => new Option(label, value)));
+}
+
+async function fetchJson(url, params) {
+  const request = new URL(url);
+  Object.entries(params).forEach(([key, value]) => request.searchParams.set(key, value));
+  const response = await fetch(request);
+  if (!response.ok) throw new Error(`Assignment service returned ${response.status}`);
+  const payload = await response.json();
+  if (payload.error) throw new Error(payload.error.message || "Assignment service is unavailable");
+  return payload;
+}
+
 async function initializeParcelMap() {
-  const map = new Map({ basemap: "gray-vector" });
   parcelMapView = new MapView({
     container: parcelMapNode,
-    map,
+    map: new Map({ basemap: "gray-vector" }),
     center: [-80.0, 40.44],
     zoom: 11,
     ui: { components: ["zoom"] }
@@ -45,58 +89,37 @@ function showSelectedParcel(assignment) {
       type: "simple-fill",
       color: [0, 152, 211, 0.2],
       outline: { color: "#00334f", width: 2.5 }
-    },
-    attributes: assignment
+    }
   });
   parcelMapView.graphics.add(selectedParcelGraphic);
-  parcelMapView.goTo({ target: selectedParcelGraphic, zoom: 18 }, { duration: 450 }).catch(() => {});
-  selectedParcelLabel.textContent = `${assignment.parcelNumber} · ${assignment.address}`;
-  selectedParcelMeta.textContent = `${cleanOrganization(assignment.organization)} · ${assignment.period} · official assigned parcel boundary`;
+  parcelMapView.goTo(assignment.geometry.extent?.expand(1.8) || selectedParcelGraphic, { duration: 450 }).catch(() => {});
+  selectedParcelLabel.textContent = `${assignment.parcelNumber} - ${assignment.address}`;
+  selectedParcelMeta.textContent = `${cleanOrganization(assignment.organization)} - ${assignment.period} - ${assignment.coordinateLabel} - official assigned parcel boundary`;
 }
 
-function isSurvey123Url(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && /(^|\.)survey123\.arcgis\.com$/i.test(url.hostname) && /\/share\//.test(url.pathname);
-  } catch {
-    return false;
-  }
-}
-
-function showSurveyPlaceholder() {
-  container.innerHTML = `
-    <div class="survey-embed-message survey-embed-config">
-      <strong>Select an assigned parcel above</strong>
-      <p>The service form will open with that parcel and address already populated.</p>
-    </div>`;
-}
-
-function escapeSqlText(value) {
-  return String(value || "").replace(/'/g, "''");
-}
-
-function cleanOrganization(value) {
-  return String(value || "").replace(/\s+Primary Contact$/i, "").trim();
-}
-
-function setOptions(select, options, placeholder) {
-  select.replaceChildren(new Option(placeholder, ""), ...options.map(({ label, value }) => new Option(label, value)));
-}
-
-async function fetchJson(url, params) {
-  const request = new URL(url);
-  Object.entries(params).forEach(([key, value]) => request.searchParams.set(key, value));
-  const response = await fetch(request);
-  if (!response.ok) throw new Error(`Assignment service returned ${response.status}`);
-  const payload = await response.json();
-  if (payload.error) throw new Error(payload.error.message || "Assignment service is unavailable");
-  return payload;
+async function loadRecentMonths() {
+  const payload = await fetchJson(`${ASSIGNMENT_HISTORY_LAYER_URL}/query`, {
+    f: "json",
+    where: "period_label IS NOT NULL",
+    outFields: "period_label",
+    returnGeometry: "false",
+    returnDistinctValues: "true",
+    orderByFields: "period_label DESC"
+  });
+  const months = [...new Set((payload.features || []).map(({ attributes }) => attributes?.period_label).filter(Boolean))].slice(0, 2);
+  if (!months.length) throw new Error("No assignment periods were returned");
+  setOptions(monthSelect, months.map((month, index) => ({
+    value: month,
+    label: index === 0 ? `${month} - current period` : `${month} - prior period`
+  })), "Choose assignment month");
+  monthSelect.value = months[0];
+  monthSelect.disabled = false;
 }
 
 async function loadOrganizations() {
-  const payload = await fetchJson(`${ASSIGNMENT_CURRENT_LAYER_URL}/query`, {
+  const payload = await fetchJson(`${ASSIGNMENT_HISTORY_LAYER_URL}/query`, {
     f: "json",
-    where: "is_current_period = 1 AND maintained_by IS NOT NULL",
+    where: periodWhere("maintained_by IS NOT NULL"),
     outFields: "maintained_by",
     returnGeometry: "false",
     returnDistinctValues: "true",
@@ -105,21 +128,20 @@ async function loadOrganizations() {
   const organizations = [...new Set((payload.features || []).map(({ attributes }) => attributes?.maintained_by).filter(Boolean))]
     .map((value) => ({ label: cleanOrganization(value), value }))
     .sort((left, right) => left.label.localeCompare(right.label));
-  if (!organizations.length) throw new Error("No current organization assignments were returned");
+  if (!organizations.length) throw new Error("No organization assignments were returned for this month");
   setOptions(organizationSelect, organizations, "Choose your organization");
   organizationSelect.disabled = false;
-  status.textContent = `${organizations.length} organizations in the current monthly assignment bundle.`;
+  status.textContent = `${organizations.length} organizations in the ${monthSelect.value} assignment bundle.`;
 }
 
 async function loadParcels(organization) {
   parcelSelect.disabled = true;
   continueButton.disabled = true;
-  setOptions(parcelSelect, [], "Loading assigned parcels…");
-  status.textContent = "Loading parcels assigned to this organization…";
-  const where = `is_current_period = 1 AND maintained_by = '${escapeSqlText(organization)}'`;
-  const payload = await fetchJson(`${ASSIGNMENT_CURRENT_LAYER_URL}/query`, {
+  setOptions(parcelSelect, [], "Loading assigned parcels...");
+  status.textContent = "Loading parcels assigned to this organization...";
+  const payload = await fetchJson(`${ASSIGNMENT_HISTORY_LAYER_URL}/query`, {
     f: "json",
-    where,
+    where: periodWhere(`maintained_by = '${escapeSqlText(organization)}'`),
     outFields: "OBJECTID,parcelnumb,alco_pin,address,period_label,service_period_label,maintain_level,maintained_by",
     returnGeometry: "true",
     outSR: "4326",
@@ -129,22 +151,23 @@ async function loadParcels(organization) {
   assignments = (payload.features || [])
     .map(({ attributes, geometry }) => ({
       objectId: String(attributes.OBJECTID),
-      address: attributes.address || "Address not listed",
+      address: attributes.address || coordinateFallback(geometry),
+      coordinateLabel: coordinateFallback(geometry),
       organization: attributes.maintained_by || organization,
       parcelNumber: attributes.parcelnumb || attributes.alco_pin || "Parcel not listed",
-      period: attributes.period_label || attributes.service_period_label || "Current period",
+      period: attributes.period_label || attributes.service_period_label || monthSelect.value,
       maintenanceLevel: attributes.maintain_level || "Active",
       geometry
     }))
     .filter((assignment) => !/request/i.test(assignment.maintenanceLevel));
   setOptions(parcelSelect, assignments.map((assignment) => ({
     value: assignment.objectId,
-    label: `${assignment.parcelNumber} — ${assignment.address}`
+    label: `${assignment.parcelNumber} - ${assignment.address}`
   })), assignments.length ? "Choose an assigned parcel" : "No active parcels assigned");
   parcelSelect.disabled = assignments.length === 0;
   status.textContent = assignments.length
-    ? `${assignments.length} active parcel${assignments.length === 1 ? "" : "s"} assigned for the current service period.`
-    : "No active parcels were found for this organization in the current assignment bundle.";
+    ? `${assignments.length} active parcel${assignments.length === 1 ? "" : "s"} assigned for ${monthSelect.value}.`
+    : "No active parcels were found for this organization in the selected assignment month.";
 }
 
 function buildSurveyUrl(assignment) {
@@ -158,6 +181,20 @@ function buildSurveyUrl(assignment) {
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.assignmentPeriod}`, assignment.period);
   return url;
 }
+
+monthSelect.addEventListener("change", async () => {
+  assignments = [];
+  organizationSelect.disabled = true;
+  parcelSelect.disabled = true;
+  continueButton.disabled = true;
+  setOptions(parcelSelect, [], "Choose an organization first");
+  status.textContent = `Loading organizations for ${monthSelect.value}...`;
+  try {
+    await loadOrganizations();
+  } catch (error) {
+    status.textContent = `Unable to load organizations: ${error.message}`;
+  }
+});
 
 organizationSelect.addEventListener("change", async () => {
   if (!organizationSelect.value) {
@@ -179,18 +216,15 @@ organizationSelect.addEventListener("change", async () => {
 parcelSelect.addEventListener("change", () => {
   continueButton.disabled = !parcelSelect.value;
   const assignment = assignments.find((item) => item.objectId === parcelSelect.value);
-  if (assignment) status.textContent = `${assignment.parcelNumber} · ${assignment.address} · ${assignment.period}`;
-  if (assignment) showSelectedParcel(assignment);
+  if (!assignment) return;
+  status.textContent = `${assignment.parcelNumber} - ${assignment.address} - ${assignment.period}`;
+  showSelectedParcel(assignment);
 });
 
 lookupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const assignment = assignments.find((item) => item.objectId === parcelSelect.value);
-  if (!assignment) return;
-  if (!isSurvey123Url(SURVEY123_SHARE_URL)) {
-    status.textContent = "Parcel selected. Publish the Survey123 form and add its share URL to connect this verified assignment to the service form.";
-    return;
-  }
+  if (!assignment || !isSurvey123Url(SURVEY123_SHARE_URL)) return;
   const surveyUrl = buildSurveyUrl(assignment);
   const frame = document.createElement("iframe");
   frame.title = "LandCare Network service submission";
@@ -204,12 +238,13 @@ lookupForm.addEventListener("submit", (event) => {
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-loadOrganizations().catch((error) => {
-  organizationSelect.disabled = true;
-  status.textContent = `Unable to load the current assignment bundle: ${error.message}`;
-});
-
-if (!isSurvey123Url(SURVEY123_SHARE_URL)) showSurveyPlaceholder();
+loadRecentMonths()
+  .then(loadOrganizations)
+  .catch((error) => {
+    organizationSelect.disabled = true;
+    monthSelect.disabled = true;
+    status.textContent = `Unable to load the assignment bundle: ${error.message}`;
+  });
 
 initializeParcelMap().catch(() => {
   selectedParcelMeta.textContent = "The parcel map could not load. The assignment lookup remains available.";

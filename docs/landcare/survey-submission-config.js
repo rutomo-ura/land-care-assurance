@@ -8,6 +8,8 @@ export const SURVEY123_SHARE_URL =
 // from the monthly Regrid assignment bundle and contains no edit capability.
 export const ASSIGNMENT_CURRENT_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_current_period/FeatureServer/0";
+export const ASSIGNMENT_HISTORY_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_history/FeatureServer/0";
 
 // These names must match the Survey123 question names when the survey is built.
 // Survey123 URL parameters then populate the selected assignment before the user
