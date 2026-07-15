@@ -1,5 +1,9 @@
 # LandCare Network Survey123 setup
 
+**Live public form:** https://survey123.arcgis.com/share/02a003254ba546c28b4997b42e0f220b
+
+The public form is shared anonymously. The branded intake page is https://rutomo-ura.github.io/land-care-assurance/survey-submission/ and supplies the selected assignment context before opening the form.
+
 The existing **LandCare Network** survey is a Regrid survey. Its current contractor, service, comment, and required-photo questions are the source template for a new Survey123 contractor intake; do not alter the live Regrid survey or its production responses.
 
 ## Public form fields
@@ -18,13 +22,17 @@ Mirror the existing Regrid questions: contractor, date of services, first visit,
 
 Photos must be required and stored as Survey123 attachments. Retain the service point/geometry when possible.
 
-## Monthly assignment prefill
+## Monthly assignment prefill and map selection
 
-The branded Survey Submission page queries the public, query-only current assignment layer:
+The branded Survey Submission page uses the public, query-only current and history assignment layers. It presents the two newest assignment periods, filters them by contractor, and lets a contractor select an active parcel from either a dropdown or its map outline. Both controls use the same source `OBJECTID`, so the form prefill cannot diverge from the visible parcel.
 
 `https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_current_period/FeatureServer/0`
 
-It filters `is_current_period = 1` by `maintained_by`, presents only active parcels, and carries the selected contractor, parcel number, address, and period into Survey123 using URL parameters. Use these exact Survey123 question names so the prefill works: `organization`, `parcel_number`, `address`, and `assignment_period`.
+The selectable current/prior periods are read from:
+
+`https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_history/FeatureServer/0`
+
+It filters by `maintained_by`, presents only active parcels, and carries the selected contractor, parcel number, address, and period into Survey123 using URL parameters. Use these exact Survey123 question names so the prefill works: `organization`, `parcel_number`, `address`, and `assignment_period`. The web app normalizes assignment polygons with numeric or historical string coordinate vertices before drawing them.
 
 The monthly Regrid bundle refreshes that layer, so no manual list maintenance is required in the public intake page. The Survey123 form remains the system of record for the submitted response; the reference layer only verifies the parcel is in the current assignment.
 
@@ -68,3 +76,5 @@ After the receiver is behind HTTPS, set `APPROVED_EVIDENCE_GEOJSON_URL` in
 endpoint. That endpoint exposes only approved records with valid public photos.
 
 Update [`docs/landcare/survey-submission-config.js`](landcare/survey-submission-config.js) with the Survey123 public share URL. This repository intentionally contains no Survey123 IDs, PostgreSQL passwords, tokens, or webhook secrets.
+
+See [`landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) for the current end-to-end lifecycle and test checklist.

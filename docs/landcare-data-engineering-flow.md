@@ -2,6 +2,8 @@
 
 This note is the quick visual reference for the LandCare monitoring data pipeline. See [`docs/landcare-architecture.md`](landcare-architecture.md) for the full platform architecture and [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) for metric definitions.
 
+For the contractor Survey123 path, approval gate, and evidence-photo contract, see [`docs/landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md). That flow is intentionally separate from the official Regrid completion calculation.
+
 ## End-to-End Architecture
 
 ```mermaid
@@ -197,6 +199,19 @@ These values are intentionally different. AGOL raw survey records show total sur
 | `returned_flag` | **Live AGOL survey layer** | Postgres export |
 | `ownership_type` | Postgres owner join | Published GeoJSON |
 | Finance totals | Workbook → `finance_summary.json` | Same |
+
+## Submission evidence contract
+
+The Survey123 intake reads the same assignment snapshots as the monitoring experience, but it is an evidence workflow rather than a metric input. Contractors select a parcel through a synchronized list/map control; the browser uses the assignment `OBJECTID` as the shared key and normalizes mixed ArcGIS polygon representations before drawing the parcel.
+
+| Evidence stage | Data state | May affect official completion? |
+|---|---|---|
+| Contractor submits Survey123 + photo | `pending` in Survey123 | No |
+| URA rejects | `rejected` in Survey123 | No |
+| URA approves and VM webhook upserts record | `approved` internal PostgreSQL record | No; available as separate monitoring context |
+| Map Monitor displays photo | Approved evidence feed | No |
+
+The public evidence endpoint is intentionally optional until the VM receiver and public read-only attachment view are configured. Existing Regrid `image_url` evidence remains the live default photo source in Map Monitor.
 
 ## Related Documents
 

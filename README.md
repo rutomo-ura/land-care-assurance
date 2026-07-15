@@ -1,13 +1,30 @@
 # LandCare Assurance v1.0
 
-Public application: [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/) and [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/).
+LandCare Assurance is a map-first operational product for URA LandCare: a contractor selects an assigned parcel, submits field evidence, URA reviews it, and supervisors monitor trusted Regrid, assignment, and approved-evidence context.
 
-Start a handover or operational review here:
+Public application:
 
-- [`docs/v1.0-operational-handover.md`](docs/v1.0-operational-handover.md) - system, reasoning, runbook, roles, and readiness controls
-- [`docs/v1.0-presentation-script.md`](docs/v1.0-presentation-script.md) - meeting-ready content and speaker script
-- [`docs/v1.0-release-notes.md`](docs/v1.0-release-notes.md) - release scope and known checks
-- [`docs/landcare-architecture.md`](docs/landcare-architecture.md) - canonical architecture
+- [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/)
+- [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/)
+- [Survey Submission](https://rutomo-ura.github.io/land-care-assurance/survey-submission/)
+- [Public Survey123 form](https://survey123.arcgis.com/share/02a003254ba546c28b4997b42e0f220b)
+
+## Start here
+
+| Need | Read this |
+|---|---|
+| Understand the full data and submission lifecycle | [`docs/landcare-submission-and-evidence-flow.md`](docs/landcare-submission-and-evidence-flow.md) |
+| Understand sources, metric rules, runtime layers, and daily refresh | [`docs/landcare-architecture.md`](docs/landcare-architecture.md) |
+| Operate the VM daily refresh | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |
+| Configure Survey123 review, webhook, PostgreSQL, and public evidence | [`docs/survey123-landcare-network-setup.md`](docs/survey123-landcare-network-setup.md) |
+| Present or hand over the product | [`docs/v1.0-operational-handover.md`](docs/v1.0-operational-handover.md) and [`docs/v1.0-presentation-script.md`](docs/v1.0-presentation-script.md) |
+
+## Core operating rules
+
+- **Regrid remains the official completion source.** Approved Survey123 evidence is displayed separately; it does not alter the official completion denominator in this release.
+- **Contractors can choose a parcel from the list or directly on the map.** Both controls use the same assignment ID and prefill the same Survey123 fields.
+- **Public intake is anonymous; public evidence is not.** A submission starts `pending`; only an URA-approved record can reach PostgreSQL and the public Map Monitor evidence feed.
+- **Images are lazy-loaded.** Map Monitor exposes a safe full-image link for existing Regrid photos and, once the VM endpoint is enabled, approved Survey123 photos.
 
 ---
 

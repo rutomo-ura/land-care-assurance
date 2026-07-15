@@ -1,6 +1,6 @@
 # LandCare Platform Architecture
 
-Last updated: 2026-07-09
+Last updated: 2026-07-15
 
 This is the canonical architecture reference for the LandCare monitoring platform in this repository. Related docs:
 
@@ -8,6 +8,7 @@ This is the canonical architecture reference for the LandCare monitoring platfor
 - [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
 - [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI + Codex + Power Platform option; not the current ops path
 - [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) - pipeline diagrams and data contract
+- [`docs/landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) - contractor intake, approval, and evidence publication contract
 - [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) - metric definitions and denominator rules
 - [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) - source inventory and QA checklist
 
@@ -20,6 +21,8 @@ LandCare assurance data moves through three layers:
 | Ingestion | `URA-GIS-User/URA-Data-Repository` on GIS VM | Daily Regrid download, GISDB load, AGOL publish; monthly bundle assignments |
 | Store | PostgreSQL `gisdb` + ArcGIS Online hosted layers | Survey submissions, bundle assignments, parcel geometry, ownership |
 | Publish + app | This repo (`land-care-assurance`) | GitHub Pages app, finance/static fallback JSON, monitoring map, KPI dashboard |
+
+The public contractor intake is a governed sidecar to this pipeline: it reads assignment references from AGOL, writes pending evidence to Survey123, and only publishes approved evidence through the VM receiver. It does **not** change the official Regrid completion denominator in v1.
 
 ```mermaid
 flowchart TB
@@ -170,6 +173,18 @@ Survey **returned** counts for the selected service period can change daily in t
 | **This repo + VM** | Daily export, QA, git publish, web app, operational logs | Regrid login, upstream Selenium download |
 | **Task Scheduler + VM logs** | Refresh orchestration, run status, failure triage | Core source-of-truth data |
 
+## Contractor submission and evidence boundary
+
+| Stage | Owner | Source / destination | Public visibility |
+|---|---|---|---|
+| Parcel selection | Contractor | AGOL assignment history/current snapshot | Assignment outlines and address are public to the submission experience |
+| Service evidence capture | Contractor | Public Survey123 form | Submission is pending; not shown on Map Monitor |
+| Approval / rejection | URA reviewer | Restricted Survey123 Inbox | Internal only |
+| Approved evidence sync | VM webhook receiver | `gis.ura_landcare_survey_submissions_internal` | Internal store |
+| Evidence presentation | Map Monitor | `gis.landcare_approved_survey_evidence` through approved GeoJSON feed | Approved photos only |
+
+See [`landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) for field mappings, geometry normalization, and the VM completion checklist.
+
 ## Monitoring and QA
 
 | Artifact | Path | Purpose |
@@ -186,6 +201,7 @@ Survey **returned** counts for the selected service period can change daily in t
 land-care-assurance/
 docs/
 |-- landcare-architecture.md          <- this document
+|-- landcare-submission-and-evidence-flow.md <- contractor intake and approved evidence handoff
 |-- upstream-regrid-survey-pipeline.md
 |-- landcare-data-engineering-flow.md
 |-- monitoring/                       <- map monitor app
