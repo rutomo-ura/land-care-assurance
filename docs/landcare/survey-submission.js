@@ -24,6 +24,7 @@ let assignments = [];
 let parcelMapView;
 let selectedParcelGraphic;
 let selectedParcelLabelGraphic;
+let availableParcelGraphics = [];
 let selectedAssignment;
 
 function isSurvey123Url(value) {
@@ -97,7 +98,48 @@ async function initializeParcelMap() {
     ui: { components: ["zoom"] }
   });
   await parcelMapView.when();
+  parcelMapView.on("click", async (event) => {
+    const hit = await parcelMapView.hitTest(event).catch(() => null);
+    const graphic = hit?.results
+      .map((result) => result.graphic)
+      .find((item) => item?.attributes?.assignmentObjectId);
+    if (graphic?.attributes?.assignmentObjectId) selectAssignment(graphic.attributes.assignmentObjectId, { fromMap: true });
+  });
   if (selectedAssignment) showSelectedParcel(selectedAssignment);
+  else showAvailableParcels();
+}
+
+function clearAvailableParcels() {
+  if (!parcelMapView) return;
+  availableParcelGraphics.forEach((graphic) => parcelMapView.graphics.remove(graphic));
+  availableParcelGraphics = [];
+}
+
+function showAvailableParcels() {
+  clearAvailableParcels();
+  if (!parcelMapView) return;
+  if (selectedParcelGraphic) parcelMapView.graphics.remove(selectedParcelGraphic);
+  if (selectedParcelLabelGraphic) parcelMapView.graphics.remove(selectedParcelLabelGraphic);
+  selectedParcelGraphic = null;
+  selectedParcelLabelGraphic = null;
+  selectedAssignment = null;
+  availableParcelGraphics = assignments
+    .filter((assignment) => assignment.geometry)
+    .map((assignment) => new Graphic({
+      geometry: assignment.geometry,
+      attributes: { assignmentObjectId: assignment.objectId },
+      symbol: {
+        type: "simple-fill",
+        color: [0, 152, 211, 0.08],
+        outline: { color: "#007eae", width: 1.5 }
+      }
+    }));
+  availableParcelGraphics.forEach((graphic) => parcelMapView.graphics.add(graphic));
+  if (!availableParcelGraphics.length) return;
+  selectedParcelLabel.textContent = "Tap an outlined parcel on the map or use the list";
+  selectedParcelBadge.hidden = true;
+  selectedParcelMeta.textContent = "Every outline is assigned to the selected organization. Tap a parcel to select it for this service record.";
+  parcelMapView.goTo(availableParcelGraphics, { duration: 450 }).catch(() => {});
 }
 
 function showSelectedParcel(assignment) {
@@ -132,6 +174,15 @@ function showSelectedParcel(assignment) {
   selectedParcelBadge.hidden = false;
   selectedParcelBadge.textContent = `Selected parcel · ${assignment.parcelNumber}`;
   selectedParcelMeta.textContent = `Bright blue boundary = this service record. ${assignment.address} · ${cleanOrganization(assignment.organization)} · ${assignment.period} · ${assignment.coordinateLabel}`;
+}
+
+function selectAssignment(objectId, { fromMap = false } = {}) {
+  const assignment = assignments.find((item) => item.objectId === String(objectId));
+  if (!assignment) return;
+  parcelSelect.value = assignment.objectId;
+  continueButton.disabled = false;
+  status.textContent = `${assignment.parcelNumber} - ${assignment.address} - ${assignment.period}${fromMap ? " (selected on map)" : ""}`;
+  showSelectedParcel(assignment);
 }
 
 async function loadRecentMonths() {
@@ -205,8 +256,9 @@ async function loadParcels(organization) {
     label: `${assignment.parcelNumber} - ${assignment.address}`
   })), assignments.length ? "Choose an assigned parcel" : "No active parcels assigned");
   parcelSelect.disabled = assignments.length === 0;
+  showAvailableParcels();
   status.textContent = assignments.length
-    ? `${assignments.length} active parcel${assignments.length === 1 ? "" : "s"} assigned for ${monthSelect.value}.`
+    ? `${assignments.length} active parcel${assignments.length === 1 ? "" : "s"} assigned for ${monthSelect.value}. Choose from the map or the list.`
     : "No active parcels were found for this organization in the selected assignment month.";
 }
 
@@ -224,6 +276,7 @@ function buildSurveyUrl(assignment) {
 
 monthSelect.addEventListener("change", async () => {
   assignments = [];
+  clearAvailableParcels();
   organizationSelect.disabled = true;
   parcelSelect.disabled = true;
   continueButton.disabled = true;
@@ -239,6 +292,7 @@ monthSelect.addEventListener("change", async () => {
 organizationSelect.addEventListener("change", async () => {
   if (!organizationSelect.value) {
     assignments = [];
+    clearAvailableParcels();
     setOptions(parcelSelect, [], "Choose an organization first");
     parcelSelect.disabled = true;
     continueButton.disabled = true;
@@ -254,11 +308,11 @@ organizationSelect.addEventListener("change", async () => {
 });
 
 parcelSelect.addEventListener("change", () => {
-  continueButton.disabled = !parcelSelect.value;
-  const assignment = assignments.find((item) => item.objectId === parcelSelect.value);
-  if (!assignment) return;
-  status.textContent = `${assignment.parcelNumber} - ${assignment.address} - ${assignment.period}`;
-  showSelectedParcel(assignment);
+  if (!parcelSelect.value) {
+    continueButton.disabled = true;
+    return;
+  }
+  selectAssignment(parcelSelect.value);
 });
 
 lookupForm.addEventListener("submit", (event) => {
