@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The **LandCare morning executive brief** turns the published LandCare data contract into one short daily leadership update. It is deliberately GitHub-native: it creates and assigns a repository Issue rather than sending email directly from the VM.
+The **LandCare morning executive brief** turns the published LandCare data contract into one short daily leadership update. Once Microsoft 365 Graph is configured, it sends a simple, mobile-friendly Executive BI HTML email. Until then, it falls back to an assigned repository Issue so no daily update is lost.
 
 The brief answers four questions:
 
@@ -14,14 +14,24 @@ The brief answers four questions:
 ## Delivery and notification model
 
 - The workflow is [`landcare-morning-brief.yml`](../.github/workflows/landcare-morning-brief.yml).
-- It creates one open Issue per Eastern-calendar day, assigned to `rutomo-ura` and labelled `landcare-brief`.
-- GitHub sends the normal account email/in-app notification for an assigned Issue. Enable Issue notifications for the `rutomo-ura` account and ensure that account's notification email is monitored.
-- This is not direct SMTP delivery to `rutomo@ura.org`; it does not require mailbox credentials, Graph approval, or a secret in the repository.
+- Default direct recipients are `rutomo@ura.org` and `omedina@ura.org`.
+- The HTML email uses the LandCare Executive BI color system: deep blue masthead, readable decision cards, responsive single-column phone layout, source/freshness footer, and direct Map/KPI links.
+- Configure the four GitHub Actions secrets below to enable direct Microsoft 365 delivery. No secret is stored in code or documentation.
+
+| Secret | Purpose |
+|---|---|
+| `M365_TENANT_ID` | URA Microsoft 365 tenant ID |
+| `M365_CLIENT_ID` | App registration client ID |
+| `M365_CLIENT_SECRET` | App registration client secret |
+| `M365_SENDER_UPN` | Approved service mailbox used as the sender |
+
+- The app registration needs Microsoft Graph **Application** `Mail.Send` permission, admin consent, and a mailbox policy that permits the configured sender.
+- Until all four secrets exist, the workflow creates one open Issue per Eastern-calendar day, assigned to `rutomo-ura` and labelled `landcare-brief`. GitHub then provides the account notification fallback.
 - GitHub Actions scheduled workflows are best-effort. The Issue creation timestamp is the delivery record.
 
 ## Schedule
 
-GitHub Actions cron uses UTC, while the executive brief is intended for 9:00 AM America/New_York. The workflow starts at both candidate UTC hours and emits an Issue only when the actual New York local hour is 09. This covers daylight saving time.
+GitHub Actions cron uses UTC, while the executive brief is intended for 9:00 AM America/New_York. The workflow starts at both candidate UTC hours and emits a brief only when the actual New York local hour is 09. This covers daylight saving time.
 
 The 7:00 AM VM refresh remains the producer of the committed data contract. The brief reads the current repository data and compares it to the immediately preceding commit that changed `docs/landcare/data`.
 
@@ -52,7 +62,8 @@ For a local rendering-only check:
 ```powershell
 python scripts\generate_landcare_morning_brief.py `
   --current-dir docs\landcare\data `
-  --output $env:TEMP\landcare-morning-brief.md
+  --output $env:TEMP\landcare-morning-brief.md `
+  --html-output $env:TEMP\landcare-morning-brief.html
 ```
 
-The command writes Markdown only; it does not create a GitHub Issue.
+The command writes Markdown and HTML only; it does not create a GitHub Issue or send email.

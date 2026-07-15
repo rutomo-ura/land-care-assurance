@@ -30,11 +30,16 @@ def write_snapshot(directory: Path, *, submissions=100, returned=20, active=80, 
 class MorningBriefTests(unittest.TestCase):
     def generate(self, current: Path, previous: Path | None = None) -> str:
         output = current.parent / "brief.md"
-        command = [sys.executable, str(SCRIPT), "--current-dir", str(current), "--output", str(output), "--date", "2026-07-14"]
+        html_output = current.parent / "brief.html"
+        command = [sys.executable, str(SCRIPT), "--current-dir", str(current), "--output", str(output), "--html-output", str(html_output), "--date", "2026-07-14"]
         if previous:
             command.extend(["--previous-dir", str(previous)])
         subprocess.run(command, check=True, capture_output=True, text=True)
         return output.read_text(encoding="utf-8")
+
+    def generate_html(self, current: Path, previous: Path | None = None) -> str:
+        self.generate(current, previous)
+        return (current.parent / "brief.html").read_text(encoding="utf-8")
 
     def test_reports_movement_and_contributor(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -49,6 +54,16 @@ class MorningBriefTests(unittest.TestCase):
             self.assertIn("Active completion:** 28.7% (+3.7 pp", brief)
             self.assertIn("KRJ Enterprises:** +2", brief)
             self.assertIn("Hilltop Rising:** +1", brief)
+
+    def test_html_is_branded_and_phone_friendly(self):
+        with tempfile.TemporaryDirectory() as temp:
+            current = Path(temp) / "current"
+            write_snapshot(current, contractors={"KRJ Enterprises": 20})
+            html = self.generate_html(current)
+            self.assertIn("#006c9f", html)
+            self.assertIn("#00334f", html)
+            self.assertIn("@media only screen and (max-width:600px)", html)
+            self.assertIn("Open Map Monitor", html)
 
     def test_reports_no_material_movement(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -149,11 +149,50 @@ def brief_markdown(current: dict, previous: dict | None, brief_date: date) -> tu
     return title, "\n".join(body) + "\n"
 
 
+def brief_html(current: dict, previous: dict | None, brief_date: date) -> str:
+    """Return a mobile-friendly email that follows the Executive BI color system."""
+    if previous is None:
+        headline = "Baseline established"
+        subhead = "The first automated brief establishes the comparison baseline."
+        raw_delta = returned_delta = open_delta = completion_delta = None
+        contributors: list[tuple[str, int]] = []
+    else:
+        raw_delta = current["raw_submissions"] - previous["raw_submissions"]
+        returned_delta = current["returned"] - previous["returned"]
+        open_delta = current["open_active"] - previous["open_active"]
+        completion_delta = round(current["completion_pct"] - previous["completion_pct"], 1)
+        movement = any((raw_delta, returned_delta, open_delta, completion_delta))
+        headline = "Movement detected" if movement else "No material movement"
+        subhead = "Compared with the previous published LandCare data snapshot."
+        contributors = sorted(
+            ((name, count - previous["contractors"].get(name, 0)) for name, count in current["contractors"].items()),
+            key=lambda item: (-item[1], item[0]),
+        )
+        contributors = [(name, delta) for name, delta in contributors if delta > 0][:5]
+
+    def delta(value: int | float | None, suffix: str = "") -> str:
+        if value is None:
+            return "Baseline"
+        if isinstance(value, float):
+            return f"{value:+.1f}{suffix}" if value else f"0.0{suffix}"
+        return f"{value:+d}{suffix}" if value else f"0{suffix}"
+
+    contributor_rows = "".join(
+        f"<tr><td>{name}</td><td align=\"right\"><strong>+{value}</strong></td></tr>" for name, value in contributors
+    ) or "<tr><td colspan=\"2\">No new assignment-matched returns by contractor.</td></tr>"
+    return f"""<!doctype html>
+<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<style>
+body{{margin:0;background:#eef3f6;color:#102a43;font-family:Arial,Helvetica,sans-serif}} .wrap{{width:100%;padding:24px 12px;box-sizing:border-box}} .card{{max-width:640px;margin:auto;background:#fff;border:1px solid #dbe5ea;border-radius:12px;overflow:hidden}} .mast{{background:#00334f;color:#fff;padding:26px 28px}} .mast p{{margin:6px 0 0;color:#ccecf9;font-size:14px}} .content{{padding:24px 28px}} h1{{font-size:24px;margin:0}} h2{{font-size:16px;color:#00334f;margin:26px 0 10px}} .status{{color:#006c9f;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em}} .metrics{{width:100%;border-collapse:separate;border-spacing:8px 8px;margin:10px -8px}} .metric{{background:#e8f6fc;border-radius:8px;padding:14px;vertical-align:top}} .label{{display:block;color:#486581;font-size:12px;margin-bottom:6px}} .value{{display:block;color:#00334f;font-size:24px;font-weight:700}} .delta{{display:block;color:#006c9f;font-size:13px;margin-top:5px}} table.contributors{{width:100%;border-collapse:collapse;font-size:14px}} table.contributors td{{padding:10px 0;border-bottom:1px solid #e5edf1}} .button{{display:inline-block;background:#006c9f;color:#fff!important;text-decoration:none;padding:11px 16px;border-radius:6px;font-weight:700;margin:4px 8px 4px 0}} .footer{{padding:16px 28px;background:#f6f9fa;color:#627d98;font-size:12px;line-height:1.45}} @media only screen and (max-width:600px){{.wrap{{padding:0}} .card{{border-radius:0;border:0}} .mast,.content,.footer{{padding-left:20px;padding-right:20px}} .metrics,.metrics tbody,.metrics tr,.metric{{display:block;width:100%;box-sizing:border-box}} .metrics{{margin:4px 0}} .metric{{margin:8px 0}} .button{{display:block;text-align:center;margin:8px 0}}}}
+</style></head><body><div class=\"wrap\"><main class=\"card\"><section class=\"mast\"><h1>LandCare Morning Brief</h1><p>{brief_date.isoformat()} · Executive operating update</p></section><section class=\"content\"><div class=\"status\">{headline}</div><p>{subhead}</p><table role=\"presentation\" class=\"metrics\"><tr><td class=\"metric\"><span class=\"label\">Raw survey submissions</span><span class=\"value\">{current['raw_submissions']:,}</span><span class=\"delta\">{delta(raw_delta)}</span></td><td class=\"metric\"><span class=\"label\">Matched returns</span><span class=\"value\">{current['returned']:,}</span><span class=\"delta\">{delta(returned_delta)}</span></td></tr><tr><td class=\"metric\"><span class=\"label\">Active completion</span><span class=\"value\">{current['completion_pct']:.1f}%</span><span class=\"delta\">{delta(completion_delta, ' pp')}</span></td><td class=\"metric\"><span class=\"label\">Open Active queue</span><span class=\"value\">{current['open_active']:,}</span><span class=\"delta\">{delta(open_delta)}</span></td></tr></table><h2>Contractor contribution</h2><table class=\"contributors\"><tbody>{contributor_rows}</tbody></table><h2>Act now</h2><a class=\"button\" href=\"{MAP_MONITOR_URL}\">Open Map Monitor</a><a class=\"button\" href=\"{KPI_DASHBOARD_URL}\">Open KPI Dashboard</a></section><footer class=\"footer\">Published snapshot generated {current['generated_on']} · Assignment period {current['latest_assignment_period']} · Survey period {current['latest_survey_period']}. Contractor attribution reflects the assigned contractor for assignment-matched returns.</footer></main></div></body></html>"""
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a LandCare executive morning brief in Markdown.")
     parser.add_argument("--current-dir", type=Path, required=True, help="Directory containing the current published data files.")
     parser.add_argument("--previous-dir", type=Path, help="Directory containing the prior published data files.")
     parser.add_argument("--output", type=Path, required=True, help="Destination Markdown file.")
+    parser.add_argument("--html-output", type=Path, help="Optional destination for the themed HTML email.")
     parser.add_argument("--date", help="Brief date as YYYY-MM-DD; defaults to America/New_York today.")
     parser.add_argument("--github-output", type=Path, help="Optional GitHub Actions output file.")
     args = parser.parse_args()
@@ -164,6 +203,9 @@ def main() -> None:
     title, markdown = brief_markdown(current, previous, brief_date)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(markdown, encoding="utf-8", newline="\n")
+    if args.html_output:
+        args.html_output.parent.mkdir(parents=True, exist_ok=True)
+        args.html_output.write_text(brief_html(current, previous, brief_date), encoding="utf-8", newline="\n")
     if args.github_output:
         with args.github_output.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(f"brief_date={brief_date.isoformat()}\n")

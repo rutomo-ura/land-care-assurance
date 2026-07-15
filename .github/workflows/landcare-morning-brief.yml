@@ -11,6 +11,13 @@ permissions:
   contents: read
   issues: write
 
+env:
+  M365_TENANT_ID: ${{ secrets.M365_TENANT_ID }}
+  M365_CLIENT_ID: ${{ secrets.M365_CLIENT_ID }}
+  M365_CLIENT_SECRET: ${{ secrets.M365_CLIENT_SECRET }}
+  M365_SENDER_UPN: ${{ secrets.M365_SENDER_UPN }}
+  LANDCARE_EMAIL_RECIPIENTS: rutomo@ura.org,omedina@ura.org
+
 jobs:
   publish-brief:
     runs-on: ubuntu-latest
@@ -58,14 +65,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          arguments=(--current-dir docs/landcare/data --output "$RUNNER_TEMP/landcare-morning-brief.md" --github-output "$GITHUB_OUTPUT")
+          arguments=(--current-dir docs/landcare/data --output "$RUNNER_TEMP/landcare-morning-brief.md" --html-output "$RUNNER_TEMP/landcare-morning-brief.html" --github-output "$GITHUB_OUTPUT")
           if [ "${{ steps.previous.outputs.has_previous }}" = "true" ]; then
             arguments+=(--previous-dir "${{ steps.previous.outputs.directory }}")
           fi
           python scripts/generate_landcare_morning_brief.py "${arguments[@]}"
 
-      - name: Create assigned daily issue
+      - name: Send executive HTML email
         if: steps.window.outputs.run == 'true'
+        id: email
+        shell: bash
+        run: |
+          if [ -z "$M365_TENANT_ID" ] || [ -z "$M365_CLIENT_ID" ] || [ -z "$M365_CLIENT_SECRET" ] || [ -z "$M365_SENDER_UPN" ]; then
+            echo "sent=false" >> "$GITHUB_OUTPUT"
+            echo "Microsoft 365 Graph is not fully configured; using the GitHub Issue fallback."
+            exit 0
+          fi
+          python scripts/send_landcare_executive_email.py \
+            --html "$RUNNER_TEMP/landcare-morning-brief.html" \
+            --subject "${{ steps.brief.outputs.title }}"
+          echo "sent=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create assigned daily issue when email is not configured
+        if: steps.window.outputs.run == 'true' && steps.email.outputs.sent != 'true'
         uses: actions/github-script@v7
         env:
           BRIEF_FILE: ${{ runner.temp }}/landcare-morning-brief.md
