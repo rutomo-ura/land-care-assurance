@@ -675,8 +675,8 @@
     "period_month": "2026-06",
     "organization": "Amani Christian CDC",
     "assigned_parcel_keys": 10,
-    "returned_assigned_parcel_keys": 2,
-    "completion_rate_pct": 20.0
+    "returned_assigned_parcel_keys": 9,
+    "completion_rate_pct": 90.0
   },
   {
     "period_month": "2026-06",
@@ -689,15 +689,15 @@
     "period_month": "2026-06",
     "organization": "Chatman Properties",
     "assigned_parcel_keys": 24,
-    "returned_assigned_parcel_keys": 7,
-    "completion_rate_pct": 29.2
+    "returned_assigned_parcel_keys": 12,
+    "completion_rate_pct": 50.0
   },
   {
     "period_month": "2026-06",
     "organization": "Ervin Home Beautification",
     "assigned_parcel_keys": 17,
-    "returned_assigned_parcel_keys": 2,
-    "completion_rate_pct": 11.8
+    "returned_assigned_parcel_keys": 6,
+    "completion_rate_pct": 35.3
   },
   {
     "period_month": "2026-06",
@@ -717,8 +717,8 @@
     "period_month": "2026-06",
     "organization": "KRJ Enterprises",
     "assigned_parcel_keys": 59,
-    "returned_assigned_parcel_keys": 31,
-    "completion_rate_pct": 52.5
+    "returned_assigned_parcel_keys": 43,
+    "completion_rate_pct": 72.9
   },
   {
     "period_month": "2026-06",
