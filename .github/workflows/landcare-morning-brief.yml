@@ -1,0 +1,101 @@
+name: LandCare morning executive brief
+
+on:
+  schedule:
+    # GitHub Actions cron is UTC. Run at both candidate hours and allow only
+    # the real 9 AM America/New_York run to publish (handles DST).
+    - cron: "0 13,14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  publish-brief:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check 9 AM Eastern window
+        id: window
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$(TZ=America/New_York date +%H)" = "09" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository history
+        if: steps.window.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare previous published snapshot
+        if: steps.window.outputs.run == 'true'
+        id: previous
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t commits < <(git rev-list --max-count=2 HEAD -- docs/landcare/data)
+          if [ "${#commits[@]}" -lt 2 ]; then
+            echo "has_previous=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          previous_dir="$RUNNER_TEMP/previous"
+          mkdir -p "$previous_dir"
+          git archive "${commits[1]}" docs/landcare/data | tar -x -C "$previous_dir"
+          echo "has_previous=true" >> "$GITHUB_OUTPUT"
+          echo "directory=$previous_dir/docs/landcare/data" >> "$GITHUB_OUTPUT"
+
+      - name: Generate executive brief
+        if: steps.window.outputs.run == 'true'
+        id: brief
+        shell: bash
+        run: |
+          set -euo pipefail
+          arguments=(--current-dir docs/landcare/data --output "$RUNNER_TEMP/landcare-morning-brief.md" --github-output "$GITHUB_OUTPUT")
+          if [ "${{ steps.previous.outputs.has_previous }}" = "true" ]; then
+            arguments+=(--previous-dir "${{ steps.previous.outputs.directory }}")
+          fi
+          python scripts/generate_landcare_morning_brief.py "${arguments[@]}"
+
+      - name: Create assigned daily issue
+        if: steps.window.outputs.run == 'true'
+        uses: actions/github-script@v7
+        env:
+          BRIEF_FILE: ${{ runner.temp }}/landcare-morning-brief.md
+          BRIEF_DATE: ${{ steps.brief.outputs.brief_date }}
+          BRIEF_TITLE: ${{ steps.brief.outputs.title }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const marker = `[LandCare Morning Brief] ${process.env.BRIEF_DATE}`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', labels: 'landcare-brief', per_page: 100,
+            });
+            if (issues.some((issue) => issue.title.includes(marker))) {
+              core.notice(`Morning brief already exists for ${process.env.BRIEF_DATE}; skipping duplicate.`);
+              return;
+            }
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: 'landcare-brief' });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.issues.createLabel({ owner, repo, name: 'landcare-brief', color: '006c9f', description: 'Automated LandCare executive morning brief' });
+            }
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: process.env.BRIEF_TITLE,
+              body: fs.readFileSync(process.env.BRIEF_FILE, 'utf8'),
+              labels: ['landcare-brief'],
+              assignees: ['rutomo-ura'],
+            });

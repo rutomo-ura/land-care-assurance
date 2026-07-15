@@ -16,6 +16,11 @@ flowchart TB
         Logs["C:\\srv\\logs\\land-care-assurance"]
     end
 
+    subgraph githubAutomation ["GitHub Actions"]
+        MorningBrief["9:00 AM Eastern morning executive brief"]
+        BriefIssue["Assigned GitHub Issue"]
+    end
+
     subgraph upstream ["C:\\srv\\URA-Data-Repository"]
         RegridDaily["regrid_survey_daily_pipeline.py"]
         RegridMonthly["regrid_survey_monthly_export.py"]
@@ -37,6 +42,7 @@ flowchart TB
     RegridDaily --> SurveyTable --> SurveyView --> SurveyAgol
     Refresh --> DataFiles --> GitHub --> Pages
     Refresh --> Logs
+    GitHub --> MorningBrief --> BriefIssue
 ```
 
 ## Daily Scheduled Flow
@@ -58,6 +64,7 @@ flowchart TD
     L -->|Yes| N["Commit docs/landcare/data"]
     N --> O["Push to GitHub"]
     O --> P["GitHub Pages serves updated dashboard"]
+    P --> Q["9:00 AM GitHub Action creates assigned executive brief"]
 ```
 
 ## Task Registration Standard
@@ -187,6 +194,7 @@ flowchart LR
 | Dated status | `C:\srv\logs\land-care-assurance\daily-refresh-status-YYYY-MM-DD.json` | Historical run record |
 | Transcript log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` | Full troubleshooting log |
 | Task history | Windows Task Scheduler UI | Confirms scheduled trigger and exit code |
+| Morning brief Issue | GitHub Actions and repository Issues | Confirms 9 AM summary delivery and metric movement |
 
 ## Source Rules
 
