@@ -160,6 +160,74 @@ textarea {
   min-height: 660px;
 }
 
+.submission-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 22px 48px;
+}
+
+.submission-masthead,
+.survey-frame-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.submission-masthead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 30px;
+}
+
+.submission-masthead h1 { margin: 4px 0 8px; color: var(--ura-deep); font-size: clamp(28px, 4vw, 42px); letter-spacing: -.04em; }
+.submission-masthead p { max-width: 660px; margin: 0; color: var(--muted); line-height: 1.65; }
+.submission-status { display: flex; align-items: center; gap: 9px; color: var(--ura-deep); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.submission-status strong { display: none; }
+.submission-status i { width: 18px; height: 1px; background: var(--ura-blue); }
+
+.submission-guidance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+.submission-guidance article { min-height: 154px; padding: 20px; background: var(--soft-blue); border: 1px solid #cceaf6; border-radius: var(--radius-md); }
+.submission-guidance strong { display: block; margin-top: 6px; color: var(--ura-deep); font-size: 17px; }
+.submission-guidance p { margin: 8px 0 0; color: #42606e; font-size: 13px; line-height: 1.55; }
+
+.assignment-check { display: grid; grid-template-columns: minmax(260px, .85fr) minmax(420px, 1.35fr); gap: 24px; align-items: end; margin: 18px 0; padding: 24px; background: linear-gradient(120deg, var(--ura-deep), #045f91); border-radius: var(--radius-lg); box-shadow: var(--shadow); color: #fff; }
+.assignment-check__intro h2 { margin: 5px 0 8px; font-size: 23px; letter-spacing: -.025em; }
+.assignment-check__intro p { max-width: 480px; margin: 0; color: #d9edf7; font-size: 13px; line-height: 1.55; }
+.assignment-check .section-kicker { color: #9fdcf4; }
+.assignment-check__form { display: grid; grid-template-columns: 1fr 1.25fr auto; gap: 10px; align-items: end; }
+.assignment-check label { display: grid; gap: 6px; color: #d9edf7; font-size: 11px; font-weight: 800; }
+.assignment-check select { width: 100%; min-height: 42px; border: 1px solid transparent; border-radius: 8px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 700; }
+.assignment-check button { min-height: 42px; padding: 0 15px; border: 1px solid #67c7eb; border-radius: 8px; background: #0e9bce; color: #fff; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.assignment-check button:disabled, .assignment-check select:disabled { cursor: not-allowed; opacity: .64; }
+.assignment-check__status { grid-column: 1 / -1; padding-top: 2px; color: #ccebf7; font-size: 12px; font-weight: 700; }
+.assignment-map-card { grid-column: 1 / -1; overflow: hidden; border: 1px solid rgba(181, 229, 247, .42); border-radius: 12px; background: #fff; color: var(--ink); }
+.assignment-map-card__head { display: grid; gap: 3px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+.assignment-map-card__head .eyebrow { color: var(--ura-blue-dark); }
+.assignment-map-card__head strong { color: var(--ura-deep); font-size: 15px; }
+.assignment-parcel-map { height: 300px; background: #e9f2f6; }
+.assignment-map-card p { margin: 0; padding: 10px 16px 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
+.survey-frame-card { overflow: hidden; }
+.survey-frame-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; border-bottom: 1px solid var(--line); }
+.survey-frame-head h2 { margin: 3px 0 0; color: var(--ura-deep); font-size: 21px; }
+.survey-open-link { color: var(--ura-blue-dark); font-size: 13px; font-weight: 800; }
+.survey-embed { min-height: 760px; background: #f7fafc; }
+.survey-embed iframe { display: block; width: 100%; min-height: 760px; border: 0; }
+.survey-embed-message { display: grid; place-content: center; min-height: 480px; padding: 32px; text-align: center; color: var(--ura-deep); }
+.survey-embed-message p { max-width: 520px; color: var(--muted); line-height: 1.55; }
+.survey-embed-config { background: linear-gradient(135deg, #f5fbfe, #fff); }
+
+.evidence-hover-card { position: absolute; z-index: 5; width: 222px; pointer-events: none; filter: drop-shadow(0 10px 18px rgba(0, 51, 79, .18)); }
+.survey-photo-evidence { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfd; }
+.survey-photo-evidence img { display: block; width: 116px; height: 82px; border-radius: 8px; object-fit: cover; background: var(--panel); }
+.survey-photo-evidence a { display: block; margin-top: 3px; color: var(--ura-blue-dark); font-size: 12px; font-weight: 800; line-height: 1.35; }
+.survey-photo-evidence.compact { display: block; margin: 0; padding: 8px; background: var(--paper); }
+.survey-photo-evidence.compact img { width: 204px; height: 138px; }
+.survey-photo-evidence.compact div { display: none; }
+
 body[data-page="monitoring"] .monitoring-masthead {
   display: flex;
   grid-column: 1 / -1;
@@ -2317,6 +2385,11 @@ select {
   .parcel-panel {
     grid-template-columns: 1fr;
   }
+
+  .submission-masthead { display: grid; align-items: start; padding: 22px; }
+  .submission-status { flex-wrap: wrap; white-space: normal; }
+  .submission-guidance { grid-template-columns: 1fr; }
+  .assignment-check { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 620px) {
@@ -2328,10 +2401,8 @@ select {
     white-space: normal;
   }
 
-  .page-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+  .page-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .page-tabs a { min-height: 34px; padding: 0 8px; font-size: 10px; }
 
   .mini-kpis,
   .kpi-grid,
@@ -2377,6 +2448,14 @@ select {
   .panel-head {
     display: grid;
   }
+
+  .submission-shell { padding: 16px 12px 32px; }
+  .submission-masthead { padding: 20px; }
+  .submission-masthead h1 { font-size: 28px; }
+  .assignment-check { padding: 20px; }
+  .assignment-check__form { grid-template-columns: 1fr; }
+  .survey-frame-head { align-items: start; padding: 18px; }
+  .survey-embed, .survey-embed iframe { min-height: 650px; }
 
   select {
     width: 100%;

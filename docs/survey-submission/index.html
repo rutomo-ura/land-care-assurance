@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LandCare Survey Submission</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260715-3" />
+  </head>
+  <body data-page="survey-submission">
+    <header class="app-header">
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">
+        <img src="../landcare/assets/ura-logo.png" alt="URA" />
+      </a>
+      <div class="title-block">
+        <span>LandCare Assurance</span>
+        <strong>Survey Submission</strong>
+      </div>
+      <nav class="page-tabs" aria-label="LandCare pages">
+        <a href="../monitoring/">Map Monitor</a>
+        <a href="../kpi/">KPI Dashboard</a>
+        <a class="is-active" href="../survey-submission/">Survey Submission</a>
+      </nav>
+      <div class="freshness">Public contractor intake</div>
+    </header>
+
+    <main class="submission-shell">
+      <section class="submission-masthead" aria-labelledby="submissionTitle">
+        <div>
+          <span class="section-kicker">Field evidence intake</span>
+          <h1 id="submissionTitle">Report completed LandCare service</h1>
+          <p>Submit one service record for each parcel. A URA reviewer verifies every submission before it appears as public evidence or supports reporting.</p>
+        </div>
+        <aside class="submission-status" aria-label="Submission process">
+          <strong>How it works</strong>
+          <span>Submit</span><i></i><span>URA review</span><i></i><span>Approved evidence</span>
+        </aside>
+      </section>
+
+      <section class="submission-guidance" aria-label="Submission requirements">
+        <article><span class="eyebrow">Before you begin</span><strong>One parcel per entry</strong><p>Use the parcel/address in the field and select your organization.</p></article>
+        <article><span class="eyebrow">Required evidence</span><strong>Attach a clear photo</strong><p>Show the completed service area. Photos are reviewed before they are published.</p></article>
+        <article><span class="eyebrow">Reporting scope</span><strong>Mirror the Regrid checklist</strong><p>Record service date, first visit, litter, vegetation, vehicle, and notes.</p></article>
+      </section>
+
+      <section class="assignment-check" aria-labelledby="assignmentCheckTitle">
+        <div class="assignment-check__intro">
+          <span class="section-kicker">Current assignment</span>
+          <h2 id="assignmentCheckTitle">Start with your assigned parcel</h2>
+          <p>Choose your organization, then select a parcel from the current monthly assignment bundle. The parcel and address carry into the service form.</p>
+        </div>
+        <form id="assignmentLookupForm" class="assignment-check__form">
+          <label>
+            <span>Organization</span>
+            <select id="assignmentOrganization" required disabled>
+              <option value="">Loading current assignments…</option>
+            </select>
+          </label>
+          <label>
+            <span>Assigned parcel</span>
+            <select id="assignmentParcel" required disabled>
+              <option value="">Choose an organization first</option>
+            </select>
+          </label>
+          <button id="continueToSurvey" type="submit" disabled>Continue to service form</button>
+        </form>
+        <div id="assignmentLookupStatus" class="assignment-check__status" aria-live="polite">Loading the current monthly assignment bundle…</div>
+        <aside class="assignment-map-card" aria-label="Selected assigned parcel map">
+          <div class="assignment-map-card__head">
+            <span class="eyebrow">Parcel confirmation</span>
+            <strong id="selectedParcelLabel">Choose a parcel to inspect its official boundary</strong>
+          </div>
+          <div id="assignmentParcelMap" class="assignment-parcel-map" aria-label="Map of selected LandCare parcel"></div>
+          <p id="selectedParcelMeta">The outlined parcel is read from the current monthly LandCare assignment bundle.</p>
+        </aside>
+      </section>
+
+      <section class="survey-frame-card" aria-label="LandCare Network survey form">
+        <div class="survey-frame-head">
+          <div><span class="eyebrow">LandCare Network</span><h2>Service submission form</h2></div>
+          <a id="openSurveyLink" class="survey-open-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Open form in a new tab</a>
+        </div>
+        <div class="survey-embed" id="surveyEmbed" aria-live="polite">
+          <div class="survey-embed-message">
+            <strong>Loading secure survey form…</strong>
+            <p>If the form does not load, use the “Open form in a new tab” link.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="../landcare/survey-submission.js?v=20260715-3"></script>
+  </body>
+</html>

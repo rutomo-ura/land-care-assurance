@@ -13,6 +13,7 @@ import {
   SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
+  fetchLatestSurveyEvidenceForParcel,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
   enrichSummaryWithSurveyLayer,
@@ -20,6 +21,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson
 } from "./survey-layer.js";
+import { APPROVED_EVIDENCE_GEOJSON_URL } from "./survey-submission-config.js";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -111,7 +113,8 @@ const state = {
   surveyPeriodStats: [],
   assignmentLayerInfo: null,
   assignmentPeriodStats: [],
-  surveyLayerMode: "all"
+  surveyLayerMode: "all",
+  evidenceCache: new globalThis.Map()
 };
 
 const DEFAULT_EXPORT_METRICS = ["completionRate", "open", "returned", "active", "annualRunRate"];
@@ -351,6 +354,26 @@ function filteredFeatures() {
     }
     return true;
   });
+}
+
+function safeImageUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function surveyPhotoMarkup(props, { compact = false } = {}) {
+  const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
+  if (!imageUrl) return "";
+  const label = compact ? "View approved survey photo" : "Open full survey photo";
+  return `
+    <section class="survey-photo-evidence${compact ? " compact" : ""}">
+      <img src="${escapeHtml(imageUrl)}" alt="Approved survey evidence for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
+      <div><span class="eyebrow">Survey photo</span><a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
+    </section>`;
 }
 
 function uniqueCount(features, predicate = () => true) {
@@ -851,12 +874,35 @@ function parcelDetail(props) {
     Status: ${escapeHtml(statusLabel(props.completion_status))}<br>
     Ownership: ${escapeHtml(props.ownership_type || "Other or unknown")}<br>
     Owner: ${escapeHtml(props.owner_name || "Unknown")}<br>
-    Source: Monthly assurance layer
+    Source: ${escapeHtml(props.survey_source || "Monthly assurance layer")}<br>
+    ${props.created_at ? `Evidence submitted: ${escapeHtml(props.created_at)}<br>` : ""}
+    ${props.survey_status ? `Survey status: ${escapeHtml(props.survey_status)}<br>` : ""}
+    ${surveyPhotoMarkup(props)}
   `;
 }
 
 function setParcelDetail(props) {
   document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
+}
+
+async function enrichWithSurveyEvidence(props) {
+  const parcelKey = props.parcel_key || props.parcelnumb || props.parcel_number;
+  const cacheKey = `${parcelDigits(parcelKey)}:${state.selectedMonth || "Current"}`;
+  if (!parcelKey) return props;
+  let evidence = state.evidenceCache.get(cacheKey);
+  if (evidence === undefined) {
+    evidence = await fetchLatestSurveyEvidenceForParcel(parcelKey, state.selectedMonth).catch(() => null);
+    state.evidenceCache.set(cacheKey, evidence);
+  }
+  if (!evidence) return props;
+  return {
+    ...props,
+    image_url: evidence.image_url,
+    created_at: evidence.created_at,
+    address: evidence.address || props.address,
+    survey_status: evidence.status,
+    survey_source: SURVEY_LAYER_NAME
+  };
 }
 
 function updateDistrictHighlight() {
@@ -1758,18 +1804,51 @@ function buildHistorySurveyLayer({ visible }) {
     opacity: 0.95,
     popupTemplate: {
       title: "Survey {parcelnumb}",
-      content: [
-        {
-          type: "fields",
-          fieldInfos: [
-            { fieldName: "period_label", label: "Service period" },
-            { fieldName: "maintained_by", label: "Maintained by" },
-            { fieldName: "created_at", label: "Submitted", format: { dateFormat: "short-date-short-time" } },
-            { fieldName: "status", label: "Status" },
-            { fieldName: "address", label: "Address" }
-          ]
-        }
-      ]
+      content: (event) => {
+        const props = event.graphic?.attributes || {};
+        return `
+          <div class="survey-popup-detail">
+            <b>Service period:</b> ${escapeHtml(props.period_label || "Unknown")}<br>
+            <b>Maintained by:</b> ${escapeHtml(props.maintained_by || "Unknown")}<br>
+            <b>Submitted:</b> ${escapeHtml(props.created_at || "Unknown")}<br>
+            <b>Status:</b> ${escapeHtml(props.status || "Unknown")}<br>
+            <b>Address:</b> ${escapeHtml(props.address || "Unknown")}
+            ${surveyPhotoMarkup(props)}
+          </div>`;
+      }
+    }
+  });
+}
+
+function buildApprovedEvidenceLayer() {
+  if (!safeImageUrl(APPROVED_EVIDENCE_GEOJSON_URL)) return null;
+  return new GeoJSONLayer({
+    url: APPROVED_EVIDENCE_GEOJSON_URL,
+    title: "Approved Internal Survey Evidence",
+    outFields: ["*"],
+    visible: true,
+    renderer: {
+      type: "simple",
+      symbol: {
+        type: "simple-marker",
+        style: "diamond",
+        size: 8,
+        color: "#0098d3",
+        outline: { color: "#ffffff", width: 1.2 }
+      }
+    },
+    popupTemplate: {
+      title: "Approved evidence {parcelnumb}",
+      content: (event) => {
+        const props = event.graphic?.attributes || {};
+        return `
+          <div class="survey-popup-detail">
+            <b>Contractor:</b> ${escapeHtml(props.maintained_by || "Unknown")}<br>
+            <b>Service date:</b> ${escapeHtml(props.service_date || "Unknown")}<br>
+            <b>Reviewed:</b> ${escapeHtml(props.reviewed_at || "Unknown")}
+            ${surveyPhotoMarkup(props)}
+          </div>`;
+      }
     }
   });
 }
@@ -1854,12 +1933,14 @@ async function initMap() {
   const historySurveyLayer = buildHistorySurveyLayer({
     visible: false
   });
+  const approvedEvidenceLayer = buildApprovedEvidenceLayer();
   const currentLayer = buildCurrentLayer({
     visible: state.dataView === "current"
   });
   state.layers = {
     historyAssignments: historyAssignmentLayer,
     historySurveys: historySurveyLayer,
+    approvedEvidence: approvedEvidenceLayer,
     current: currentLayer
   };
 
@@ -1924,7 +2005,7 @@ async function initMap() {
 
   const map = new Map({
     basemap: buildCartoLightBasemap(),
-    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, historySurveyLayer, currentLayer]
+    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, historySurveyLayer, approvedEvidenceLayer, currentLayer].filter(Boolean)
   });
 
   const view = new MapView({
@@ -1948,7 +2029,7 @@ async function initMap() {
     const historyLayerSet = new Set(historyLayers());
     const graphic = hit.results.find((result) => {
       const layer = result.graphic?.layer;
-      return layer === state.layers.current || historyLayerSet.has(layer);
+      return layer === state.layers.current || historyLayerSet.has(layer) || layer === state.layers.historySurveys || layer === state.layers.approvedEvidence;
     })?.graphic;
     if (!graphic?.attributes) return;
     if (graphic.layer === state.layers.historySurveys) {
@@ -1960,7 +2041,25 @@ async function initMap() {
         returned_flag: true,
         period_month: graphic.attributes.period_label,
         ownership_type: graphic.attributes.owner || "URA",
-        survey_source: SURVEY_LAYER_NAME
+        survey_source: SURVEY_LAYER_NAME,
+        image_url: graphic.attributes.image_url,
+        status: graphic.attributes.status,
+        address: graphic.attributes.address,
+        created_at: graphic.attributes.created_at
+      });
+      return;
+    }
+    if (graphic.layer === state.layers.approvedEvidence) {
+      setParcelDetail({
+        parcel_key: graphic.attributes.parcelnumb,
+        organization: graphic.attributes.maintained_by || "Unassigned",
+        maintenance_level: "Internal approved evidence",
+        completion_status: "returned",
+        period_month: graphic.attributes.service_date || "Approved",
+        survey_source: "Survey123 approved evidence",
+        image_url: graphic.attributes.image_url,
+        created_at: graphic.attributes.submitted_at,
+        survey_status: "Approved"
       });
       return;
     }
@@ -1968,14 +2067,53 @@ async function initMap() {
       ? normalizeCurrentAttributes(graphic.attributes)
       : graphic.attributes;
     setParcelDetail(props);
+    const enriched = await enrichWithSurveyEvidence(props);
+    setParcelDetail(enriched);
+  });
+
+  let hoverTimer = null;
+  let lastHoverKey = "";
+  const hoverCard = document.getElementById("evidenceHoverCard");
+  const hideHoverCard = () => {
+    lastHoverKey = "";
+    hoverCard.hidden = true;
+    hoverCard.replaceChildren();
+  };
+  view.on("pointer-leave", hideHoverCard);
+  view.on("pointer-move", (event) => {
+    window.clearTimeout(hoverTimer);
+    hoverTimer = window.setTimeout(async () => {
+      const hit = await view.hitTest(event).catch(() => null);
+      const graphic = hit?.results?.find((result) => {
+        const layer = result.graphic?.layer;
+        return layer === state.layers.current || layer === state.layers.historyAssignments || layer === state.layers.historySurveys || layer === state.layers.approvedEvidence;
+      })?.graphic;
+      const props = graphic?.attributes;
+      const normalised = graphic?.layer === state.layers.current ? normalizeCurrentAttributes(props) : props;
+      const evidence = graphic?.layer === state.layers.historySurveys || graphic?.layer === state.layers.approvedEvidence
+        ? props
+        : await enrichWithSurveyEvidence(normalised || {});
+      const imageUrl = safeImageUrl(evidence?.image_url);
+      const key = `${evidence?.OBJECTID || normalised?.parcel_key || ""}:${imageUrl}`;
+      if (!imageUrl || key === lastHoverKey) {
+        if (!imageUrl) hideHoverCard();
+        return;
+      }
+      lastHoverKey = key;
+      hoverCard.innerHTML = surveyPhotoMarkup(evidence, { compact: true });
+      hoverCard.hidden = false;
+      hoverCard.style.left = `${Math.min(event.x + 14, Math.max(12, view.width - 238))}px`;
+      hoverCard.style.top = `${Math.min(event.y + 14, Math.max(12, view.height - 212))}px`;
+    }, 180);
   });
 
   await view.when();
   await Promise.all([
     historyAssignmentLayer.when(),
     historySurveyLayer.when(),
-    currentLayer.when()
-  ]);
+    currentLayer.when(),
+    approvedEvidenceLayer?.when()
+  ].filter(Boolean));
   await zoomToDefaultCurrent();
 }
 

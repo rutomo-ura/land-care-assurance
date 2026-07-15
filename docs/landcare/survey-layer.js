@@ -61,7 +61,7 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
     const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
       f: "json",
       where: `period_label = '${safePeriod}'`,
-      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address",
+      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url",
       returnGeometry: "false",
       resultRecordCount: String(pageSize),
       resultOffset: String(offset),
@@ -73,6 +73,24 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
     offset += pageSize;
   }
   return records;
+}
+
+export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLabel = null) {
+  const digits = parcelDigits(parcelNumber);
+  if (!digits) return null;
+  const clauses = [`parcelnumb = '${digits.replace(/'/g, "''")}'`];
+  if (periodLabel && periodLabel !== "Current") {
+    clauses.push(`period_label = '${String(periodLabel).replace(/'/g, "''")}'`);
+  }
+  const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
+    f: "json",
+    where: clauses.join(" AND "),
+    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,owner",
+    returnGeometry: "false",
+    orderByFields: "created_at DESC",
+    resultRecordCount: "1"
+  });
+  return payload.features?.[0]?.attributes || null;
 }
 
 export function surveyParcelKeys(records) {
