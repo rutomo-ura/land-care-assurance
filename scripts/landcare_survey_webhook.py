@@ -201,7 +201,7 @@ def approved_evidence() -> JSONResponse:
       SELECT source_global_id, parcelnumb, address, maintained_by, service_date,
              submitted_at, image_url, reviewed_at, lat, lon
       FROM gis.landcare_approved_survey_evidence
-      WHERE lat IS NOT NULL AND lon IS NOT NULL AND image_url IS NOT NULL
+      WHERE image_url IS NOT NULL
       ORDER BY submitted_at DESC NULLS LAST
       LIMIT 10000
     """
@@ -215,7 +215,14 @@ def approved_evidence() -> JSONResponse:
         features.append({
             "type": "Feature",
             "id": str(row.pop("source_global_id")),
-            "geometry": {"type": "Point", "coordinates": [float(longitude), float(latitude)]},
+            # A selected parcel can supply the geometry in Map Monitor, so do
+            # not hide approved photo evidence merely because a survey lacks a
+            # device location. GeoJSON permits a null geometry.
+            "geometry": (
+                {"type": "Point", "coordinates": [float(longitude), float(latitude)]}
+                if longitude is not None and latitude is not None
+                else None
+            ),
             "properties": {key: value.isoformat() if hasattr(value, "isoformat") else value for key, value in row.items()},
         })
     return JSONResponse(

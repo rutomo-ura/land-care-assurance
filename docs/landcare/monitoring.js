@@ -114,7 +114,9 @@ const state = {
   assignmentLayerInfo: null,
   assignmentPeriodStats: [],
   surveyLayerMode: "all",
-  evidenceCache: new globalThis.Map()
+  evidenceCache: new globalThis.Map(),
+  approvedEvidenceByParcel: new globalThis.Map(),
+  approvedEvidenceLoadPromise: null
 };
 
 const DEFAULT_EXPORT_METRICS = ["completionRate", "open", "returned", "active", "annualRunRate"];
@@ -885,10 +887,57 @@ function setParcelDetail(props) {
   document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
 }
 
+async function loadApprovedEvidenceByParcel() {
+  if (!safeImageUrl(APPROVED_EVIDENCE_GEOJSON_URL)) return state.approvedEvidenceByParcel;
+  if (state.approvedEvidenceLoadPromise) return state.approvedEvidenceLoadPromise;
+
+  state.approvedEvidenceLoadPromise = fetch(APPROVED_EVIDENCE_GEOJSON_URL, {
+    headers: { Accept: "application/geo+json, application/json" }
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Approved evidence feed returned ${response.status}`);
+      return response.json();
+    })
+    .then((collection) => {
+      for (const feature of collection?.features || []) {
+        const props = feature?.properties || {};
+        const parcelKey = parcelDigits(props.parcelnumb || props.parcel_number || props.parcel_key);
+        const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
+        // The feed is ordered newest first; retain the latest approved photo per parcel.
+        if (parcelKey && imageUrl && !state.approvedEvidenceByParcel.has(parcelKey)) {
+          state.approvedEvidenceByParcel.set(parcelKey, { ...props, image_url: imageUrl });
+        }
+      }
+      return state.approvedEvidenceByParcel;
+    })
+    .catch((error) => {
+      console.warn("Approved Survey123 evidence is unavailable; continuing without it.", error);
+      return state.approvedEvidenceByParcel;
+    });
+  return state.approvedEvidenceLoadPromise;
+}
+
 async function enrichWithSurveyEvidence(props) {
   const parcelKey = props.parcel_key || props.parcelnumb || props.parcel_number;
   const cacheKey = `${parcelDigits(parcelKey)}:${state.selectedMonth || "Current"}`;
   if (!parcelKey) return props;
+
+  // Approved Survey123 evidence is intentionally preferred. It is governed by the
+  // internal review workflow and is the only Survey123 evidence exposed publicly.
+  const approvedEvidence = (await loadApprovedEvidenceByParcel()).get(parcelDigits(parcelKey));
+  if (approvedEvidence) {
+    return {
+      ...props,
+      image_url: approvedEvidence.image_url,
+      created_at: approvedEvidence.submitted_at || props.created_at,
+      address: approvedEvidence.address || props.address,
+      survey_status: "Approved",
+      survey_source: "Survey123 approved evidence",
+      evidence_source: "approved_internal_survey123",
+      organization: approvedEvidence.maintained_by || props.organization
+    };
+  }
+
   let evidence = state.evidenceCache.get(cacheKey);
   if (evidence === undefined) {
     evidence = await fetchLatestSurveyEvidenceForParcel(parcelKey, state.selectedMonth).catch(() => null);
@@ -1943,6 +1992,9 @@ async function initMap() {
     approvedEvidence: approvedEvidenceLayer,
     current: currentLayer
   };
+  // Fetch metadata only (not the image files) so a parcel hover can show its
+  // approved Survey123 photo immediately. Images remain lazy-loaded by the card.
+  void loadApprovedEvidenceByParcel();
 
   const neighborhoodLayer = new FeatureLayer({
     url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
