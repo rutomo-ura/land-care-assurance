@@ -67,7 +67,11 @@ function normalizeAssignmentGeometry(geometry) {
   const valid = rings.every((ring) => ring.every((point) => (
     point.length >= 2 && Number.isFinite(point[0]) && Number.isFinite(point[1])
   )));
-  return valid ? { ...geometry, rings } : null;
+  // REST query geometry omits the `type` and often spatial reference. Supply
+  // both so ArcGIS can construct an extent and render the selected boundary.
+  return valid
+    ? { type: "polygon", spatialReference: { wkid: 4326 }, ...geometry, rings }
+    : null;
 }
 
 function setOptions(select, options, placeholder) {
