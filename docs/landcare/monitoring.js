@@ -370,11 +370,16 @@ function safeImageUrl(value) {
 function surveyPhotoMarkup(props, { compact = false } = {}) {
   const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
   if (!imageUrl) return "";
-  const label = compact ? "View approved survey photo" : "Open full survey photo";
+  const isApprovedSurvey123 = props.evidence_source === "approved_internal_survey123" ||
+    props.survey_source === "Survey123 approved evidence";
+  const sourceLabel = isApprovedSurvey123 ? "Approved Survey123 photo" : "Regrid survey photo";
+  const label = compact
+    ? `View ${isApprovedSurvey123 ? "approved" : "Regrid"} survey photo`
+    : `Open full ${isApprovedSurvey123 ? "approved Survey123" : "Regrid"} photo`;
   return `
     <section class="survey-photo-evidence${compact ? " compact" : ""}">
       <img src="${escapeHtml(imageUrl)}" alt="Approved survey evidence for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
-      <div><span class="eyebrow">Survey photo</span><a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
+      <div><span class="eyebrow">${sourceLabel}</span><a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
     </section>`;
 }
 

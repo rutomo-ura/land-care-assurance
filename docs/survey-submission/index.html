@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Survey Submission</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css?v=20260715-4" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260715-5" />
   </head>
   <body data-page="survey-submission">
     <header class="app-header">
@@ -75,9 +75,10 @@
           <div class="assignment-map-card__head">
             <span class="eyebrow">Parcel confirmation</span>
             <strong id="selectedParcelLabel">Choose a parcel to inspect its official boundary</strong>
+            <span id="selectedParcelBadge" class="selected-parcel-badge" hidden>Selected parcel</span>
           </div>
           <div id="assignmentParcelMap" class="assignment-parcel-map" aria-label="Map of selected LandCare parcel"></div>
-          <p id="selectedParcelMeta">The outlined parcel, address, and coordinates are read from the selected LandCare assignment period.</p>
+          <p id="selectedParcelMeta">The bright blue boundary marks the parcel selected for this service record. Its address and assignment details are read from the selected LandCare period.</p>
         </aside>
       </section>
 
@@ -94,6 +95,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="../landcare/survey-submission.js?v=20260715-4"></script>
+    <script type="module" src="../landcare/survey-submission.js?v=20260715-5"></script>
   </body>
 </html>

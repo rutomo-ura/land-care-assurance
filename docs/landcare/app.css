@@ -204,9 +204,10 @@ textarea {
 .assignment-check button:disabled, .assignment-check select:disabled { cursor: not-allowed; opacity: .64; }
 .assignment-check__status { grid-column: 1 / -1; padding-top: 2px; color: #ccebf7; font-size: 12px; font-weight: 700; }
 .assignment-map-card { grid-column: 1 / -1; overflow: hidden; border: 1px solid rgba(181, 229, 247, .42); border-radius: 12px; background: #fff; color: var(--ink); }
-.assignment-map-card__head { display: grid; gap: 3px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+.assignment-map-card__head { display: grid; gap: 5px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
 .assignment-map-card__head .eyebrow { color: var(--ura-blue-dark); }
 .assignment-map-card__head strong { color: var(--ura-deep); font-size: 15px; }
+.selected-parcel-badge { width: fit-content; padding: 4px 8px; border-radius: 999px; background: #d9f2fb; color: #006c9f; font-size: 11px; font-weight: 800; }
 .assignment-parcel-map { height: 340px; background: #e9f2f6; }
 .assignment-map-card p { margin: 0; padding: 10px 16px 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
 

@@ -17,11 +17,13 @@ const continueButton = document.getElementById("continueToSurvey");
 const status = document.getElementById("assignmentLookupStatus");
 const parcelMapNode = document.getElementById("assignmentParcelMap");
 const selectedParcelLabel = document.getElementById("selectedParcelLabel");
+const selectedParcelBadge = document.getElementById("selectedParcelBadge");
 const selectedParcelMeta = document.getElementById("selectedParcelMeta");
 
 let assignments = [];
 let parcelMapView;
 let selectedParcelGraphic;
+let selectedParcelLabelGraphic;
 let selectedAssignment;
 
 function isSurvey123Url(value) {
@@ -83,18 +85,34 @@ function showSelectedParcel(assignment) {
   selectedAssignment = assignment;
   if (!parcelMapView || !assignment?.geometry) return;
   if (selectedParcelGraphic) parcelMapView.graphics.remove(selectedParcelGraphic);
+  if (selectedParcelLabelGraphic) parcelMapView.graphics.remove(selectedParcelLabelGraphic);
   selectedParcelGraphic = new Graphic({
     geometry: assignment.geometry,
     symbol: {
       type: "simple-fill",
-      color: [0, 152, 211, 0.2],
-      outline: { color: "#00334f", width: 2.5 }
+      color: [0, 152, 211, 0.34],
+      outline: { color: "#006c9f", width: 4 }
+    }
+  });
+  selectedParcelLabelGraphic = new Graphic({
+    geometry: assignment.geometry.extent?.center,
+    symbol: {
+      type: "text",
+      color: "#00334f",
+      haloColor: "#ffffff",
+      haloSize: 1.5,
+      text: `SELECTED\n${assignment.parcelNumber}`,
+      font: { family: "Arial", size: 11, weight: "bold" },
+      yoffset: 4
     }
   });
   parcelMapView.graphics.add(selectedParcelGraphic);
-  parcelMapView.goTo(assignment.geometry.extent?.expand(1.8) || selectedParcelGraphic, { duration: 450 }).catch(() => {});
+  if (selectedParcelLabelGraphic.geometry) parcelMapView.graphics.add(selectedParcelLabelGraphic);
+  parcelMapView.goTo(assignment.geometry.extent?.expand(1.55) || selectedParcelGraphic, { duration: 450 }).catch(() => {});
   selectedParcelLabel.textContent = `${assignment.parcelNumber} - ${assignment.address}`;
-  selectedParcelMeta.textContent = `${cleanOrganization(assignment.organization)} - ${assignment.period} - ${assignment.coordinateLabel} - official assigned parcel boundary`;
+  selectedParcelBadge.hidden = false;
+  selectedParcelBadge.textContent = `Selected parcel · ${assignment.parcelNumber}`;
+  selectedParcelMeta.textContent = `Bright blue boundary = this service record. ${assignment.address} · ${cleanOrganization(assignment.organization)} · ${assignment.period} · ${assignment.coordinateLabel}`;
 }
 
 async function loadRecentMonths() {
