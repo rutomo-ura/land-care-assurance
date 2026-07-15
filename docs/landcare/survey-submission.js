@@ -55,6 +55,21 @@ function coordinateFallback(geometry) {
   return `Coordinates ${Number(latitude).toFixed(5)}, ${Number(longitude).toFixed(5)}`;
 }
 
+function normalizeAssignmentGeometry(geometry) {
+  if (!geometry?.rings) return geometry || null;
+  // A few historical bundle rows encode ring vertices as "longitude latitude"
+  // strings. ArcGIS MapView cannot draw those directly, even though the parcel
+  // boundary is present in the assignment service.
+  const rings = geometry.rings.map((ring) => ring.map((point) => {
+    if (!Array.isArray(point)) return String(point || "").trim().split(/\s+/).map(Number);
+    return point.map(Number);
+  }));
+  const valid = rings.every((ring) => ring.every((point) => (
+    point.length >= 2 && Number.isFinite(point[0]) && Number.isFinite(point[1])
+  )));
+  return valid ? { ...geometry, rings } : null;
+}
+
 function setOptions(select, options, placeholder) {
   select.replaceChildren(new Option(placeholder, ""), ...options.map(({ label, value }) => new Option(label, value)));
 }
@@ -167,16 +182,19 @@ async function loadParcels(organization) {
     resultRecordCount: "2000"
   });
   assignments = (payload.features || [])
-    .map(({ attributes, geometry }) => ({
+    .map(({ attributes, geometry }) => {
+      const parcelGeometry = normalizeAssignmentGeometry(geometry);
+      return {
       objectId: String(attributes.OBJECTID),
-      address: attributes.address || coordinateFallback(geometry),
-      coordinateLabel: coordinateFallback(geometry),
+      address: attributes.address || coordinateFallback(parcelGeometry),
+      coordinateLabel: coordinateFallback(parcelGeometry),
       organization: attributes.maintained_by || organization,
       parcelNumber: attributes.parcelnumb || attributes.alco_pin || "Parcel not listed",
       period: attributes.period_label || attributes.service_period_label || monthSelect.value,
       maintenanceLevel: attributes.maintain_level || "Active",
-      geometry
-    }))
+      geometry: parcelGeometry
+    };
+    })
     .filter((assignment) => !/request/i.test(assignment.maintenanceLevel));
   setOptions(parcelSelect, assignments.map((assignment) => ({
     value: assignment.objectId,
