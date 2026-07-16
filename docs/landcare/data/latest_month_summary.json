@@ -17,10 +17,10 @@
   ],
   "latest_assignment_period": "2026-07-15",
   "latest_survey_period": "2026-06-15",
-  "survey_submission_count": 502,
-  "survey_distinct_parcels": 445,
+  "survey_submission_count": 582,
+  "survey_distinct_parcels": 524,
   "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-06-15.",
-  "generated_on": "2026-07-15",
+  "generated_on": "2026-07-16",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -38,9 +38,9 @@
   "all_month_feature_count": 2776,
   "feature_count": 210,
   "status_counts": {
-    "missing": 105,
+    "missing": 92,
     "request_only": 34,
-    "returned": 71
+    "returned": 84
   },
   "contractor_counts": {
     "Amani Christian CDC": 10,
@@ -56,8 +56,9 @@
     "Amani Christian CDC": 9,
     "Center That CARES": 1,
     "Chatman Properties": 12,
-    "Ervin Home Beautification": 6,
-    "KRJ Enterprises": 43
+    "Ervin Home Beautification": 10,
+    "KRJ Enterprises": 48,
+    "One Call Handles It All": 4
   },
   "level_counts": {
     "Active": 176,
