@@ -710,8 +710,8 @@
     "period_month": "2026-06",
     "organization": "Hilltop Rising",
     "assigned_parcel_keys": 48,
-    "returned_assigned_parcel_keys": 0,
-    "completion_rate_pct": 0.0
+    "returned_assigned_parcel_keys": 4,
+    "completion_rate_pct": 8.3
   },
   {
     "period_month": "2026-06",

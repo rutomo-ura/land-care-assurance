@@ -1,5 +1,5 @@
 {
-  "generated_on": "2026-07-16",
+  "generated_on": "2026-07-17",
   "source_file": "prototype\\source\\app_ready_parcels_monthly.geojson",
   "output_dir": "docs\\landcare\\data",
   "ownership_scope": "URA owned only",
@@ -23,7 +23,7 @@
   "latest_month_feature_count": 210,
   "latest_assignment_period": "2026-07-15",
   "latest_survey_period": "2026-06-15",
-  "survey_submission_count": 582,
-  "survey_distinct_parcels": 524,
+  "survey_submission_count": 618,
+  "survey_distinct_parcels": 556,
   "note": "Dashboard data refreshed for assignments through 2026-07-15 and survey completion through 2026-06-15."
 }

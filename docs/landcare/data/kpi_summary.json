@@ -17,10 +17,10 @@
   ],
   "latest_assignment_period": "2026-07-15",
   "latest_survey_period": "2026-06-15",
-  "survey_submission_count": 582,
-  "survey_distinct_parcels": 524,
+  "survey_submission_count": 618,
+  "survey_distinct_parcels": 556,
   "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-06-15.",
-  "generated_on": "2026-07-16",
+  "generated_on": "2026-07-17",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -40,10 +40,10 @@
     "period_month": "2026-06",
     "assigned_active": 176,
     "assigned_total": 210,
-    "returned_assigned": 84,
-    "active_completion_rate_pct": 47.7,
-    "blended_completion_rate_pct": 40.0,
-    "survey_rows_raw": 84
+    "returned_assigned": 88,
+    "active_completion_rate_pct": 50.0,
+    "blended_completion_rate_pct": 41.9,
+    "survey_rows_raw": 88
   },
   "source_contract": {
     "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
