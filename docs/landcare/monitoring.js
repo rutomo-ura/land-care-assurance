@@ -322,19 +322,11 @@ function esriPolygonToGeoJson(geometry) {
 function currentMonthFeatures() {
   const features = state.geojson?.features || [];
   if (state.dataView === "current") return features;
-  const currentKeys = currentLandCareParcelDigits();
-  return features.filter((feature) => (
-    feature.properties.period_month === state.selectedMonth &&
-    (!currentKeys.size || currentKeys.has(parcelDigits(feature.properties.parcel_key)))
-  ));
-}
-
-function currentLandCareParcelDigits() {
-  return new Set(
-    (state.datasets?.current?.geojson?.features || [])
-      .map((feature) => feature.properties.parcel_digits || parcelDigits(feature.properties.parcel_key))
-      .filter(Boolean)
-  );
+  // Historical compliance must use the complete assignment bundle for the
+  // selected service month. Restricting it to today's EPP inventory silently
+  // removes parcels that have since left the current portfolio and makes Map
+  // Monitor disagree with the KPI dashboard's monthly assignment denominator.
+  return features.filter((feature) => feature.properties.period_month === state.selectedMonth);
 }
 
 function districtFilteredFeatures() {
