@@ -227,7 +227,7 @@ function contractorColor(name) {
 
 function districtItems() {
   const counts = {};
-  const features = state.datasets?.current?.geojson?.features || [];
+  const features = currentMonthFeatures();
   for (const feature of features) {
     const district = String(feature.properties.council_district || "").trim();
     if (!district) continue;
@@ -331,7 +331,7 @@ function currentMonthFeatures() {
 
 function districtFilteredFeatures() {
   const features = currentMonthFeatures();
-  if (state.dataView !== "current" || state.districtFilter === "all") return features;
+  if (state.districtFilter === "all") return features;
   return features.filter((feature) => String(feature.properties.council_district || "") === state.districtFilter);
 }
 
@@ -526,6 +526,9 @@ function assignmentHistoryWhereForFilter(mode = state.dataView) {
   if (mode !== "history") return whereForFilter(mode);
   const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
   const clauses = [`period_month = '${month}'`];
+  if (state.districtFilter !== "all") {
+    clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
+  }
   if (state.contractorFilter !== "all") {
     clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
   }
@@ -544,8 +547,7 @@ function whereForFilter(mode = state.dataView) {
     }
   }
   if (mode === "history") {
-    const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
-    clauses.push(`period_month = '${month}'`);
+    return assignmentHistoryWhereForFilter("history");
   }
   if (state.contractorFilter !== "all") {
     if (mode === "current") {
@@ -954,9 +956,15 @@ async function enrichWithSurveyEvidence(props) {
 function updateDistrictHighlight() {
   if (!state.boundaryLayers.councilHighlight) return;
   state.boundaryLayers.councilHighlight.definitionExpression =
-    state.dataView === "current" && state.districtFilter !== "all"
+    state.districtFilter !== "all"
       ? `DIST_ID = ${Number(state.districtFilter)}`
       : "1=0";
+}
+
+function extentIsUsable(extent) {
+  if (!extent) return false;
+  const { xmin, ymin, xmax, ymax } = extent;
+  return [xmin, ymin, xmax, ymax].every((value) => Number.isFinite(value)) && xmax > xmin && ymax > ymin;
 }
 
 function currentZoomWhere({ contractor = state.contractorFilter, district = state.districtFilter, neighborhood = null } = {}) {
@@ -971,13 +979,14 @@ function currentZoomWhere({ contractor = state.contractorFilter, district = stat
 
 async function zoomToCurrentWhere(where, { expand = 1.18, duration = 650 } = {}) {
   const layer = state.layers.current;
-  if (!state.view || !layer?.queryExtent) return;
+  if (!state.view || !layer?.queryExtent) return false;
   const result = await layer.queryExtent({
     where,
     outSpatialReference: state.view.spatialReference
   }).catch(() => null);
-  if (!result?.extent) return;
+  if (!result?.count || !extentIsUsable(result.extent)) return false;
   await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
+  return true;
 }
 
 async function zoomToDefaultCurrent() {
@@ -986,13 +995,31 @@ async function zoomToDefaultCurrent() {
   await state.view.goTo({ center: [-79.9959, 40.4406], zoom: 13 }, { duration: 650 }).catch(() => {});
 }
 
+async function zoomToDistrictBoundary(district, { expand = 1.08, duration = 650 } = {}) {
+  const layer = state.boundaryLayers.council || state.boundaryLayers.councilHighlight;
+  if (!state.view || !layer?.queryExtent) return false;
+  const districtId = Number(district);
+  if (!Number.isFinite(districtId)) return false;
+  const result = await layer.queryExtent({
+    where: `DIST_ID = ${districtId}`,
+    outSpatialReference: state.view.spatialReference
+  }).catch(() => null);
+  if (!result?.count || !extentIsUsable(result.extent)) return false;
+  await state.view.goTo(result.extent.expand(expand), { duration }).catch(() => {});
+  return true;
+}
+
 async function zoomToDistrict(district = state.districtFilter) {
   if (district === "all") {
     await zoomToDefaultCurrent();
     return;
   }
-  state.mapFocusLabel = `district focus`;
-  await zoomToCurrentWhere(currentZoomWhere({ contractor: "all", district }), { expand: 1.12 });
+  state.mapFocusLabel = "district focus";
+  const focused = await zoomToDistrictBoundary(district);
+  if (focused) return;
+  if (state.dataView === "current") {
+    await zoomToCurrentWhere(currentZoomWhere({ contractor: "all", district }), { expand: 1.12 });
+  }
 }
 
 async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}) {
@@ -1005,7 +1032,7 @@ async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}
       where: layer === state.layers.historySurveys ? surveyWhereForFilter("history") : assignmentHistoryWhereForFilter("history"),
       outSpatialReference: state.view.spatialReference
     }).catch(() => null);
-    if (result?.extent) extents.push(result.extent);
+    if (result?.count && extentIsUsable(result.extent)) extents.push(result.extent);
   }
   if (!extents.length) return;
   let target = extents[0];
@@ -1020,6 +1047,10 @@ async function zoomToSelectedExtent({ duration = 650 } = {}) {
   const contractorSelected = state.contractorFilter !== "all";
   const districtSelected = state.districtFilter !== "all";
   const expand = contractorSelected ? 1.22 : districtSelected ? 1.14 : 1.08;
+  if (districtSelected && !contractorSelected && state.landcareStatusFilter === "all") {
+    await zoomToDistrict(state.districtFilter);
+    return;
+  }
   if (state.dataView === "current") {
     if (!contractorSelected && !districtSelected) {
       await zoomToDefaultCurrent();
@@ -1109,14 +1140,16 @@ function setColorMode(mode) {
 async function setDistrictFilter(district, { zoom = true } = {}) {
   state.districtFilter = district || "all";
   state.contractorFilter = "all";
+  state.landcareStatusFilter = "all";
   state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
-  const layer = activeLayer();
-  if (layer) {
-    layer.definitionExpression = whereForFilter();
+  if (state.dataView === "history") {
+    syncHistoryLayerFilters();
+  } else if (state.layers.current) {
+    state.layers.current.definitionExpression = whereForFilter("current");
   }
   updateDistrictHighlight();
   renderAll();
-  if (zoom) await zoomToSelectedExtent();
+  if (zoom) await zoomToDistrict(state.districtFilter);
 }
 
 async function setContractorFilter(name, { zoom = false } = {}) {
@@ -1615,6 +1648,8 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
         property_class: currentFeature.properties.property_class,
         project_name: currentFeature.properties.project_name,
         tags: currentFeature.properties.tags,
+        council_district: currentFeature.properties.council_district,
+        neighborhood: currentFeature.properties.neighborhood,
         geometry_source: "ArcGIS current LandCare parcel geometry"
       }
     });
@@ -2050,6 +2085,7 @@ async function initMap() {
     },
     popupEnabled: false
   });
+  state.boundaryLayers.council = councilLayer;
   state.boundaryLayers.councilHighlight = councilHighlightLayer;
 
   const map = new Map({
