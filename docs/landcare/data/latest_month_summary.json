@@ -1,5 +1,5 @@
 {
-  "latest_month": "2026-07",
+  "latest_month": "2026-05",
   "available_months": [
     "2025-05",
     "2025-06",
@@ -12,16 +12,14 @@
     "2026-02",
     "2026-03",
     "2026-04",
-    "2026-05",
-    "2026-06",
-    "2026-07"
+    "2026-05"
   ],
-  "latest_assignment_period": "2026-07-15",
-  "latest_survey_period": "2026-07-15",
-  "survey_submission_count": 117,
-  "survey_distinct_parcels": 112,
-  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-07-15.",
-  "generated_on": "2026-07-23",
+  "latest_assignment_period": "2026-06-15",
+  "latest_survey_period": "2026-05-15",
+  "survey_submission_count": null,
+  "survey_distinct_parcels": null,
+  "source_note": "PostgreSQL export filtered to URA- and PLB-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-05-15.",
+  "generated_on": "2026-07-28",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -33,37 +31,41 @@
     "analysis.assessment_snapshot"
   ],
   "owner_match_note": "Owner names are normalized before matching URA and Pittsburgh Land Bank variants.",
-  "missing_geometry_rows": 109,
-  "latest_comparable_month": "2026-07-01",
-  "ownership_scope": "URA owned only",
-  "all_month_feature_count": 2986,
-  "feature_count": 210,
+  "missing_geometry_rows": 103,
+  "latest_comparable_month": "2026-05-01",
+  "ownership_scope": "URA and PLB owned",
+  "all_month_feature_count": 2689,
+  "ownership_counts": {
+    "Pittsburgh Land Bank": 3,
+    "URA": 222
+  },
+  "missing_block_lot_parcel_count": 225,
+  "feature_count": 225,
   "status_counts": {
-    "missing": 159,
-    "request_only": 34,
-    "returned": 17
+    "missing": 92,
+    "request_only": 36,
+    "returned": 97
   },
   "contractor_counts": {
-    "Amani Christian CDC": 10,
+    "Amani Christian CDC": 11,
     "Center That CARES": 11,
-    "Chatman Properties": 27,
-    "Ervin Home Beautification": 17,
-    "FHCV Contracting LLC & LawnCare": 5,
-    "Hilltop Rising": 74,
-    "KRJ Enterprises": 62,
-    "One Call Handles It All": 4
+    "Chatman Properties": 31,
+    "Ervin Home Beautification": 16,
+    "FHCV Contracting LLC & LawnCare": 1,
+    "Hilltop Rising": 86,
+    "KRJ Enterprises": 64,
+    "One Call Handles It All": 5
   },
   "contractor_returned": {
-    "Ervin Home Beautification": 4,
-    "Hilltop Rising": 4,
-    "KRJ Enterprises": 5,
-    "One Call Handles It All": 4
+    "Amani Christian CDC": 11,
+    "Center That CARES": 1,
+    "Chatman Properties": 21,
+    "Ervin Home Beautification": 13,
+    "KRJ Enterprises": 50,
+    "One Call Handles It All": 1
   },
   "level_counts": {
-    "Active": 176,
-    "Request Only": 34
-  },
-  "ownership_counts": {
-    "URA": 210
+    "Active": 189,
+    "Request Only": 36
   }
 }

@@ -75,7 +75,7 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
   return records;
 }
 
-export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLabel = null) {
+export async function fetchSurveyEvidenceForParcel(parcelNumber, periodLabel = null) {
   const digits = parcelDigits(parcelNumber);
   if (!digits) return null;
   const clauses = [`parcelnumb = '${digits.replace(/'/g, "''")}'`];
@@ -88,9 +88,14 @@ export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLab
     outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,owner",
     returnGeometry: "false",
     orderByFields: "created_at DESC",
-    resultRecordCount: "1"
+    resultRecordCount: "50"
   });
-  return payload.features?.[0]?.attributes || null;
+  return (payload.features || []).map((feature) => feature.attributes || {});
+}
+
+export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLabel = null) {
+  const records = await fetchSurveyEvidenceForParcel(parcelNumber, periodLabel);
+  return records[0] || null;
 }
 
 export function surveyParcelKeys(records) {

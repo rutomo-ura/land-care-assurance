@@ -42,6 +42,8 @@ current_epp as (
     select distinct on (parcel_key)
         parcel_key,
         parcel_number,
+        block_lot,
+        inventory_type,
         property_maint_mgr_name,
         case
             when tags ilike '%LandCare - Active%' then 'Active'
@@ -52,6 +54,8 @@ current_epp as (
         select
             regexp_replace(parcel_number::text, '[^0-9]', '', 'g') as parcel_key,
             parcel_number,
+            par_mapblocklo as block_lot,
+            inventory_type,
             property_maint_mgr_name,
             tags,
             mod_dt
@@ -66,6 +70,8 @@ assignments as (
         period_month,
         parcel_key,
         parcel_number,
+        block_lot,
+        inventory_type,
         organization,
         maintenance_level
     from (
@@ -73,6 +79,8 @@ assignments as (
             date_trunc('month', a.period)::date as period_month,
             regexp_replace(a.parcelnumb::text, '[^0-9]', '', 'g') as parcel_key,
             coalesce(nullif(a.parcelnumb::text, ''), e.parcel_number) as parcel_number,
+            e.block_lot,
+            e.inventory_type,
             coalesce(nullif(a.assigned_to, ''), e.property_maint_mgr_name, 'Unassigned') as organization,
             case
                 when a.maintain_level ilike '%Active%' then 'Active'
@@ -180,6 +188,8 @@ parcel_month as (
         a.period_month,
         a.parcel_key,
         a.parcel_number,
+        a.block_lot,
+        a.inventory_type,
         a.organization,
         a.maintenance_level,
         coalesce(nullif(o.owner_name, ''), 'Unknown') as owner_name,
@@ -189,6 +199,13 @@ parcel_month as (
             when o.owner_norm ~ '(cityofpittsburgh)' then 'City of Pittsburgh'
             else 'Other or unknown'
         end as ownership_type,
+        case
+            when a.inventory_type = 'URA Owned' then 'URA'
+            when a.inventory_type = 'PLB Owned' then 'PLB'
+            when o.owner_norm ~ '(pittsburghlandbank|^plb|landbank)' then 'PLB'
+            when o.owner_norm ~ '(urbanredevelopmentauthority|redevelopmentauthorityofpittsburgh|pittsburghurbanredevelopmentauthority|^ura)' then 'URA'
+            else 'Other'
+        end as ownership_group,
         true as assigned_flag,
         (r.parcel_key is not null and a.maintenance_level = 'Active') as returned_flag,
         case
@@ -212,10 +229,14 @@ feature_rows as (
             'type', 'Feature',
             'properties', jsonb_build_object(
                 'parcel_key', parcel_key,
+                'parcel_number', parcel_number,
+                'block_lot', block_lot,
                 'period_month', to_char(period_month, 'YYYY-MM'),
                 'organization', organization,
                 'maintenance_level', maintenance_level,
                 'ownership_type', ownership_type,
+                'ownership_group', ownership_group,
+                'inventory_type', inventory_type,
                 'owner_name', owner_name,
                 'assigned_flag', assigned_flag,
                 'returned_flag', returned_flag,

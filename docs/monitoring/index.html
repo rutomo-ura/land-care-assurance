@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Monitoring</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css?v=20260715-5" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260728-map" />
   </head>
   <body data-page="monitoring">
     <header class="app-header">
@@ -68,7 +68,26 @@
           <span class="eyebrow">Color Map By</span>
           <div class="segmented" role="group" aria-label="Map color mode">
             <button class="is-active" type="button" data-color-mode="status">LandCare Status</button>
-            <button type="button" data-color-mode="contractor">Contractor</button>
+            <button type="button" data-color-mode="contractor">Assignments</button>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <span class="eyebrow">Find Parcel</span>
+          <label class="field-label compact-field" for="parcelSearchInput">
+            <span>Block &amp; lot or parcel PIN</span>
+            <input id="parcelSearchInput" type="search" placeholder="e.g., 50-B-45" autocomplete="off" aria-describedby="parcelSearchHelp" />
+          </label>
+          <div class="parcel-search-results" id="parcelSearchResults" aria-live="polite"></div>
+          <p class="field-help" id="parcelSearchHelp">Searches active URA and Pittsburgh Land Bank LandCare parcels.</p>
+        </section>
+
+        <section class="sidebar-section">
+          <span class="eyebrow">Ownership</span>
+          <div class="segmented ownership-toggle" role="group" aria-label="Property ownership filter">
+            <button type="button" data-ownership-filter="all">All</button>
+            <button class="is-active" type="button" data-ownership-filter="URA">URA</button>
+            <button type="button" data-ownership-filter="PLB">PLB</button>
           </div>
         </section>
 
@@ -92,16 +111,16 @@
           <div class="contractor-list" id="contractorList"></div>
         </section>
 
-        <section class="sidebar-section">
-          <div class="section-heading">
-            <span class="eyebrow" id="legendHeading">Legend</span>
-          </div>
-          <div class="legend-list" id="legendList"></div>
-        </section>
       </aside>
 
       <section class="map-stage" aria-label="LandCare parcel map">
         <div id="mapView"></div>
+        <section class="map-legend" id="mapLegend" aria-label="Map key">
+          <button class="map-legend-toggle" id="mapLegendToggle" type="button" aria-expanded="true" aria-controls="legendList">
+            <span id="legendHeading">Map Key</span><span aria-hidden="true">−</span>
+          </button>
+          <div class="legend-list" id="legendList"></div>
+        </section>
         <div class="evidence-hover-card" id="evidenceHoverCard" hidden aria-live="polite"></div>
         <div class="map-badge" id="mapBadge">Loading parcel map...</div>
         <div class="map-callout" id="mapCallout">
@@ -114,7 +133,7 @@
         <section>
           <span class="eyebrow">Selected Parcel</span>
           <div class="parcel-detail" id="parcelDetail">
-            Select a parcel to review contractor, status, ownership, and survey period.
+            Select a parcel to review contractor, status, ownership, survey period, and returned photos.
           </div>
         </section>
         <section>

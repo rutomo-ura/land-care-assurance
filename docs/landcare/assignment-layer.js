@@ -56,6 +56,13 @@ function normalizeMaintenanceLevel(value) {
   return text || "Active";
 }
 
+function ownershipGroup(value) {
+  const text = String(value || "").trim();
+  if (text === "URA" || text === "URA Owned") return "URA";
+  if (text === "PLB" || text === "PLB Owned" || text === "Pittsburgh Land Bank") return "PLB";
+  return "Other";
+}
+
 function normalizeAssignmentFeature(feature, source) {
   const attrs = feature.attributes || {};
   const parcelKey = attrs.parcelnumb || attrs.alco_pin || `ASSIGN-${attrs.OBJECTID}`;
@@ -82,6 +89,7 @@ function normalizeAssignmentFeature(feature, source) {
       completion_status: maintenanceLevel === "Request Only" ? "request_only" : "missing",
       returned_flag: false,
       ownership_type: attrs.inv_type || "Assignment layer",
+      ownership_group: ownershipGroup(attrs.inv_type),
       inventory_type: attrs.inv_type,
       property_class: attrs.prop_class,
       acreage: Number(attrs.sq_footage || 0) / 43560,

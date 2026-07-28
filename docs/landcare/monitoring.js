@@ -13,7 +13,7 @@ import {
   SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
-  fetchLatestSurveyEvidenceForParcel,
+  fetchSurveyEvidenceForParcel,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
   enrichSummaryWithSurveyLayer,
@@ -42,11 +42,13 @@ const EPP_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
 const COUNCIL_DISTRICT_LAYER_URL =
   "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
-const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type = 'URA Owned'";
+const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type IN ('URA Owned', 'PLB Owned')";
 const CARTO_LIGHT_ATTRIBUTION = "© OpenStreetMap contributors © CARTO";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
   "parcel_number",
+  "par_pin",
+  "par_mapblocklo",
   "property_id",
   "inventory_type",
   "current_status",
@@ -80,18 +82,8 @@ const surveyStatusColors = {
   Other: "#7b1fa2"
 };
 
-const contractorPalette = [
-  "#0098d3",
-  "#006c9f",
-  "#008f9f",
-  "#554a8f",
-  "#e65100",
-  "#2e7d32",
-  "#7b1fa2",
-  "#455a64",
-  "#ad1457",
-  "#f0c24b"
-];
+const contractorPalette = ["#4477AA", "#EE6677", "#228833", "#AA3377", "#66CCEE", "#EE7733", "#009988", "#332288", "#CCBB44", "#8C564B"];
+const UNASSIGNED_CONTRACTOR_COLOR = "#6b7280";
 
 const state = {
   summary: null,
@@ -102,6 +94,7 @@ const state = {
   layers: {},
   boundaryLayers: {},
   contractorFilter: "all",
+  ownershipFilter: "URA",
   districtFilter: "all",
   landcareStatusFilter: "all",
   colorMode: "status",
@@ -153,6 +146,21 @@ function slug(value) {
 
 function parcelDigits(value) {
   return String(value || "").replace(/\D/g, "");
+}
+
+function normalizeBlockLot(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function ownershipGroup(value) {
+  const text = String(value || "").trim();
+  if (text === "URA" || text === "URA Owned") return "URA";
+  if (text === "PLB" || text === "PLB Owned" || text === "Pittsburgh Land Bank") return "PLB";
+  return "Other";
+}
+
+function ownershipLabel(value) {
+  return { all: "URA + Pittsburgh Land Bank", URA: "URA-owned", PLB: "Pittsburgh Land Bank-owned", Other: "Other or unknown" }[value] || "Other or unknown";
 }
 
 function escapeHtml(value) {
@@ -207,6 +215,11 @@ function contractorItems() {
     if (props.maintenance_level === "Active") active[org].add(parcelKey);
     if (props.maintenance_level === "Request Only") requestOnly[org].add(parcelKey);
   }
+  const contractorNames = [...new Set(
+    ["history", "current"].flatMap((key) => state.datasets?.[key]?.geojson?.features || [])
+      .map((feature) => feature.properties?.organization)
+      .filter((name) => name && name !== "Unassigned")
+  )].sort((a, b) => a.localeCompare(b));
   return Object.entries(counts)
     .map(([name, keys]) => [name, keys.size])
     .sort((a, b) => b[1] - a[1])
@@ -217,7 +230,9 @@ function contractorItems() {
       returned: returned[name]?.size || 0,
       active: active[name]?.size || 0,
       requestOnly: requestOnly[name]?.size || 0,
-      color: contractorPalette[index % contractorPalette.length]
+      color: name === "Unassigned"
+        ? UNASSIGNED_CONTRACTOR_COLOR
+        : contractorPalette[Math.max(0, contractorNames.indexOf(name)) % contractorPalette.length]
     }));
 }
 
@@ -285,6 +300,7 @@ function normalizeCurrentAttributes(attrs) {
     parcel_key: parcelKey,
     parcel_digits: parcelDigits(parcelKey),
     parcel_number: attrs.parcel_number,
+    block_lot: attrs.par_mapblocklo || "",
     property_id: attrs.property_id,
     period_month: "Current",
     organization: stripPrimaryContact(attrs.property_maint_mgr_name),
@@ -292,7 +308,8 @@ function normalizeCurrentAttributes(attrs) {
     maintenance_level: maintenanceLevel,
     completion_status: maintenanceLevel === "Request Only" ? "request_only" : "current_active",
     returned_flag: false,
-    ownership_type: "URA",
+    ownership_type: attrs.inventory_type,
+    ownership_group: ownershipGroup(attrs.inventory_type),
     inventory_type: attrs.inventory_type,
     current_status: attrs.current_status,
     census_tract: attrs.census_tract,
@@ -331,8 +348,11 @@ function currentMonthFeatures() {
 
 function districtFilteredFeatures() {
   const features = currentMonthFeatures();
-  if (state.districtFilter === "all") return features;
-  return features.filter((feature) => String(feature.properties.council_district || "") === state.districtFilter);
+  return features.filter((feature) => {
+    const group = ownershipGroup(feature.properties.ownership_group || feature.properties.ownership_type || feature.properties.inventory_type);
+    if (state.ownershipFilter !== "all" && group !== state.ownershipFilter) return false;
+    return state.districtFilter === "all" || String(feature.properties.council_district || "") === state.districtFilter;
+  });
 }
 
 function filteredFeatures() {
@@ -372,6 +392,18 @@ function surveyPhotoMarkup(props, { compact = false } = {}) {
     <section class="survey-photo-evidence${compact ? " compact" : ""}">
       <img src="${escapeHtml(imageUrl)}" alt="Approved survey evidence for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
       <div><span class="eyebrow">${sourceLabel}</span><a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
+    </section>`;
+}
+
+function surveyPhotoGalleryMarkup(props) {
+  const photos = Array.isArray(props.evidence_photos) ? props.evidence_photos : [];
+  if (!photos.length) {
+    return '<div class="survey-photo-empty">No returned photo available for this parcel and period.</div>';
+  }
+  return `
+    <section class="survey-photo-gallery" aria-label="Returned survey photos">
+      <span class="survey-photo-gallery__heading">Returned photos (${photos.length})</span>
+      ${photos.map((photo) => surveyPhotoMarkup(photo)).join("")}
     </section>`;
 }
 
@@ -526,6 +558,10 @@ function assignmentHistoryWhereForFilter(mode = state.dataView) {
   if (mode !== "history") return whereForFilter(mode);
   const month = String(state.selectedMonth || state.datasets.history.summary.latest_month).replace(/'/g, "''");
   const clauses = [`period_month = '${month}'`];
+  if (state.ownershipFilter !== "all") {
+    const values = state.ownershipFilter === "URA" ? ["URA", "URA Owned"] : ["PLB", "PLB Owned", "Pittsburgh Land Bank"];
+    clauses.push(`(ownership_group = ${sqlValue(state.ownershipFilter)} OR ownership_type IN (${values.map(sqlValue).join(", ")}))`);
+  }
   if (state.districtFilter !== "all") {
     clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
   }
@@ -542,6 +578,12 @@ function whereForFilter(mode = state.dataView) {
   const clauses = [];
   if (mode === "current") {
     if (isLiveCurrentDataset()) clauses.push(CURRENT_WHERE);
+    if (state.ownershipFilter !== "all") {
+      const value = state.ownershipFilter === "URA" ? "URA Owned" : "PLB Owned";
+      clauses.push(isLiveCurrentDataset()
+        ? `inventory_type = ${sqlValue(value)}`
+        : `(ownership_group = ${sqlValue(state.ownershipFilter)} OR ownership_type = ${sqlValue(state.ownershipFilter)})`);
+    }
     if (state.districtFilter !== "all") {
       clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
     }
@@ -602,6 +644,7 @@ function renderKpis() {
     document.getElementById("assignedKpiLabel").textContent = "Parcels";
     document.getElementById("returnedKpiLabel").textContent = "Active";
     document.getElementById("completionKpiLabel").textContent = "Request Only";
+    document.getElementById("completionKpiLabel").removeAttribute("title");
     document.getElementById("openKpiLabel").textContent = "Contractors";
     document.getElementById("assignedKpi").textContent = formatNumber(assigned);
     document.getElementById("returnedKpi").textContent = formatNumber(active);
@@ -612,7 +655,9 @@ function renderKpis() {
   document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} monthly LandCare status`;
   document.getElementById("assignedKpiLabel").textContent = "Assigned";
   document.getElementById("returnedKpiLabel").textContent = "All survey records";
-  document.getElementById("completionKpiLabel").textContent = "Matched returned";
+  const returnedAssignmentsLabel = document.getElementById("completionKpiLabel");
+  returnedAssignmentsLabel.textContent = "Returned assignments";
+  returnedAssignmentsLabel.title = "Unique active assignments with a survey return matched by normalized parcel number in the selected service month.";
   document.getElementById("openKpiLabel").textContent = "Open assigned";
   document.getElementById("assignedKpi").textContent = formatNumber(assigned);
   document.getElementById("returnedKpi").textContent = formatNumber(surveyRecordCountForSelectedPeriod());
@@ -683,7 +728,7 @@ function renderLegend() {
   document.querySelector("[data-color-mode='status']").textContent =
     "LandCare Status";
   if (state.colorMode === "contractor") {
-    heading.textContent = "Legend - Contractor";
+    heading.textContent = "Map Key — Assignments";
     list.innerHTML = contractorItems().map((item) => `
       <button class="legend-item legend-button ${state.contractorFilter === item.name ? "is-active" : ""}" type="button" data-contractor="${escapeHtml(item.name)}">
         <span class="legend-swatch" style="background:${item.color}"></span>
@@ -694,7 +739,7 @@ function renderLegend() {
     return;
   }
 
-  heading.textContent = "Legend - LandCare Status";
+  heading.textContent = "Map Key — LandCare Status";
   const legendFeatures = districtFilteredFeatures().filter((feature) =>
     state.contractorFilter === "all" || feature.properties.organization === state.contractorFilter
   );
@@ -824,18 +869,18 @@ function renderFreshness() {
     const contractorText =
       state.contractorFilter === "all" ? "all contractors" : shortContractor(state.contractorFilter);
     document.getElementById("mapBadge").textContent =
-      `${formatNumber(visibleFeatures.length)} records / ${formatNumber(uniqueCount(visibleFeatures))} parcels`;
+      `${formatNumber(visibleFeatures.length)} records / ${formatNumber(uniqueCount(visibleFeatures))} parcels — ${ownershipLabel(state.ownershipFilter)}`;
     document.getElementById("mapCallout").innerHTML = `
-      <strong>Current URA-owned LandCare universe</strong>
+      <strong>Current ${escapeHtml(ownershipLabel(state.ownershipFilter))} LandCare universe</strong>
       <span>${escapeHtml(districtText)} - ${escapeHtml(contractorText)}${state.mapFocusLabel ? ` - ${escapeHtml(state.mapFocusLabel)}` : ""}${state.currentDataWarning ? ` - ${escapeHtml(state.currentDataWarning)}` : ""}</span>
     `;
     return;
   }
   const visibleFeatures = filteredFeatures();
   document.getElementById("mapBadge").textContent =
-    `${formatNumber(uniqueCount(visibleFeatures))} assigned parcels - ${state.selectedMonth}`;
+    `${formatNumber(uniqueCount(visibleFeatures))} assigned parcels — ${ownershipLabel(state.ownershipFilter)} — ${state.selectedMonth}`;
   const rawSurveys = surveyRecordCountForSelectedPeriod();
-  const monthFeatures = currentMonthFeatures();
+  const monthFeatures = districtFilteredFeatures();
   const matchedReturned = matchedReturnedCount(monthFeatures);
   const openActive = uniqueCount(monthFeatures, (feature) => feature.properties.completion_status === "missing");
   const requestOnly = uniqueCount(monthFeatures, (feature) => feature.properties.maintenance_level === "Request Only");
@@ -859,12 +904,15 @@ function parcelDetail(props) {
       Census tract: ${escapeHtml(props.census_tract || "Unknown")}<br>
       Project: ${escapeHtml(props.project_name || "None")}<br>
       Inventory: ${escapeHtml(props.inventory_type || "Unknown")}<br>
+      Ownership: ${escapeHtml(ownershipLabel(props.ownership_group || props.ownership_type || props.inventory_type))}<br>
+      Block &amp; lot: ${escapeHtml(props.block_lot || "Unknown")}<br>
       Property class: ${escapeHtml(props.property_class || "Unknown")}<br>
       Zoning: ${escapeHtml(props.zoning || "Unknown")}<br>
       Area: ${formatAcres(props.acreage || (props.parcel_sqft ? props.parcel_sqft / 43560 : 0))} <span class="muted">(${escapeHtml(props.area_source || "ArcGIS area field")})</span><br>
       Parcel sq ft: ${formatNumber(props.parcel_sqft)}<br>
       Tags: ${escapeHtml(props.tags || "None")}<br>
       Modified: ${escapeHtml(props.mod_dt || "Unknown")}
+      ${props.history_note ? `<br><strong>${escapeHtml(props.history_note)}</strong>` : ""}
     `;
   }
   return `
@@ -873,12 +921,14 @@ function parcelDetail(props) {
     Survey month: ${escapeHtml(props.period_month)}<br>
     Maintenance level: ${escapeHtml(props.maintenance_level)}<br>
     Status: ${escapeHtml(statusLabel(props.completion_status))}<br>
-    Ownership: ${escapeHtml(props.ownership_type || "Other or unknown")}<br>
+    Ownership: ${escapeHtml(ownershipLabel(props.ownership_group || props.ownership_type))}<br>
+    ${props.block_lot ? `Block &amp; lot: ${escapeHtml(props.block_lot)}<br>` : ""}
     Owner: ${escapeHtml(props.owner_name || "Unknown")}<br>
     Source: ${escapeHtml(props.survey_source || "Monthly assurance layer")}<br>
     ${props.created_at ? `Evidence submitted: ${escapeHtml(props.created_at)}<br>` : ""}
     ${props.survey_status ? `Survey status: ${escapeHtml(props.survey_status)}<br>` : ""}
-    ${surveyPhotoMarkup(props)}
+    ${props.history_note ? `<strong>${escapeHtml(props.history_note)}</strong><br>` : ""}
+    ${surveyPhotoGalleryMarkup(props)}
   `;
 }
 
@@ -902,10 +952,14 @@ async function loadApprovedEvidenceByParcel() {
         const props = feature?.properties || {};
         const parcelKey = parcelDigits(props.parcelnumb || props.parcel_number || props.parcel_key);
         const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
-        // The feed is ordered newest first; retain the latest approved photo per parcel.
-        if (parcelKey && imageUrl && !state.approvedEvidenceByParcel.has(parcelKey)) {
-          state.approvedEvidenceByParcel.set(parcelKey, { ...props, image_url: imageUrl });
+        if (parcelKey && imageUrl) {
+          const photos = state.approvedEvidenceByParcel.get(parcelKey) || [];
+          photos.push({ ...props, image_url: imageUrl, survey_source: "Survey123 approved evidence", evidence_source: "approved_internal_survey123" });
+          state.approvedEvidenceByParcel.set(parcelKey, photos);
         }
+      }
+      for (const photos of state.approvedEvidenceByParcel.values()) {
+        photos.sort((a, b) => String(b.submitted_at || b.service_date || "").localeCompare(String(a.submitted_at || a.service_date || "")));
       }
       return state.approvedEvidenceByParcel;
     })
@@ -921,35 +975,28 @@ async function enrichWithSurveyEvidence(props) {
   const cacheKey = `${parcelDigits(parcelKey)}:${state.selectedMonth || "Current"}`;
   if (!parcelKey) return props;
 
-  // Approved Survey123 evidence is intentionally preferred. It is governed by the
-  // internal review workflow and is the only Survey123 evidence exposed publicly.
-  const approvedEvidence = (await loadApprovedEvidenceByParcel()).get(parcelDigits(parcelKey));
-  if (approvedEvidence) {
-    return {
-      ...props,
-      image_url: approvedEvidence.image_url,
-      created_at: approvedEvidence.submitted_at || props.created_at,
-      address: approvedEvidence.address || props.address,
-      survey_status: "Approved",
-      survey_source: "Survey123 approved evidence",
-      evidence_source: "approved_internal_survey123",
-      organization: approvedEvidence.maintained_by || props.organization
-    };
-  }
-
+  const selectedPeriod = state.selectedMonth === "Current" ? null : state.selectedMonth;
+  const approvedEvidence = (await loadApprovedEvidenceByParcel()).get(parcelDigits(parcelKey)) || [];
   let evidence = state.evidenceCache.get(cacheKey);
   if (evidence === undefined) {
-    evidence = await fetchLatestSurveyEvidenceForParcel(parcelKey, state.selectedMonth).catch(() => null);
+    evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod).catch(() => []);
     state.evidenceCache.set(cacheKey, evidence);
   }
-  if (!evidence) return props;
+  const periodPhotos = [
+    ...approvedEvidence.filter((photo) => !selectedPeriod || String(photo.service_date || photo.submitted_at || "").startsWith(selectedPeriod)),
+    ...evidence.map((photo) => ({ ...photo, survey_source: SURVEY_LAYER_NAME }))
+  ].filter((photo, index, all) => safeImageUrl(photo.image_url) && all.findIndex((candidate) => candidate.image_url === photo.image_url) === index)
+    .sort((a, b) => String(b.created_at || b.submitted_at || b.service_date || "").localeCompare(String(a.created_at || a.submitted_at || a.service_date || "")));
+  if (!periodPhotos.length) return { ...props, evidence_photos: [] };
+  const latest = periodPhotos[0];
   return {
     ...props,
-    image_url: evidence.image_url,
-    created_at: evidence.created_at,
-    address: evidence.address || props.address,
-    survey_status: evidence.status,
-    survey_source: SURVEY_LAYER_NAME
+    image_url: latest.image_url,
+    created_at: latest.created_at || latest.submitted_at,
+    address: latest.address || props.address,
+    survey_status: latest.status || (latest.evidence_source ? "Approved" : props.survey_status),
+    survey_source: latest.survey_source,
+    evidence_photos: periodPhotos
   };
 }
 
@@ -969,6 +1016,12 @@ function extentIsUsable(extent) {
 
 function currentZoomWhere({ contractor = state.contractorFilter, district = state.districtFilter, neighborhood = null } = {}) {
   const clauses = isLiveCurrentDataset() ? [CURRENT_WHERE] : [];
+  if (state.ownershipFilter !== "all") {
+    const value = state.ownershipFilter === "URA" ? "URA Owned" : "PLB Owned";
+    clauses.push(isLiveCurrentDataset()
+      ? `inventory_type = ${sqlValue(value)}`
+      : `(ownership_group = ${sqlValue(state.ownershipFilter)} OR ownership_type = ${sqlValue(state.ownershipFilter)})`);
+  }
   if (district && district !== "all") clauses.push(`council_district = ${sqlValue(district)}`);
   const contactClause = contractorContactClause(contractor);
   if (contactClause) clauses.push(contactClause);
@@ -1139,8 +1192,6 @@ function setColorMode(mode) {
 
 async function setDistrictFilter(district, { zoom = true } = {}) {
   state.districtFilter = district || "all";
-  state.contractorFilter = "all";
-  state.landcareStatusFilter = "all";
   state.mapFocusLabel = state.districtFilter === "all" ? "" : "district focus";
   if (state.dataView === "history") {
     syncHistoryLayerFilters();
@@ -1173,6 +1224,17 @@ async function setContractorFilter(name, { zoom = false } = {}) {
     await zoomToSelectedExtent();
     renderFreshness();
   }
+}
+
+async function setOwnershipFilter(group, { zoom = true } = {}) {
+  state.ownershipFilter = ["all", "URA", "PLB"].includes(group) ? group : "URA";
+  document.querySelectorAll("[data-ownership-filter]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.ownershipFilter === state.ownershipFilter);
+  });
+  if (state.dataView === "history") syncHistoryLayerFilters();
+  else if (state.layers.current) state.layers.current.definitionExpression = whereForFilter("current");
+  renderAll();
+  if (zoom) await zoomToSelectedExtent({ duration: 450 });
 }
 
 async function setLandcareStatusFilter(status, { zoom = false } = {}) {
@@ -1235,9 +1297,6 @@ function renderAll() {
 
 async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
-  state.contractorFilter = "all";
-  state.landcareStatusFilter = "all";
-  state.districtFilter = state.dataView === "current" ? state.districtFilter : "all";
   state.mapFocusLabel = "";
   setActiveDataset();
   const dataViewSelect = document.getElementById("dataViewSelect");
@@ -1264,9 +1323,6 @@ async function setMonthFilter(month) {
   state.dataView = "history";
   setActiveDataset();
   state.selectedMonth = month || state.summary.latest_month;
-  state.contractorFilter = "all";
-  state.districtFilter = "all";
-  state.landcareStatusFilter = "all";
   state.mapFocusLabel = "";
   setHistoryLayerVisibility(true);
   if (state.layers.current) state.layers.current.visible = false;
@@ -1276,6 +1332,68 @@ async function setMonthFilter(month) {
   document.getElementById("parcelDetail").textContent =
     "Select a parcel to review contractor, status, ownership, and survey period.";
   await zoomToSelectedExtent({ duration: 450 });
+}
+
+function parcelSearchCandidates(query) {
+  const normalizedBlockLot = normalizeBlockLot(query);
+  const normalizedPin = parcelDigits(query);
+  if (!normalizedBlockLot && !normalizedPin) return [];
+  return (state.datasets?.current?.geojson?.features || [])
+    .filter((feature) => {
+      const props = feature.properties || {};
+      const blockLot = normalizeBlockLot(props.block_lot);
+      const pin = parcelDigits(props.parcel_number || props.parcel_key);
+      return normalizedPin.length >= 8 ? pin.includes(normalizedPin) : blockLot.includes(normalizedBlockLot);
+    })
+    .slice(0, 8);
+}
+
+function renderParcelSearchResults(query = "") {
+  const container = document.getElementById("parcelSearchResults");
+  const trimmed = String(query || "").trim();
+  if (!trimmed) {
+    container.replaceChildren();
+    return;
+  }
+  const results = parcelSearchCandidates(trimmed);
+  if (!results.length) {
+    container.innerHTML = '<span class="field-help">No active URA or PLB LandCare parcel matched that search.</span>';
+    return;
+  }
+  container.innerHTML = results.map((feature, index) => {
+    const props = feature.properties || {};
+    return `<button class="parcel-search-result" type="button" data-parcel-search-result="${index}">
+      <strong>${escapeHtml(props.block_lot || props.parcel_number || props.parcel_key)}</strong>
+      <span>${escapeHtml(ownershipLabel(props.ownership_group))} · ${escapeHtml(props.parcel_number || props.parcel_key)}${props.address ? ` · ${escapeHtml(props.address)}` : ""}</span>
+    </button>`;
+  }).join("");
+  container._results = results;
+}
+
+function featureCenter(feature) {
+  const points = feature?.geometry?.coordinates?.flat?.(Infinity) || [];
+  const numbers = points.filter((value) => typeof value === "number");
+  if (numbers.length < 4) return null;
+  const xs = numbers.filter((_, index) => index % 2 === 0);
+  const ys = numbers.filter((_, index) => index % 2 === 1);
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}
+
+async function selectParcelSearchResult(feature) {
+  const props = feature.properties || {};
+  const group = ownershipGroup(props.ownership_group || props.ownership_type || props.inventory_type);
+  await setOwnershipFilter(group === "Other" ? "all" : group, { zoom: false });
+  const selectedMonthRow = state.dataView === "history"
+    ? (state.geojson?.features || []).find((row) => row.properties?.period_month === state.selectedMonth && parcelDigits(row.properties?.parcel_key) === parcelDigits(props.parcel_key))
+    : null;
+  const detail = selectedMonthRow
+    ? { ...selectedMonthRow.properties, block_lot: selectedMonthRow.properties.block_lot || props.block_lot, ownership_group: group }
+    : state.dataView === "history"
+      ? { ...props, ownership_group: group, history_note: `No assignment in ${state.selectedMonth}.` }
+      : props;
+  setParcelDetail(detail);
+  const center = featureCenter(feature);
+  if (center) await state.view?.goTo({ center, zoom: 18 }, { duration: 500 }).catch(() => {});
 }
 
 function wireControls() {
@@ -1294,11 +1412,38 @@ function wireControls() {
       const status = landcareStatusButton.dataset.landcareStatus;
       setLandcareStatusFilter(state.landcareStatusFilter === status ? "all" : status, { zoom: true });
     }
+
+    const ownershipButton = event.target.closest("[data-ownership-filter]");
+    if (ownershipButton) setOwnershipFilter(ownershipButton.dataset.ownershipFilter);
+
+    const searchButton = event.target.closest("[data-parcel-search-result]");
+    if (searchButton) {
+      const results = document.getElementById("parcelSearchResults")._results || [];
+      selectParcelSearchResult(results[Number(searchButton.dataset.parcelSearchResult)]);
+    }
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
+  document.getElementById("parcelSearchInput").addEventListener("input", (event) => renderParcelSearchResults(event.target.value));
+  document.getElementById("mapLegendToggle").addEventListener("click", () => {
+    const legend = document.getElementById("mapLegend");
+    const collapsed = legend.classList.toggle("is-collapsed");
+    const toggle = document.getElementById("mapLegendToggle");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.lastElementChild.textContent = collapsed ? "+" : "−";
+  });
+  const syncLegendForViewport = () => {
+    const legend = document.getElementById("mapLegend");
+    const toggle = document.getElementById("mapLegendToggle");
+    const shouldCollapse = window.matchMedia("(max-width: 620px)").matches;
+    legend.classList.toggle("is-collapsed", shouldCollapse);
+    toggle.setAttribute("aria-expanded", String(!shouldCollapse));
+    toggle.lastElementChild.textContent = shouldCollapse ? "+" : "−";
+  };
+  syncLegendForViewport();
+  window.addEventListener("resize", syncLegendForViewport);
   document.getElementById("exportPdfButton").addEventListener("click", openExportMetricsDialog);
   document.getElementById("confirmExportButton").addEventListener("click", confirmExportMetrics);
 }
@@ -1489,6 +1634,7 @@ function updatePrintProgress(printWindow, percent, label) {
 function buildPrintHtml(mapImage, stats, screenshotScale, selectedMetricKeys = DEFAULT_EXPORT_METRICS) {
   const contractor = state.contractorFilter === "all" ? "All Contractors" : shortContractor(state.contractorFilter);
   const district = state.districtFilter === "all" ? "All Districts" : `Council District ${state.districtFilter}`;
+  const ownership = ownershipLabel(state.ownershipFilter);
   const month = state.dataView === "current" ? "Current portfolio" : state.selectedMonth;
   const budget = exportBudgetStats();
   const rank = contractorOpenRank();
@@ -1541,7 +1687,7 @@ function buildPrintHtml(mapImage, stats, screenshotScale, selectedMetricKeys = D
       <header>
         <div>
           <h1>URA LandCare Executive Map Brief</h1>
-          <div class="subtitle">Survey Month: ${escapeHtml(month)} &nbsp;|&nbsp; Contractor: ${escapeHtml(contractor)} &nbsp;|&nbsp; ${escapeHtml(district)}</div>
+          <div class="subtitle">Survey Month: ${escapeHtml(month)} &nbsp;|&nbsp; Ownership: ${escapeHtml(ownership)} &nbsp;|&nbsp; Contractor: ${escapeHtml(contractor)} &nbsp;|&nbsp; ${escapeHtml(district)}</div>
         </div>
         <div class="brand">URA</div>
       </header>
@@ -1635,7 +1781,10 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
   const features = [];
   for (const feature of historyGeojson.features || []) {
     const currentFeature = currentByDigits.get(parcelDigits(feature.properties?.parcel_key));
-    if (!currentFeature) continue;
+    if (!currentFeature) {
+      features.push(feature);
+      continue;
+    }
     features.push({
       ...feature,
       geometry: currentFeature.geometry,
@@ -1644,6 +1793,9 @@ function alignHistoryToCurrentArcgisGeometries(historyGeojson, currentDataset) {
         parcel_key: currentFeature.properties.parcel_key || feature.properties.parcel_key,
         parcel_digits: currentFeature.properties.parcel_digits,
         parcel_number: currentFeature.properties.parcel_number,
+        block_lot: currentFeature.properties.block_lot || feature.properties.block_lot,
+        ownership_group: currentFeature.properties.ownership_group || feature.properties.ownership_group,
+        inventory_type: currentFeature.properties.inventory_type || feature.properties.inventory_type,
         current_status: currentFeature.properties.current_status,
         property_class: currentFeature.properties.property_class,
         project_name: currentFeature.properties.project_name,
@@ -1821,7 +1973,7 @@ function summarizeCurrentDataset(features, options) {
       survey_layer: SURVEY_LAYER_NAME,
       survey_layer_url: SURVEY_LAYER_URL.replace(/\/0$/, ""),
       survey_layer_item_url: SURVEY_AGOL_ITEM_URL,
-      ownership_scope: "URA owned only",
+       ownership_scope: "URA and PLB owned",
       feature_count: features.length,
       unique_parcel_count: parcelKeys.size,
       duplicate_parcel_key_count: features.length - parcelKeys.size,
@@ -2130,7 +2282,8 @@ async function initMap() {
         image_url: graphic.attributes.image_url,
         status: graphic.attributes.status,
         address: graphic.attributes.address,
-        created_at: graphic.attributes.created_at
+        created_at: graphic.attributes.created_at,
+        evidence_photos: [{ ...graphic.attributes, survey_source: SURVEY_LAYER_NAME }]
       });
       return;
     }
@@ -2144,7 +2297,8 @@ async function initMap() {
         survey_source: "Survey123 approved evidence",
         image_url: graphic.attributes.image_url,
         created_at: graphic.attributes.submitted_at,
-        survey_status: "Approved"
+        survey_status: "Approved",
+        evidence_photos: [{ ...graphic.attributes, survey_source: "Survey123 approved evidence", evidence_source: "approved_internal_survey123" }]
       });
       return;
     }
