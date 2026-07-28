@@ -75,14 +75,6 @@ const statusColors = {
   ownership_risk: "#c2410c"
 };
 
-const surveyStatusColors = {
-  Complete: "#2e7d32",
-  Partial: "#d97706",
-  "Needs Addressed": "#c2410c",
-  "Needs Addressing": "#c2410c",
-  Other: "#7b1fa2"
-};
-
 const contractorPalette = ["#4477AA", "#EE6677", "#228833", "#AA3377", "#66CCEE", "#EE7733", "#009988", "#332288", "#CCBB44", "#8C564B"];
 const UNASSIGNED_CONTRACTOR_COLOR = "#6b7280";
 
@@ -462,32 +454,6 @@ function surveyOnlyCount(features = currentMonthFeatures()) {
   return Math.max(raw - matchedReturnedCount(features), 0);
 }
 
-function surveyRenderer() {
-  if (state.colorMode === "contractor") {
-    return {
-      type: "unique-value",
-      field: "maintained_by",
-      defaultSymbol: fillSymbol("#8a8f98"),
-      uniqueValueInfos: contractorItems().map((item) => ({
-        value: item.name,
-        label: item.label,
-        symbol: fillSymbol(item.color)
-      }))
-    };
-  }
-  const infos = Object.entries(surveyStatusColors).map(([value, color]) => ({
-    value,
-    label: value,
-    symbol: fillSymbol(color)
-  }));
-  return {
-    type: "unique-value",
-    field: "status",
-    defaultSymbol: fillSymbol(surveyStatusColors.Other),
-    uniqueValueInfos: infos
-  };
-}
-
 function statusRenderer(mode = state.dataView) {
   return {
     type: "unique-value",
@@ -514,20 +480,6 @@ function contractorRenderer(mode = state.dataView) {
   };
 }
 
-
-function surveyPeriodClause(month = state.selectedMonth) {
-  const safeMonth = String(month || "").replace(/'/g, "''");
-  return safeMonth ? `period_label = '${safeMonth}'` : "1=1";
-}
-
-function surveyWhereForFilter(mode = state.dataView) {
-  if (mode !== "history") return "1=1";
-  const clauses = [surveyPeriodClause()];
-  if (state.contractorFilter !== "all") {
-    clauses.push(`maintained_by LIKE '%${String(state.contractorFilter).replace(/'/g, "''")}%'`);
-  }
-  return clauses.join(" AND ");
-}
 
 function assignmentHistoryWhereForFilter(mode = state.dataView) {
   if (mode !== "history") return whereForFilter(mode);
@@ -1018,7 +970,7 @@ async function zoomToActiveFilteredExtent({ expand = 1.16, duration = 650 } = {}
   for (const layer of layers) {
     if (!layer?.queryExtent) continue;
     const result = await layer.queryExtent({
-      where: layer === state.layers.historySurveys ? surveyWhereForFilter("history") : assignmentHistoryWhereForFilter("history"),
+      where: assignmentHistoryWhereForFilter("history"),
       outSpatialReference: state.view.spatialReference
     }).catch(() => null);
     if (result?.count && extentIsUsable(result.extent)) extents.push(result.extent);
@@ -1201,19 +1153,15 @@ function syncHistoryLayerFilters() {
   if (state.layers.historyAssignments) {
     state.layers.historyAssignments.definitionExpression = assignmentHistoryWhereForFilter("history");
   }
-  if (state.layers.historySurveys) {
-    state.layers.historySurveys.definitionExpression = surveyWhereForFilter("history");
-  }
 }
 
 function setHistoryLayerVisibility(visible) {
   if (state.layers.historyAssignments) state.layers.historyAssignments.visible = visible;
-  if (state.layers.historySurveys) state.layers.historySurveys.visible = false;
 }
 
 function activeLayer() {
   if (state.dataView === "current") return state.layers.current;
-  return state.layers.historyAssignments || state.layers.historySurveys;
+  return state.layers.historyAssignments;
 }
 
 function historyLayers() {
@@ -1992,39 +1940,6 @@ function buildHistoryAssignmentLayer({ url, title, mode, visible }) {
   });
 }
 
-function buildHistorySurveyLayer({ visible }) {
-  return new FeatureLayer({
-    url: SURVEY_LAYER_URL,
-    title: "LandCare Survey Submissions",
-    outFields: ["*"],
-    visible,
-    definitionExpression: surveyWhereForFilter("history"),
-    renderer: surveyRenderer(),
-    opacity: 0.95,
-    popupTemplate: {
-      title: "Survey {parcelnumb}",
-      content: (event) => {
-        const props = event.graphic?.attributes || {};
-        return `
-          <div class="survey-popup-detail">
-            <b>Service period:</b> ${escapeHtml(props.period_label || "Unknown")}<br>
-            <b>Maintained by:</b> ${escapeHtml(props.maintained_by || "Unknown")}<br>
-            <b>Submitted:</b> ${escapeHtml(props.created_at || "Unknown")}<br>
-            <b>Status:</b> ${escapeHtml(props.status || "Unknown")}<br>
-            <b>Address:</b> ${escapeHtml(props.address || "Unknown")}
-            ${surveyPhotoMarkup(props)}
-          </div>`;
-      }
-    }
-  });
-}
-
-function buildApprovedEvidenceLayer() {
-  // Survey123 stores point evidence only. The public map uses the matched
-  // assignment polygon, so no evidence point layer is rendered here.
-  return null;
-}
-
 function buildHistoryLayer({ url, title, mode, visible }) {
   return buildHistoryAssignmentLayer({ url, title, mode, visible });
 }
@@ -2067,17 +1982,11 @@ async function initMap() {
     mode: "history",
     visible: state.dataView === "history"
   });
-  const historySurveyLayer = buildHistorySurveyLayer({
-    visible: false
-  });
-  const approvedEvidenceLayer = buildApprovedEvidenceLayer();
   const currentLayer = buildCurrentLayer({
     visible: state.dataView === "current"
   });
   state.layers = {
     historyAssignments: historyAssignmentLayer,
-    historySurveys: historySurveyLayer,
-    approvedEvidence: approvedEvidenceLayer,
     current: currentLayer
   };
   const neighborhoodLayer = new FeatureLayer({
@@ -2142,7 +2051,7 @@ async function initMap() {
 
   const map = new Map({
     basemap: buildCartoLightBasemap(),
-    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, historySurveyLayer, approvedEvidenceLayer, currentLayer].filter(Boolean)
+    layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, currentLayer]
   });
 
   const view = new MapView({
@@ -2166,42 +2075,9 @@ async function initMap() {
     const historyLayerSet = new Set(historyLayers());
     const graphic = hit.results.find((result) => {
       const layer = result.graphic?.layer;
-      return layer === state.layers.current || historyLayerSet.has(layer) || layer === state.layers.historySurveys || layer === state.layers.approvedEvidence;
+      return layer === state.layers.current || historyLayerSet.has(layer);
     })?.graphic;
     if (!graphic?.attributes) return;
-    if (graphic.layer === state.layers.historySurveys) {
-      setParcelDetail({
-        parcel_key: graphic.attributes.parcelnumb,
-        organization: graphic.attributes.maintained_by || "Unassigned",
-        maintenance_level: "Active",
-        completion_status: "returned",
-        returned_flag: true,
-        period_month: graphic.attributes.period_label,
-        ownership_type: graphic.attributes.owner || "URA",
-        survey_source: SURVEY_LAYER_NAME,
-        image_url: graphic.attributes.image_url,
-        status: graphic.attributes.status,
-        address: graphic.attributes.address,
-        created_at: graphic.attributes.created_at,
-        evidence_photos: [{ ...graphic.attributes, survey_source: SURVEY_LAYER_NAME }]
-      });
-      return;
-    }
-    if (graphic.layer === state.layers.approvedEvidence) {
-      setParcelDetail({
-        parcel_key: graphic.attributes.parcelnumb,
-        organization: graphic.attributes.maintained_by || "Unassigned",
-        maintenance_level: "Internal approved evidence",
-        completion_status: "returned",
-        period_month: graphic.attributes.service_date || "Approved",
-        survey_source: "Survey123 approved evidence",
-        image_url: graphic.attributes.image_url,
-        created_at: graphic.attributes.submitted_at,
-        survey_status: "Approved",
-        evidence_photos: [{ ...graphic.attributes, survey_source: "Survey123 approved evidence", evidence_source: "approved_internal_survey123" }]
-      });
-      return;
-    }
     const props = state.dataView === "current"
       ? normalizeCurrentAttributes(graphic.attributes)
       : graphic.attributes;
@@ -2225,13 +2101,11 @@ async function initMap() {
       const hit = await view.hitTest(event).catch(() => null);
       const graphic = hit?.results?.find((result) => {
         const layer = result.graphic?.layer;
-        return layer === state.layers.current || layer === state.layers.historyAssignments || layer === state.layers.historySurveys || layer === state.layers.approvedEvidence;
+        return layer === state.layers.current || layer === state.layers.historyAssignments;
       })?.graphic;
       const props = graphic?.attributes;
       const normalised = graphic?.layer === state.layers.current ? normalizeCurrentAttributes(props) : props;
-      const evidence = graphic?.layer === state.layers.historySurveys || graphic?.layer === state.layers.approvedEvidence
-        ? props
-        : await enrichWithSurveyEvidence(normalised || {});
+      const evidence = await enrichWithSurveyEvidence(normalised || {});
       const imageUrl = safeImageUrl(evidence?.image_url);
       const key = `${evidence?.OBJECTID || normalised?.parcel_key || ""}:${imageUrl}`;
       if (!imageUrl || key === lastHoverKey) {
@@ -2249,9 +2123,7 @@ async function initMap() {
   await view.when();
   await Promise.all([
     historyAssignmentLayer.when(),
-    historySurveyLayer.when(),
-    currentLayer.when(),
-    approvedEvidenceLayer?.when()
+    currentLayer.when()
   ].filter(Boolean));
   await zoomToDefaultCurrent();
 }

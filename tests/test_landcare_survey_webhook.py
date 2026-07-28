@@ -53,6 +53,8 @@ def test_normalise_submission_maps_regrid_style_answers():
             "review_status": "approved",
             "parcel_number": "0012-A-00400",
             "maintained_by": "KRJ Enterprises",
+            "assignment_period": "2026-07",
+            "untitled_question_2": "123",
             "date_of_services": "2026-07-15",
             "first_visit": "Yes",
             "litter_dumping": "No",
@@ -66,6 +68,25 @@ def test_normalise_submission_maps_regrid_style_answers():
     assert record["first_visit"] is True
     assert record["litter_dumping"] is False
     assert record["image_attachment_url"] == "https://example.org/photo.jpg"
+    assert record["assignment_object_id"] == "123"
+
+
+def test_assignment_match_requires_the_selected_authoritative_polygon():
+    record = {
+        "parcel_number": "0049-J-00278-0000-00",
+        "assignment_period": "2026-07",
+        "maintained_by": "KRJ Enterprises",
+        "assignment_object_id": "123",
+        "image_attachment_url": "https://example.org/photo.jpg",
+    }
+    assignment = {"attributes": {
+        "OBJECTID": 123,
+        "parcelnumb": "0049J00278000000",
+        "period_label": "2026-07",
+        "maintained_by": "KRJ Enterprises Primary Contact",
+    }, "geometry": {"rings": [[[-79.96, 40.46], [-79.95, 40.46], [-79.95, 40.47], [-79.96, 40.46]]]}}
+    assert MODULE.assignment_matches_submission(record, assignment)
+    assert not MODULE.assignment_matches_submission({**record, "assignment_period": "2026-06"}, assignment)
 
 
 def test_normalise_submission_requires_global_id():
@@ -79,5 +100,6 @@ def test_normalise_submission_requires_global_id():
 
 if __name__ == "__main__":
     test_normalise_submission_maps_regrid_style_answers()
+    test_assignment_match_requires_the_selected_authoritative_polygon()
     test_normalise_submission_requires_global_id()
     print("landcare survey webhook mapping tests passed")
