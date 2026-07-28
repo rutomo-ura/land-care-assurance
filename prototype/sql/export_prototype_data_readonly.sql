@@ -105,6 +105,13 @@ returned as (
     from gis.regrid_survey_submissions
     where period >= date '2025-05-01'
       and parcelnumb is not null
+    union
+    select distinct
+        to_date(service_period || '-01', 'YYYY-MM-DD') as period_month,
+        parcel_key
+    from gis.landcare_survey_evidence_parcels
+    where evidence_source = 'survey123'
+      and service_period ~ '^\\d{4}-\\d{2}$'
 ),
 pgh_geometry as (
     select distinct on (parcel_key)

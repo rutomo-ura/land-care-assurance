@@ -58,16 +58,16 @@ URA reviewers use the restricted Inbox to set `approved` or `rejected`, includin
 
 ### 3. Approved-evidence storage
 
-The VM receiver in [`scripts/landcare_survey_webhook.py`](../scripts/landcare_survey_webhook.py) validates webhook requests, deduplicates by Survey123 global ID, retrieves the attachment URL, and upserts only approved records into:
+The upstream `URA-Data-Repository` webhook queues the raw event, retrieves the attachment URL, and validates the submission against the durable assignment ID, parcel, period, and organization. Its daily reconciliation repairs missed events and materializes only valid records into:
 
 ```text
-gis.ura_landcare_survey_submissions_internal
+gis.landcare_survey_evidence_parcels
 ```
 
 The curated public view is:
 
 ```text
-gis.landcare_approved_survey_evidence
+the stable **LandCare Survey123 Evidence Parcels** hosted feature layer
 ```
 
 The migration is [`sql/20260715_landcare_survey_submission_internal.sql`](../sql/20260715_landcare_survey_submission_internal.sql).

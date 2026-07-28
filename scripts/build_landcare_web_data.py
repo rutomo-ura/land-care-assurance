@@ -219,8 +219,9 @@ def build_data(source: Path, output_dir: Path) -> None:
             "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
             "historical_assignments": (
                 "PostgreSQL export from gis.regrid_bundle_assignments joined to "
-                "gis.regrid_survey_submissions and parcel ownership tables. "
-                "Surveys are ingested daily by URA-Data-Repository into gis.regrid_survey_submissions and published to ArcGIS Online gisdb_gis_regrid_surveys, which the web app queries live for all-period returned evidence. "
+                "Regrid returns and canonical Survey123 evidence polygons. "
+                "URA-Data-Repository validates Survey123 against stable assignment IDs, "
+                "then publishes only authoritative parcel polygons; invalid raw submissions remain in restricted QA. "
                 "Bundle assignments are loaded monthly via bundle_assignment_creation.py and BundlesDriveToSQL.py."
             ),
             "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json.",

@@ -25,8 +25,8 @@ export const SURVEY123_PREFILL_FIELDS = {
   parcelLocation: "parcel_location"
 };
 
-// Public, query-only ArcGIS view of Survey123 evidence. This is intentionally
-// separate from the add-only form view and must expose only safe dashboard fields.
-// Populate after creating the view in ArcGIS Online.
+// Public, query-only hosted polygon layer. It is materialized from validated
+// Survey123 evidence and authoritative assignment geometry; never point the app
+// at the raw Survey123 form/results layer.
 export const SURVEY123_EVIDENCE_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/LandCare_Network_Internal_Survey_3_view/FeatureServer/0";
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/LandCare_Survey123_Evidence_Parcels/FeatureServer/0";
