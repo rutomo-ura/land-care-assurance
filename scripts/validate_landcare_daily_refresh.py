@@ -133,6 +133,27 @@ def validate_duplicate_parcel_months(features: list[dict[str, Any]], label: str)
         raise ValidationError(f"{label} contains {duplicates} duplicate parcel-month feature(s)")
 
 
+def validate_canonical_parcel_contract(features: list[dict[str, Any]], label: str) -> None:
+    missing_block_lot = 0
+    allowed_ownership = {"URA", "PLB"}
+    for feature in features:
+        props = feature.get("properties")
+        if not isinstance(props, dict):
+            raise ValidationError(f"{label} contains a feature without properties")
+        missing = {"parcel_key", "ownership_group", "completion_status"} - set(props)
+        if missing:
+            raise ValidationError(f"{label} is missing canonical properties: {sorted(missing)}")
+        if props.get("ownership_group") not in allowed_ownership:
+            raise ValidationError(f"{label} has unsupported ownership_group {props.get('ownership_group')!r}")
+        if not props.get("block_lot"):
+            missing_block_lot += 1
+    if missing_block_lot:
+        warnings.warn(
+            f"{label} has {missing_block_lot} feature(s) without block_lot; search coverage is incomplete.",
+            stacklevel=2,
+        )
+
+
 def validate_latest_status_counts(latest_summary: dict[str, Any]) -> None:
     status_counts = latest_summary.get("status_counts")
     feature_count = latest_summary.get("feature_count")
@@ -238,11 +259,18 @@ def validate_daily_refresh(args: argparse.Namespace) -> None:
     all_features = validate_feature_collection(payloads["all_months.geojson"], "all_months.geojson")
     latest_features = validate_feature_collection(payloads["latest_month.geojson"], "latest_month.geojson")
     validate_duplicate_parcel_months(all_features, "all_months.geojson")
+    validate_canonical_parcel_contract(all_features, "all_months.geojson")
 
     if len(all_features) != manifest.get("all_month_feature_count"):
         raise ValidationError("all_months.geojson feature count does not match refresh_manifest.json")
     if len(latest_features) != manifest.get("latest_month_feature_count"):
         raise ValidationError("latest_month.geojson feature count does not match refresh_manifest.json")
+
+    ownership_counts = manifest.get("ownership_counts")
+    if not isinstance(ownership_counts, dict) or not ownership_counts:
+        raise ValidationError("refresh_manifest.json missing ownership_counts")
+    if set(ownership_counts) - {"URA", "PLB"}:
+        raise ValidationError(f"refresh_manifest.json has unsupported ownership groups: {sorted(set(ownership_counts) - {'URA', 'PLB'})}")
 
     validate_latest_status_counts(latest_summary)
     validate_finance_summary(payloads["finance_summary.json"])

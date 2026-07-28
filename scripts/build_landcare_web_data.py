@@ -27,12 +27,20 @@ def normalize_feature(feature: dict[str, object]) -> dict[str, object] | None:
     geometry = feature.get("geometry")
     if not isinstance(props, dict) or not geometry:
         return None
-    if props.get("ownership_type") != "URA":
+    ownership_value = str(props.get("ownership_group") or props.get("ownership_type") or "").strip()
+    ownership_group = (
+        "URA" if ownership_value in {"URA", "URA Owned"}
+        else "PLB" if ownership_value in {"PLB", "PLB Owned", "Pittsburgh Land Bank"}
+        else "Other"
+    )
+    if ownership_group not in {"URA", "PLB"}:
         return None
     props = dict(props)
     props["assigned_flag"] = truthy(props.get("assigned_flag")) or True
     props["returned_flag"] = truthy(props.get("returned_flag"))
     props["period_month"] = str(props.get("period_month") or "")[:7]
+    props["ownership_group"] = ownership_group
+    props["block_lot"] = str(props.get("block_lot") or "")
     props["completion_status"] = props.get("completion_status") or (
         "returned" if props["returned_flag"] else "missing"
     )
@@ -155,7 +163,7 @@ def build_data(source: Path, output_dir: Path) -> None:
         if (normalized := normalize_feature(feature))
     ]
     if not features:
-        raise SystemExit("No URA-owned LandCare features found in source export.")
+        raise SystemExit("No URA- or PLB-owned LandCare features found in source export.")
 
     months = sorted({feature["properties"]["period_month"] for feature in features})
     latest_month = months[-1]
@@ -166,9 +174,17 @@ def build_data(source: Path, output_dir: Path) -> None:
     latest_metric = next(row for row in monthly_metrics if row["period_month"] == latest_month)
     latest_summary = month_summary(features, latest_month)
     generated_on = date.today().isoformat()
+    ownership_counts: dict[str, set[str]] = defaultdict(set)
+    missing_block_lot = set()
+    for feature in features:
+        props = feature["properties"]
+        parcel_key = str(props.get("parcel_key") or "")
+        ownership_counts[str(props.get("ownership_group") or "Other")].add(parcel_key)
+        if not props.get("block_lot") and parcel_key:
+            missing_block_lot.add(parcel_key)
 
     source_note = (
-        "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. "
+        "PostgreSQL export filtered to URA- and PLB-owned LandCare parcels across all available months. "
         f"Assignments updated through {metadata.get('latest_assignment_period')}; "
         f"survey completion shown through {metadata.get('latest_survey_period')}."
     )
@@ -186,8 +202,10 @@ def build_data(source: Path, output_dir: Path) -> None:
         "owner_match_note": metadata.get("owner_match_note"),
         "missing_geometry_rows": metadata.get("missing_geometry_rows"),
         "latest_comparable_month": metadata.get("latest_comparable_month"),
-        "ownership_scope": "URA owned only",
+        "ownership_scope": "URA and PLB owned",
         "all_month_feature_count": len(features),
+        "ownership_counts": {key: len(value) for key, value in sorted(ownership_counts.items())},
+        "missing_block_lot_parcel_count": len(missing_block_lot),
     }
 
     latest_month_summary = {
@@ -232,7 +250,7 @@ def build_data(source: Path, output_dir: Path) -> None:
             "generated_on": generated_on,
             "source_file": str(source.relative_to(ROOT)) if source.is_relative_to(ROOT) else str(source),
             "output_dir": str(output_dir.relative_to(ROOT)) if output_dir.is_relative_to(ROOT) else str(output_dir),
-            "ownership_scope": "URA owned only",
+            "ownership_scope": "URA and PLB owned",
             "available_months": months,
             "latest_month": latest_month,
             "all_month_feature_count": len(features),
@@ -241,6 +259,8 @@ def build_data(source: Path, output_dir: Path) -> None:
             "latest_survey_period": metadata.get("latest_survey_period"),
             "survey_submission_count": metadata.get("survey_submission_count"),
             "survey_distinct_parcels": metadata.get("survey_distinct_parcels"),
+            "ownership_counts": common_summary["ownership_counts"],
+            "missing_block_lot_parcel_count": common_summary["missing_block_lot_parcel_count"],
             "note": (
                 f"Dashboard data refreshed for assignments through {metadata.get('latest_assignment_period')} "
                 f"and survey completion through {metadata.get('latest_survey_period')}."

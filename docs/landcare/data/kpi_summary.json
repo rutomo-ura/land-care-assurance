@@ -1,5 +1,5 @@
 {
-  "latest_month": "2026-07",
+  "latest_month": "2026-05",
   "available_months": [
     "2025-05",
     "2025-06",
@@ -12,15 +12,13 @@
     "2026-02",
     "2026-03",
     "2026-04",
-    "2026-05",
-    "2026-06",
-    "2026-07"
+    "2026-05"
   ],
-  "latest_assignment_period": "2026-07-15",
-  "latest_survey_period": "2026-07-15",
-  "survey_submission_count": 117,
-  "survey_distinct_parcels": 112,
-  "source_note": "PostgreSQL export filtered to URA-owned LandCare parcels across all available months. Assignments updated through 2026-07-15; survey completion shown through 2026-07-15.",
+  "latest_assignment_period": "2026-06-15",
+  "latest_survey_period": "2026-05-15",
+  "survey_submission_count": null,
+  "survey_distinct_parcels": null,
+  "source_note": "PostgreSQL export filtered to URA- and PLB-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-05-15.",
   "generated_on": "2026-07-28",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
@@ -33,18 +31,23 @@
     "analysis.assessment_snapshot"
   ],
   "owner_match_note": "Owner names are normalized before matching URA and Pittsburgh Land Bank variants.",
-  "missing_geometry_rows": 109,
-  "latest_comparable_month": "2026-07-01",
-  "ownership_scope": "URA owned only",
-  "all_month_feature_count": 2986,
+  "missing_geometry_rows": 103,
+  "latest_comparable_month": "2026-05-01",
+  "ownership_scope": "URA and PLB owned",
+  "all_month_feature_count": 2689,
+  "ownership_counts": {
+    "PLB": 3,
+    "URA": 222
+  },
+  "missing_block_lot_parcel_count": 225,
   "latest_month_metrics": {
-    "period_month": "2026-07",
-    "assigned_active": 176,
-    "assigned_total": 210,
-    "returned_assigned": 17,
-    "active_completion_rate_pct": 9.7,
-    "blended_completion_rate_pct": 8.1,
-    "survey_rows_raw": 17
+    "period_month": "2026-05",
+    "assigned_active": 189,
+    "assigned_total": 225,
+    "returned_assigned": 97,
+    "active_completion_rate_pct": 51.3,
+    "blended_completion_rate_pct": 43.1,
+    "survey_rows_raw": 97
   },
   "source_contract": {
     "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
