@@ -50,6 +50,10 @@
           <span class="eyebrow">Period</span>
           <strong id="periodKpi">Loading...</strong>
         </div>
+        <label class="field-label compact-field" for="kpiQuarterSelect">
+          <span>Quarter</span>
+          <select id="kpiQuarterSelect" aria-label="KPI quarter"></select>
+        </label>
         <label class="field-label compact-field" for="kpiMonthSelect">
           <span>Month</span>
           <select id="kpiMonthSelect" aria-label="KPI month"></select>
@@ -92,8 +96,8 @@
           </article>
           <article class="insight-card" data-tone="finance">
             <div class="card-top">
-              <span class="eyebrow">Budget Run Rate</span>
-              <span class="metric-status-chip">Annualized</span>
+              <span class="eyebrow">Budget Forecast</span>
+              <span class="metric-status-chip">Selected quarter</span>
             </div>
             <strong id="budgetRunRateInsight">--</strong>
             <p class="card-trend" id="budgetRunRateCopy">Loading...</p>
@@ -113,6 +117,21 @@
               <span class="legend-line target"></span> 80% target
             </div>
             <div class="line-chart" id="completionLineChart" aria-label="Monthly completion line chart"></div>
+          </article>
+
+          <article class="panel powerbi-panel mtd-comparison-panel">
+            <div class="panel-head">
+              <div>
+                <h1>MTD Completion Rate vs. Last Month</h1>
+                <p class="panel-sub" id="mtdCompletionSummary">Loading daily completion pace...</p>
+              </div>
+            </div>
+            <div class="chart-legend chart-legend-inline">
+              <span class="legend-line rate"></span> Current service period
+              <span class="legend-line previous-period"></span> Previous service period, same day
+            </div>
+            <div class="line-chart mtd-comparison-chart" id="mtdCompletionComparisonChart" aria-label="Daily month-to-date completion rate compared with the previous service period"></div>
+            <p class="source-footnote mtd-comparison-note">Cumulative returned assignments divided by active assignments. Service periods run from the 15th through the 14th; the prior period is aligned to the same service day.</p>
           </article>
 
           <article class="panel powerbi-panel contractor-panel">
@@ -138,15 +157,15 @@
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Annual Run Rate</span><strong id="annualRunRateKpi">--</strong><small>Projected invoice pace</small></div>
-            <div class="reference-card"><span>Monthly Invoice Total</span><strong id="monthlyInvoiceKpi">--</strong><small>Current monthly baseline</small></div>
-            <div class="reference-card"><span>Total Contract Amount</span><strong id="totalContractKpi">--</strong><small>Committed portfolio value</small></div>
-            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong><small>Active supplier base</small></div>
+            <div class="reference-card featured"><span>Quarterly Forecast</span><strong id="annualRunRateKpi">--</strong><small id="quarterlyForecastNote">Selected-quarter contract forecast</small></div>
+            <div class="reference-card"><span>Monthly Invoice Baseline</span><strong id="monthlyInvoiceKpi">--</strong><small>Active contracts in selected quarter</small></div>
+            <div class="reference-card"><span>Contracted Acres</span><strong id="totalContractKpi">--</strong><small>Contracts active in selected quarter</small></div>
+            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong><small>Active supplier base for selected quarter</small></div>
           </div>
         </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Contract amount by contractor</h1><p class="panel-sub">Ranked view of annual financial exposure</p></div>
+            <div><h1>Quarterly forecast by contractor</h1><p class="panel-sub">Contract forecast for the selected calendar quarter</p></div>
           </div>
           <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
         </article>
@@ -155,11 +174,11 @@
       <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
         <header class="tab-intro">
           <div><span class="section-kicker">Payment operations</span><h2>Check request history</h2></div>
-          <p>Audit invoice timing, payment values, and contractor-level request activity.</p>
+          <p>Audit the finance records whose documented term overlaps the selected calendar quarter.</p>
         </header>
         <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <div><h1>Request ledger</h1><p class="panel-sub">Most recent finance records in source order</p></div>
+            <div><h1>Request ledger</h1><p class="panel-sub" id="checkRequestSummary">Finance records overlapping the selected quarter</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="checkRequestTable"></table>
@@ -186,11 +205,11 @@
       <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
         <header class="tab-intro">
           <div><span class="section-kicker">Portfolio allocation</span><h2>Parcel area distribution</h2></div>
-          <p>Understand acreage concentration and balance across the contractor portfolio.</p>
+          <p>Understand acreage concentration in the selected month within the selected quarter.</p>
         </header>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Parcel area by contractor</h1><p class="panel-sub">Current contracted acreage, ranked by organization</p></div>
+            <div><h1>Parcel area by contractor</h1><p class="panel-sub" id="areaDistributionSummary">Selected-month assignment acreage, ranked by organization</p></div>
           </div>
           <div class="grouped-chart" id="areaDistributionChart" aria-label="Current parcel acreage by contractor"></div>
         </article>
@@ -214,19 +233,19 @@
       <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
         <header class="tab-intro">
           <div><span class="section-kicker">Cost efficiency</span><h2>Maintenance expense intensity</h2></div>
-          <p>Evaluate unit economics across acreage, parcels, and contractor commitments.</p>
+          <p>Evaluate quarter-scoped contract forecast against the active contract footprint.</p>
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Annual Cost / Acre</span><strong id="annualCostPerAcreKpi">--</strong><small>Portfolio intensity</small></div>
-            <div class="reference-card"><span>Monthly Cost / Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong><small>Normalized monthly cost</small></div>
-            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong><small>Maintained land area</small></div>
-            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong><small>Contracted inventory</small></div>
+            <div class="reference-card featured"><span>Quarter Forecast / Acre</span><strong id="annualCostPerAcreKpi">--</strong><small>Quarter-scoped contract intensity</small></div>
+            <div class="reference-card"><span>Monthly / Contract Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong><small>Active contract baseline</small></div>
+            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong><small>Active in selected quarter</small></div>
+            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong><small>Active in selected quarter</small></div>
           </div>
         </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Cost per acre by contractor</h1><p class="panel-sub">Ranked annual cost intensity</p></div>
+            <div><h1>Quarter forecast per acre by contractor</h1><p class="panel-sub">Ranked selected-quarter contract intensity</p></div>
           </div>
           <div class="grouped-chart" id="expenseIntensityChart" aria-label="Annual cost per acre by contractor"></div>
         </article>
@@ -246,6 +265,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260714-4"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260728-1"></script>
   </body>
 </html>

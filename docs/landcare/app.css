@@ -1515,6 +1515,65 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   padding-top: 8px;
 }
 
+.mtd-comparison-panel {
+  grid-column: 1;
+}
+
+.mtd-comparison-panel .mtd-comparison-chart {
+  min-height: 230px;
+}
+
+.mtd-comparison-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.legend-line.previous-period {
+  background: #6b7785;
+}
+
+.mtd-current-line,
+.mtd-previous-line {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.mtd-current-line {
+  stroke: var(--ura-blue);
+}
+
+.mtd-previous-line {
+  stroke: #6b7785;
+  stroke-dasharray: 6 5;
+}
+
+.mtd-current-marker {
+  fill: var(--paper);
+  stroke: var(--ura-blue);
+  stroke-width: 2;
+}
+
+.mtd-current-marker:focus-visible {
+  fill: var(--ura-blue-soft);
+  stroke: var(--ura-blue-dark);
+  stroke-width: 3;
+  outline: none;
+}
+
+.chart-empty-state {
+  display: grid;
+  min-height: 220px;
+  margin: 0;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .panel {
   padding: 22px 24px;
 }

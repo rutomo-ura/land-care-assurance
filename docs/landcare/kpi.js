@@ -5,11 +5,13 @@ import {
   fetchArcgisJson,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
+  fetchSurveyRecordsForPeriod,
   enrichLatestMonthlyMetrics,
   enrichSummaryWithSurveyLayer,
   countReturnedAssigned,
   loadSurveyEvidenceByPeriod,
-  mergeSurveyEvidenceIntoGeojson
+  mergeSurveyEvidenceIntoGeojson,
+  parcelDigits
 } from "./survey-layer.js";
 import {
   enrichSummaryWithAssignmentLayers,
@@ -54,6 +56,14 @@ const compactMoneyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0
 });
+const SERVICE_PERIOD_START_DAY = 15;
+const EASTERN_TIME_ZONE = "America/New_York";
+const easternDateParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: EASTERN_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+});
 
 function formatNumber(value) {
   return formatter.format(Number(value || 0));
@@ -73,6 +83,52 @@ function formatMoneyCompact(value) {
 
 function formatAcres(value) {
   return `${formatter.format(Number(value || 0).toFixed(1))}`;
+}
+
+function dateKeyFromParts(parts) {
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function easternDateKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : dateKeyFromParts(easternDateParts.formatToParts(date));
+}
+
+function dateFromKey(dateKey) {
+  return new Date(`${dateKey}T00:00:00Z`);
+}
+
+function dateKeyForOffset(dateKey, offset) {
+  const date = dateFromKey(dateKey);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function servicePeriodStartFor(date = new Date()) {
+  const dateKey = easternDateKey(date);
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month - 1, SERVICE_PERIOD_START_DAY));
+  if (day < SERVICE_PERIOD_START_DAY) start.setUTCMonth(start.getUTCMonth() - 1);
+  return start.toISOString().slice(0, 10);
+}
+
+function servicePeriodLabel(startDateKey) {
+  return String(startDateKey || "").slice(0, 7);
+}
+
+function shiftServicePeriodStart(startDateKey, months) {
+  const start = dateFromKey(startDateKey);
+  start.setUTCMonth(start.getUTCMonth() + months);
+  return start.toISOString().slice(0, 10);
+}
+
+function shortDate(dateKey) {
+  return dateFromKey(dateKey).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
 }
 
 function escapeHtml(value) {
@@ -95,6 +151,83 @@ function quarterLabel(month) {
   const [year, rawMonth] = String(month).split("-");
   const quarter = Math.ceil(Number(rawMonth) / 3);
   return `Q${quarter} ${year}`;
+}
+
+function quarterKey(month) {
+  const [year, rawMonth] = String(month).split("-");
+  return `${year}-Q${Math.ceil(Number(rawMonth) / 3)}`;
+}
+
+function quarterLabelFromKey(key) {
+  const match = String(key).match(/^(\d{4})-Q([1-4])$/);
+  return match ? `Q${match[2]} ${match[1]}` : String(key || "Selected quarter");
+}
+
+function quarterBounds(key) {
+  const match = String(key).match(/^(\d{4})-Q([1-4])$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const startMonth = (Number(match[2]) - 1) * 3;
+  return {
+    start: new Date(Date.UTC(year, startMonth, 1)),
+    end: new Date(Date.UTC(year, startMonth + 3, 0)),
+    monthStarts: [0, 1, 2].map((offset) => new Date(Date.UTC(year, startMonth + offset, 1)))
+  };
+}
+
+function isoDate(value) {
+  const date = new Date(`${String(value || "").slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function contractMonthsInQuarter(row, quarter) {
+  if (!quarter) return 0;
+  const start = isoDate(row.start_date);
+  const end = isoDate(row.end_date);
+  if (!start || !end || end < quarter.start || start > quarter.end) return 0;
+  return quarter.monthStarts.filter((monthStart) => {
+    const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 0));
+    return start <= monthEnd && end >= monthStart;
+  }).length;
+}
+
+function rowsOverlappingQuarter(rows, quarter) {
+  if (!quarter) return [];
+  return (rows || []).filter((row) => {
+    const start = isoDate(row.start_date);
+    const end = isoDate(row.end_date);
+    return start && end && start <= quarter.end && end >= quarter.start;
+  });
+}
+
+function buildQuarterFinance(financeSummary, selectedQuarterKey) {
+  const quarter = quarterBounds(selectedQuarterKey);
+  const rows = (financeSummary.current_contracts || [])
+    .map((row) => ({ ...row, active_months_in_quarter: contractMonthsInQuarter(row, quarter) }))
+    .filter((row) => row.active_months_in_quarter > 0)
+    .map((row) => {
+      const quarterlyForecast = Number(row.monthly_invoice_amount || 0) * row.active_months_in_quarter;
+      return {
+        ...row,
+        quarterly_forecast: quarterlyForecast,
+        quarterly_cost_per_acre: Number(row.acres || 0) ? quarterlyForecast / Number(row.acres) : 0
+      };
+    });
+  const acres = rows.reduce((sum, row) => sum + Number(row.acres || 0), 0);
+  const parcels = rows.reduce((sum, row) => sum + Number(row.parcels || 0), 0);
+  const monthlyInvoice = rows.reduce((sum, row) => sum + Number(row.monthly_invoice_amount || 0), 0);
+  const quarterlyForecast = rows.reduce((sum, row) => sum + Number(row.quarterly_forecast || 0), 0);
+  return {
+    label: quarterLabelFromKey(selectedQuarterKey),
+    rows,
+    checkRequestRows: rowsOverlappingQuarter(financeSummary.check_request_history, quarter),
+    acres,
+    parcels,
+    monthlyInvoice,
+    quarterlyForecast,
+    quarterlyCostPerAcre: acres ? quarterlyForecast / acres : 0,
+    monthlyCostPerParcel: parcels ? monthlyInvoice / parcels : 0
+  };
 }
 
 function hasReportedSurveyData(row) {
@@ -324,6 +457,86 @@ function aggregateLiveContractorMonthly(geojson) {
   });
 }
 
+function activeAssignmentKeysForPeriod(geojson, periodLabel) {
+  const keys = new Set();
+  for (const feature of geojson?.features || []) {
+    const props = feature.properties || {};
+    if (props.period_month !== periodLabel || props.maintenance_level !== "Active") continue;
+    const key = parcelDigits(props.parcel_key);
+    if (key) keys.add(key);
+  }
+  return keys;
+}
+
+function returnedKeysByDate(records, assignmentKeys, startDateKey, endDateKey) {
+  const recordsByDate = new Map();
+  for (const record of records || []) {
+    const parcelKey = parcelDigits(record.parcelnumb);
+    const submittedDate = easternDateKey(record.created_at);
+    if (!parcelKey || !assignmentKeys.has(parcelKey) || !submittedDate) continue;
+    if (submittedDate < startDateKey || submittedDate > endDateKey) continue;
+    const keys = recordsByDate.get(submittedDate) || new Set();
+    keys.add(parcelKey);
+    recordsByDate.set(submittedDate, keys);
+  }
+  return recordsByDate;
+}
+
+function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, now = new Date()) {
+  const currentStart = servicePeriodStartFor(now);
+  const previousStart = shiftServicePeriodStart(currentStart, -1);
+  const today = easternDateKey(now);
+  const elapsedDays = Math.max(
+    Math.floor((dateFromKey(today) - dateFromKey(currentStart)) / 86400000),
+    0
+  );
+  const currentEnd = dateKeyForOffset(currentStart, elapsedDays);
+  const previousEnd = dateKeyForOffset(previousStart, elapsedDays);
+  const currentAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(currentStart));
+  const previousAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
+  const currentByDate = returnedKeysByDate(currentRecords, currentAssignmentKeys, currentStart, currentEnd);
+  const previousByDate = returnedKeysByDate(previousRecords, previousAssignmentKeys, previousStart, previousEnd);
+  const currentReturned = new Set();
+  const previousReturned = new Set();
+  const days = [];
+
+  for (let offset = 0; offset <= elapsedDays; offset += 1) {
+    const currentDate = dateKeyForOffset(currentStart, offset);
+    const previousDate = dateKeyForOffset(previousStart, offset);
+    for (const key of currentByDate.get(currentDate) || []) currentReturned.add(key);
+    for (const key of previousByDate.get(previousDate) || []) previousReturned.add(key);
+    days.push({
+      serviceDay: offset + 1,
+      currentDate,
+      previousDate,
+      currentReturned: currentReturned.size,
+      previousReturned: previousReturned.size,
+      currentRate: currentAssignmentKeys.size ? (100 * currentReturned.size) / currentAssignmentKeys.size : 0,
+      previousRate: previousAssignmentKeys.size ? (100 * previousReturned.size) / previousAssignmentKeys.size : 0
+    });
+  }
+
+  return {
+    currentStart,
+    currentEnd,
+    previousStart,
+    previousEnd,
+    currentAssigned: currentAssignmentKeys.size,
+    previousAssigned: previousAssignmentKeys.size,
+    days
+  };
+}
+
+async function loadMtdCompletionComparison(geojson) {
+  const currentStart = servicePeriodStartFor();
+  const previousStart = shiftServicePeriodStart(currentStart, -1);
+  const [currentRecords, previousRecords] = await Promise.all([
+    fetchSurveyRecordsForPeriod(servicePeriodLabel(currentStart)),
+    fetchSurveyRecordsForPeriod(servicePeriodLabel(previousStart))
+  ]);
+  return buildMtdCompletionComparison(geojson, currentRecords, previousRecords);
+}
+
 function contractorRowsForMonth(contractorMonthly, month) {
   return contractorMonthly
     .filter((row) => row.period_month === month)
@@ -368,10 +581,21 @@ function buildContractorDetailRows(currentRows, latestRows) {
   return Array.from(byName.values()).sort((a, b) => b.currentParcels - a.currentParcels);
 }
 
-function renderMonthOptions(monthlyMetrics, selectedMonth) {
+function renderQuarterOptions(monthlyMetrics, selectedQuarter) {
+  const select = document.getElementById("kpiQuarterSelect");
+  if (!select) return;
+  const quarters = [...new Set(monthlyMetrics.map((row) => quarterKey(row.period_month)))];
+  select.innerHTML = quarters
+    .map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(quarterLabelFromKey(key))}</option>`)
+    .join("");
+  select.value = selectedQuarter;
+}
+
+function renderMonthOptions(monthlyMetrics, selectedMonth, selectedQuarter) {
   const select = document.getElementById("kpiMonthSelect");
   if (!select) return;
   select.innerHTML = monthlyMetrics
+    .filter((row) => quarterKey(row.period_month) === selectedQuarter)
     .map((row) => `<option value="${escapeHtml(row.period_month)}">${escapeHtml(shortMonth(row.period_month))}</option>`)
     .join("");
   select.value = selectedMonth;
@@ -522,7 +746,7 @@ function bindLineChartTooltips(container, monthlyMetrics) {
   }
 }
 
-function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary, selectedMonth) {
+function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary, selectedMonth, selectedQuarter) {
   const latest = metricForMonth(monthlyMetrics, selectedMonth);
   const prior = priorMetricForMonth(monthlyMetrics, selectedMonth);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
@@ -557,11 +781,14 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
     : "All active returned";
   openCopy.className = "card-trend";
 
+  const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
   document.getElementById("budgetRunRateInsight").textContent =
-    formatMoneyCompact(financeSummary?.summary?.annual_invoice_run_rate || 0);
+    formatMoneyCompact(quarterFinance.quarterlyForecast);
   const budgetCopy = document.getElementById("budgetRunRateCopy");
   budgetCopy.textContent =
     `${formatMoneyCompact(financeSummary?.summary?.monthly_invoice_total || 0)}/mo · ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors`;
+  budgetCopy.textContent =
+    `${quarterFinance.label} forecast · ${formatMoneyCompact(quarterFinance.monthlyInvoice)}/mo · ${formatNumber(quarterFinance.rows.length)} contractors`;
   budgetCopy.className = "card-trend";
 }
 
@@ -604,7 +831,26 @@ function renderContractorGroupedChart(rows, selected = "all", latestMonth = "") 
   }).join("");
 }
 
-function renderAreaDistribution(rows) {
+function aggregateAssignmentArea(geojson, selectedMonth) {
+  const byContractor = new Map();
+  for (const feature of geojson.features || []) {
+    const props = feature.properties || {};
+    if (props.period_month !== selectedMonth || !props.parcel_key) continue;
+    const organization = normalizeContractorName(props.organization);
+    const row = byContractor.get(organization) || { organization, parcels: new Map() };
+    if (!row.parcels.has(props.parcel_key)) row.parcels.set(props.parcel_key, Number(props.acreage || 0));
+    byContractor.set(organization, row);
+  }
+  return [...byContractor.values()]
+    .map((row) => ({
+      organization: row.organization,
+      currentParcels: row.parcels.size,
+      currentAcres: [...row.parcels.values()].reduce((sum, acres) => sum + acres, 0)
+    }))
+    .sort((a, b) => b.currentAcres - a.currentAcres);
+}
+
+function renderAreaDistribution(rows, selectedMonth) {
   const maxAcres = Math.max(1, ...rows.map((row) => Number(row.currentAcres || 0)));
   document.getElementById("areaDistributionChart").innerHTML = rows.map((row) => `
     <div class="grouped-row single-bar-row">
@@ -620,6 +866,8 @@ function renderAreaDistribution(rows) {
       </div>
     </div>
   `).join("");
+  const summary = document.getElementById("areaDistributionSummary");
+  if (summary) summary.textContent = `${shortMonth(selectedMonth)} assignment acreage, ranked by organization`;
 }
 
 function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = formatMoney) {
@@ -644,25 +892,30 @@ function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = forma
   }).join("");
 }
 
-function renderFinance(financeSummary) {
-  const summary = financeSummary.summary || {};
-  const rows = financeSummary.current_contracts || [];
-  const historyRows = financeSummary.check_request_history || [];
-  document.getElementById("annualRunRateKpi").textContent = formatMoney(summary.annual_invoice_run_rate);
-  document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(summary.monthly_invoice_total);
-  document.getElementById("totalContractKpi").textContent = formatMoney(summary.total_contract_amount);
-  document.getElementById("financeContractorsKpi").textContent = formatNumber(summary.organization_count);
-  document.getElementById("annualCostPerAcreKpi").textContent = formatMoney(summary.annual_cost_per_acre);
-  document.getElementById("monthlyCostPerParcelKpi").textContent = formatMoney(summary.monthly_cost_per_parcel);
-  document.getElementById("contractAcresKpi").textContent = `${formatAcres(summary.acres)} ac`;
-  document.getElementById("contractParcelsKpi").textContent = formatNumber(summary.parcel_count);
-  renderMoneyBarChart("budgetContractChart", rows, "annual_invoice_run_rate");
-  renderMoneyBarChart("expenseIntensityChart", rows, "annual_cost_per_acre");
-  renderCheckRequestTable(historyRows);
+function renderFinance(financeSummary, selectedQuarter) {
+  const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
+  const rows = quarterFinance.rows;
+  document.getElementById("annualRunRateKpi").textContent = formatMoney(quarterFinance.quarterlyForecast);
+  document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(quarterFinance.monthlyInvoice);
+  document.getElementById("totalContractKpi").textContent = `${formatAcres(quarterFinance.acres)} ac`;
+  document.getElementById("financeContractorsKpi").textContent = formatNumber(rows.length);
+  document.getElementById("annualCostPerAcreKpi").textContent = formatMoney(quarterFinance.quarterlyCostPerAcre);
+  document.getElementById("monthlyCostPerParcelKpi").textContent = formatMoney(quarterFinance.monthlyCostPerParcel);
+  document.getElementById("contractAcresKpi").textContent = `${formatAcres(quarterFinance.acres)} ac`;
+  document.getElementById("contractParcelsKpi").textContent = formatNumber(quarterFinance.parcels);
+  document.getElementById("quarterlyForecastNote").textContent = `${quarterFinance.label} · monthly invoice × active contract months`;
+  renderMoneyBarChart("budgetContractChart", rows, "quarterly_forecast");
+  renderMoneyBarChart("expenseIntensityChart", rows, "quarterly_cost_per_acre");
+  renderCheckRequestTable(quarterFinance.checkRequestRows);
   renderMaintenanceExpenseTable(rows);
+  const requestSummary = document.getElementById("checkRequestSummary");
+  if (requestSummary) requestSummary.textContent = quarterFinance.checkRequestRows.length
+    ? `${quarterFinance.checkRequestRows.length} source record(s) overlapping ${quarterFinance.label}`
+    : `No documented request records overlap ${quarterFinance.label}`;
   const note = `Finance workbook · refreshed ${financeSummary.metadata?.generated_on || "unknown"}`;
-  document.getElementById("financeSourceNote").textContent = note;
-  document.getElementById("expenseSourceNote").textContent = note;
+  const scopedNote = `${note} · ${quarterFinance.label} contract forecast`;
+  document.getElementById("financeSourceNote").textContent = scopedNote;
+  document.getElementById("expenseSourceNote").textContent = scopedNote;
 }
 
 function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
@@ -752,6 +1005,54 @@ function renderLineChart(monthlyMetrics) {
   `;
 
   bindLineChartTooltips(container, monthlyMetrics);
+}
+
+function renderMtdCompletionComparison(comparison) {
+  const container = document.getElementById("mtdCompletionComparisonChart");
+  const summary = document.getElementById("mtdCompletionSummary");
+  if (!container || !summary) return;
+  const latest = comparison?.days?.at(-1);
+  if (!latest || !comparison.currentAssigned || !comparison.previousAssigned) {
+    summary.textContent = "Daily completion pace is unavailable until active assignments are published for both service periods.";
+    container.innerHTML = '<p class="chart-empty-state">No comparable active-assignment periods are available yet.</p>';
+    return;
+  }
+
+  const delta = latest.currentRate - latest.previousRate;
+  const deltaText = `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`;
+  summary.textContent = `${shortDate(comparison.currentStart)}–${shortDate(comparison.currentEnd)}: ${formatPct(latest.currentRate)} vs ${shortDate(comparison.previousStart)}–${shortDate(comparison.previousEnd)}: ${formatPct(latest.previousRate)} (${deltaText})`;
+
+  const width = 720;
+  const height = 270;
+  const margin = { top: 20, right: 34, bottom: 46, left: 50 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const days = comparison.days;
+  const toX = (index) => margin.left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(100, Number(value || 0))) / 100) * plotHeight;
+  const pathFor = (field) => days.map((day, index) => `${index ? "L" : "M"}${toX(index).toFixed(1)},${toY(day[field]).toFixed(1)}`).join(" ");
+  const labelEvery = Math.max(1, Math.ceil((days.length - 1) / 6));
+  const xLabels = days.filter((_, index) => index === 0 || index === days.length - 1 || index % labelEvery === 0);
+
+  container.innerHTML = `
+    <div class="line-chart-shell">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate for the current service period compared to the previous service period">
+        ${[0, 50, 100].map((tick) => {
+          const y = toY(tick);
+          return `<line class="chart-grid" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line><text class="chart-tick" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>`;
+        }).join("")}
+        <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
+        <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
+        <path class="mtd-previous-line" d="${pathFor("previousRate")}"></path>
+        <path class="mtd-current-line" d="${pathFor("currentRate")}"></path>
+        ${days.map((day, index) => `<circle class="mtd-current-marker" cx="${toX(index).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="3" tabindex="0" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} current, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
+        ${xLabels.map((day) => {
+          const index = days.indexOf(day);
+          return `<text class="chart-count-label" x="${toX(index).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(day.currentDate)}</text>`;
+        }).join("")}
+      </svg>
+    </div>
+  `;
 }
 
 function renderTable(table, columns, rows) {
@@ -911,34 +1212,50 @@ async function loadData() {
   const liveContractorMonthly = assignmentHistoryResult.geojson
     ? aggregateLiveContractorMonthly(mergedGeojson)
     : null;
+  const mtdCompletionComparison = await loadMtdCompletionComparison(mergedGeojson).catch(() => null);
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     summary: enrichedSummary,
-    currentMetrics
+    currentMetrics,
+    assignmentGeojson: mergedGeojson,
+    mtdCompletionComparison
   };
 }
 
 async function main() {
   setupTabs();
-  const { monthlyMetrics, contractorMonthly, financeSummary, summary, currentMetrics } = await loadData();
+  const {
+    monthlyMetrics,
+    contractorMonthly,
+    financeSummary,
+    summary,
+    currentMetrics,
+    assignmentGeojson,
+    mtdCompletionComparison
+  } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
+  let selectedQuarter = quarterKey(selectedMonth);
 
   const renderSelectedMonth = () => {
     const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
     const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, selectedContractorRows);
 
-    renderMonthOptions(monthlyMetrics, selectedMonth);
+    renderQuarterOptions(monthlyMetrics, selectedQuarter);
+    renderMonthOptions(monthlyMetrics, selectedMonth, selectedQuarter);
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
     renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth);
-    renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth);
+    renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth, selectedQuarter);
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
+    renderMtdCompletionComparison(mtdCompletionComparison);
     renderParcelDetailsTable(detailRows);
+    renderAreaDistribution(aggregateAssignmentArea(assignmentGeojson, selectedMonth), selectedMonth);
+    renderFinance(financeSummary, selectedQuarter);
 
     document.getElementById("contractorSelect").onchange = (event) => {
       renderContractorGroupedChart(selectedContractorRows, event.target.value, selectedMonth);
@@ -947,11 +1264,17 @@ async function main() {
 
   renderSelectedMonth();
   renderSubmissionRateTable(monthlyMetrics);
-  renderAreaDistribution(currentMetrics.contractorRows);
-  renderFinance(financeSummary);
 
   document.getElementById("kpiMonthSelect").addEventListener("change", (event) => {
     selectedMonth = event.target.value;
+    selectedQuarter = quarterKey(selectedMonth);
+    renderSelectedMonth();
+  });
+
+  document.getElementById("kpiQuarterSelect").addEventListener("change", (event) => {
+    selectedQuarter = event.target.value;
+    const quarterMonths = monthlyMetrics.filter((row) => quarterKey(row.period_month) === selectedQuarter);
+    selectedMonth = quarterMonths.at(-1)?.period_month || selectedMonth;
     renderSelectedMonth();
   });
 }
