@@ -586,25 +586,38 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
   const currentAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(currentStart));
   const previousAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
   const currentByDate = returnedKeysByDate(currentRecords, currentAssignmentKeys, currentStart, currentEnd);
-  const previousByDate = returnedKeysByDate(previousRecords, previousAssignmentKeys, previousStart, previousEnd);
+  const previousByDate = returnedKeysByDate(previousRecords, previousAssignmentKeys, previousStart, currentStart);
   const contractorSeries = buildContractorDailyCompletionSeries(geojson, currentRecords, currentStart, currentEnd);
   const currentReturned = new Set();
   const previousReturned = new Set();
+  const axisSpanDays = Math.max(Math.floor((dateFromKey(axisEnd) - dateFromKey(currentStart)) / 86400000), 0);
+  const previousDays = [];
   const days = [];
+
+  for (let offset = 0; offset <= axisSpanDays; offset += 1) {
+    const previousDate = dateKeyForOffset(previousStart, offset);
+    for (const key of previousByDate.get(previousDate) || []) previousReturned.add(key);
+    previousDays.push({
+      serviceDay: offset + 1,
+      axisDate: dateKeyForOffset(currentStart, offset),
+      previousDate,
+      previousReturned: previousReturned.size,
+      previousRate: previousAssignmentKeys.size ? (100 * previousReturned.size) / previousAssignmentKeys.size : 0
+    });
+  }
 
   for (let offset = 0; offset <= elapsedDays; offset += 1) {
     const currentDate = dateKeyForOffset(currentStart, offset);
-    const previousDate = dateKeyForOffset(previousStart, offset);
+    const previousDay = previousDays[offset];
     for (const key of currentByDate.get(currentDate) || []) currentReturned.add(key);
-    for (const key of previousByDate.get(previousDate) || []) previousReturned.add(key);
     days.push({
       serviceDay: offset + 1,
       currentDate,
-      previousDate,
+      previousDate: previousDay.previousDate,
       currentReturned: currentReturned.size,
-      previousReturned: previousReturned.size,
+      previousReturned: previousDay.previousReturned,
       currentRate: currentAssignmentKeys.size ? (100 * currentReturned.size) / currentAssignmentKeys.size : 0,
-      previousRate: previousAssignmentKeys.size ? (100 * previousReturned.size) / previousAssignmentKeys.size : 0
+      previousRate: previousDay.previousRate
     });
   }
 
@@ -617,6 +630,7 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
     currentAssigned: currentAssignmentKeys.size,
     previousAssigned: previousAssignmentKeys.size,
     days,
+    previousDays,
     contractorSeries
   };
 }
@@ -1117,6 +1131,41 @@ function bindDailyChartTooltips(container, selector, contentForMarker) {
   }
 }
 
+function bindDailyPathTooltips(container, selector, contentForPath) {
+  const shell = container.querySelector(".line-chart-shell");
+  const tooltip = container.querySelector(".chart-floating-tooltip");
+  if (!shell || !tooltip) return;
+  const show = (path, event = null) => {
+    tooltip.innerHTML = contentForPath(path, event);
+    tooltip.removeAttribute("hidden");
+    tooltip.classList.add("is-visible");
+    const shellRect = shell.getBoundingClientRect();
+    const pathRect = path.getBoundingClientRect();
+    const clientX = Number.isFinite(event?.clientX) ? event.clientX : pathRect.right;
+    const clientY = Number.isFinite(event?.clientY) ? event.clientY : pathRect.top + pathRect.height / 2;
+    tooltip.style.left = `${clientX - shellRect.left}px`;
+    tooltip.style.top = `${clientY - shellRect.top}px`;
+  };
+  const hide = () => {
+    tooltip.setAttribute("hidden", "");
+    tooltip.classList.remove("is-visible");
+  };
+  for (const path of container.querySelectorAll(selector)) {
+    path.addEventListener("mouseenter", (event) => show(path, event));
+    path.addEventListener("mousemove", (event) => show(path, event));
+    path.addEventListener("focus", () => show(path));
+    path.addEventListener("mouseleave", hide);
+    path.addEventListener("blur", hide);
+  }
+}
+
+function serviceDayIndexFromPointer(event, svg, marginLeft, plotWidth, axisSpanDays, maxItemIndex) {
+  if (!event || !svg) return maxItemIndex;
+  const svgRect = svg.getBoundingClientRect();
+  const viewX = ((event.clientX - svgRect.left) / Math.max(svgRect.width, 1)) * 720;
+  return Math.max(0, Math.min(maxItemIndex, Math.round(((viewX - marginLeft) / plotWidth) * axisSpanDays)));
+}
+
 function renderMtdCompletionComparison(comparison) {
   const container = document.getElementById("mtdCompletionComparisonChart");
   const summary = document.getElementById("mtdCompletionSummary");
@@ -1138,10 +1187,11 @@ function renderMtdCompletionComparison(comparison) {
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const days = comparison.days;
+  const previousDays = comparison.previousDays || [];
   const axisSpanDays = Math.max(Math.floor((dateFromKey(comparison.axisEnd) - dateFromKey(comparison.currentStart)) / 86400000), 1);
   const toX = (dateKey) => margin.left + (Math.floor((dateFromKey(dateKey) - dateFromKey(comparison.currentStart)) / 86400000) / axisSpanDays) * plotWidth;
   const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(100, Number(value || 0))) / 100) * plotHeight;
-  const pathFor = (field) => days.map((day, index) => `${index ? "L" : "M"}${toX(day.currentDate).toFixed(1)},${toY(day[field]).toFixed(1)}`).join(" ");
+  const pathFor = (items, field, dateField) => items.map((day, index) => `${index ? "L" : "M"}${toX(day[dateField]).toFixed(1)},${toY(day[field]).toFixed(1)}`).join(" ");
   const xLabels = [];
   for (let offset = 0; offset <= axisSpanDays; offset += 5) xLabels.push(dateKeyForOffset(comparison.currentStart, offset));
   if (xLabels.at(-1) !== comparison.axisEnd) xLabels.push(comparison.axisEnd);
@@ -1155,21 +1205,52 @@ function renderMtdCompletionComparison(comparison) {
         }).join("")}
         <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
         <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
-        <path class="mtd-previous-line" d="${pathFor("previousRate")}"></path>
-        <path class="mtd-current-line" d="${pathFor("currentRate")}"></path>
-        ${days.map((day, index) => `<circle class="daily-hover-marker" style="--series-color:var(--ura-blue)" cx="${toX(day.currentDate).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="8" data-day-index="${index}" tabindex="0" role="button" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} selected period, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
+        <path class="mtd-previous-line" d="${pathFor(previousDays, "previousRate", "axisDate")}"></path>
+        <path class="mtd-current-line" d="${pathFor(days, "currentRate", "currentDate")}"></path>
+        <path class="daily-line-hit" d="${pathFor(previousDays, "previousRate", "axisDate")}" data-series="previous" tabindex="0" role="button" aria-label="Hover for previous-period daily detail"></path>
+        <path class="daily-line-hit" d="${pathFor(days, "currentRate", "currentDate")}" data-series="current" tabindex="0" role="button" aria-label="Hover for selected-period daily detail"></path>
+        ${previousDays.map((day, index) => `<circle class="daily-hover-marker mtd-previous-hover" style="--series-color:#6b7785" cx="${toX(day.axisDate).toFixed(1)}" cy="${toY(day.previousRate).toFixed(1)}" r="8" data-series="previous" data-day-index="${index}" tabindex="0" role="button" aria-label="M-1 service day ${day.serviceDay}, ${shortDate(day.previousDate)}: ${formatPct(day.previousRate)}"></circle>`).join("")}
+        ${days.map((day, index) => `<circle class="daily-hover-marker mtd-current-hover" style="--series-color:var(--ura-blue)" cx="${toX(day.currentDate).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="8" data-series="current" data-day-index="${index}" tabindex="0" role="button" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} selected period, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
         ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
       </svg>
       <div class="chart-floating-tooltip" hidden></div>
     </div>
   `;
   bindDailyChartTooltips(container, ".daily-hover-marker", (marker) => {
+    if (marker.dataset.series === "previous") {
+      const day = previousDays[Number(marker.dataset.dayIndex)];
+      return `
+        <span class="chart-tooltip-month">M-1 · ${escapeHtml(shortDate(day.previousDate))} · service day ${day.serviceDay}</span>
+        <strong class="chart-tooltip-rate">${formatPct(day.previousRate)}</strong>
+        <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} returned</span>
+      `;
+    }
     const day = days[Number(marker.dataset.dayIndex)];
     return `
       <span class="chart-tooltip-month">${escapeHtml(shortDate(day.currentDate))} · service day ${day.serviceDay}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.currentRate)}</strong>
       <span class="chart-tooltip-delta">M-1 ${escapeHtml(shortDate(day.previousDate))}: ${formatPct(day.previousRate)}</span>
       <span class="chart-tooltip-count">Selected: ${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} · M-1: ${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)}</span>
+    `;
+  });
+  bindDailyPathTooltips(container, ".daily-line-hit", (path, event) => {
+    const svg = container.querySelector("svg");
+    const isPrevious = path.dataset.series === "previous";
+    const items = isPrevious ? previousDays : days;
+    const index = serviceDayIndexFromPointer(event, svg, margin.left, plotWidth, axisSpanDays, items.length - 1);
+    const day = items[index];
+    if (isPrevious) {
+      return `
+        <span class="chart-tooltip-month">M-1 · ${escapeHtml(shortDate(day.previousDate))} · service day ${day.serviceDay}</span>
+        <strong class="chart-tooltip-rate">${formatPct(day.previousRate)}</strong>
+        <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} returned</span>
+      `;
+    }
+    return `
+      <span class="chart-tooltip-month">${escapeHtml(shortDate(day.currentDate))} · service day ${day.serviceDay}</span>
+      <strong class="chart-tooltip-rate">${formatPct(day.currentRate)}</strong>
+      <span class="chart-tooltip-delta">M-1: ${formatPct(day.previousRate)}</span>
+      <span class="chart-tooltip-count">${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} returned</span>
     `;
   });
 }
@@ -1216,6 +1297,7 @@ function renderContractorPaceChart(comparison) {
         <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
         <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
         ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} returned)</title></path>`).join("")}
+        ${series.map((item, seriesIndex) => `<path class="daily-line-hit" d="${pathFor(item)}" data-series-index="${seriesIndex}" tabindex="0" role="button" aria-label="Hover for ${escapeHtml(item.label)} daily detail"></path>`).join("")}
         ${series.flatMap((item, seriesIndex) => item.days.map((day, dayIndex) => `<circle class="daily-hover-marker contractor-daily-marker" style="--series-color:${item.color}" cx="${toX(day.date).toFixed(1)}" cy="${toY(day.completionRate).toFixed(1)}" r="7" data-series-index="${seriesIndex}" data-day-index="${dayIndex}" tabindex="0" role="button" aria-label="${escapeHtml(item.label)}, ${shortDate(day.date)}: ${formatPct(day.completionRate)}, ${formatNumber(day.returned)} of ${formatNumber(item.assigned)} returned"></circle>`)).join("")}
         ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
       </svg>
@@ -1225,6 +1307,17 @@ function renderContractorPaceChart(comparison) {
   bindDailyChartTooltips(container, ".contractor-daily-marker", (marker) => {
     const item = series[Number(marker.dataset.seriesIndex)];
     const day = item.days[Number(marker.dataset.dayIndex)];
+    return `
+      <span class="chart-tooltip-month">${escapeHtml(item.label)} · ${escapeHtml(shortDate(day.date))}</span>
+      <strong class="chart-tooltip-rate">${formatPct(day.completionRate)}</strong>
+      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} returned</span>
+    `;
+  });
+  bindDailyPathTooltips(container, ".daily-line-hit", (path, event) => {
+    const item = series[Number(path.dataset.seriesIndex)];
+    const svg = container.querySelector("svg");
+    const index = serviceDayIndexFromPointer(event, svg, margin.left, plotWidth, axisSpanDays, item.days.length - 1);
+    const day = item.days[index];
     return `
       <span class="chart-tooltip-month">${escapeHtml(item.label)} · ${escapeHtml(shortDate(day.date))}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.completionRate)}</strong>

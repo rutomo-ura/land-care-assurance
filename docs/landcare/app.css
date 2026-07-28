@@ -1637,6 +1637,15 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   stroke: #ffffff;
 }
 
+.daily-line-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  pointer-events: stroke;
+  cursor: crosshair;
+  outline: none;
+}
+
 .chart-empty-state {
   display: grid;
   min-height: 220px;
