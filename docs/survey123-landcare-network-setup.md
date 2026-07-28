@@ -62,19 +62,25 @@ SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL=https://services.../FeatureServer/0
 LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL=https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_history/FeatureServer/0
 ```
 
-Apply [`sql/20260715_landcare_survey_submission_internal.sql`](../sql/20260715_landcare_survey_submission_internal.sql), then run the receiver behind the URA HTTPS reverse proxy:
+The legacy receiver and `/public/evidence-parcels` GeoJSON route are retired.
+Apply `URA-Data-Repository/sql/20260728_landcare_survey123_evidence_parcels.sql`, then run the upstream receiver behind the URA HTTPS reverse proxy:
 
 ```powershell
-python -m uvicorn scripts.landcare_survey_webhook:app --host 127.0.0.1 --port 8091
+python -m uvicorn landcare_survey123_webhook:app --host 127.0.0.1 --port 8091
 ```
 
 `SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL` must be a read-only public view if
 photos are intentionally shown in the public Map Monitor. It must not contain a
-token. The receiver validates the submitted parcel, period, contractor,
-assignment ID, and photo against `LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL`, then
-stores that assignment's polygon. Add `/public/evidence-parcels` to ArcGIS as a
-GeoJSON layer named **LandCare Survey123 Evidence Parcels**; use it for maps
-instead of the Survey123 point-storage layer.
+token. Configure the stable hosted polygon item and fast path:
+
+```text
+LANDCARE_SURVEY_EVIDENCE_ENABLED=true
+LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID=<stable-hosted-layer-item-id>
+LANDCARE_SURVEY_EVIDENCE_LAYER_URL=https://services.../LandCare_Survey123_Evidence_Parcels/FeatureServer/0
+LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN=<publisher-token>
+```
+
+Bootstrap **LandCare Survey123 Evidence Parcels** once in the `LandCare - Published Layers` folder, then save that item ID above. The webhook uses `applyEdits` for a valid record; the 7 AM job re-reads Survey123 and safely overwrites the same item from canonical PostGIS polygons. The raw Survey123 point layer and restricted QA view must never be added to a public map.
 
 Update [`docs/landcare/survey-submission-config.js`](landcare/survey-submission-config.js) with the Survey123 public share URL. This repository intentionally contains no Survey123 IDs, PostgreSQL passwords, tokens, or webhook secrets.
 

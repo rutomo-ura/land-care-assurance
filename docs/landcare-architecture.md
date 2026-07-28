@@ -180,8 +180,8 @@ Survey **returned** counts for the selected service period can change daily in t
 | Parcel selection | Contractor | AGOL assignment history/current snapshot | Assignment outlines and address are public to the submission experience |
 | Service evidence capture | Contractor | Public Survey123 form | Submission is pending; not shown on Map Monitor |
 | Approval / rejection | URA reviewer | Restricted Survey123 Inbox | Internal only |
-| Approved evidence sync | VM webhook receiver | `gis.ura_landcare_survey_submissions_internal` | Internal store |
-| Evidence presentation | Map Monitor | `gis.landcare_approved_survey_evidence` through approved GeoJSON feed | Approved photos only |
+| Canonical evidence sync | URA-Data-Repository webhook + reconciliation | `gis.landcare_survey123_evidence_raw` → `gis.landcare_survey_evidence_parcels` | Raw/QA restricted; valid parcel polygons are public |
+| Evidence presentation | Map Monitor | Stable **LandCare Survey123 Evidence Parcels** hosted feature layer | Valid parcel polygons and approved photo links only |
 
 See [`landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) for field mappings, geometry normalization, and the VM completion checklist.
 

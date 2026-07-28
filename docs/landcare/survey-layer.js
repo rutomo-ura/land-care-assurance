@@ -132,8 +132,8 @@ export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
   const safePeriod = String(periodLabel || "").replace(/'/g, "''");
   const payload = await fetchArcgisJson(`${SURVEY123_EVIDENCE_LAYER_URL}/query`, {
     f: "json",
-    where: `assignment_period = '${safePeriod}'`,
-    outFields: "objectid,globalid,organization,parcel_number,address,assignment_period,untitled_question_2,date_of_services,CreationDate",
+    where: `service_period = '${safePeriod}'`,
+    outFields: "OBJECTID,source_global_id,assignment_id,organization,parcel_number,service_period,submitted_at,image_attachment_url,image_attachment_name",
     returnGeometry: "false",
     orderByFields: "CreationDate DESC",
     resultRecordCount: "2000"
@@ -141,22 +141,19 @@ export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
   const records = [];
   for (const feature of payload.features || []) {
     const attrs = feature.attributes || {};
-    const objectId = attrs.OBJECTID ?? attrs.objectid;
-    if (objectId == null) continue;
-    const attachments = await fetchArcgisJson(`${SURVEY123_EVIDENCE_LAYER_URL}/${objectId}/attachments`, { f: "json" }).catch(() => ({}));
-    const images = (attachments.attachmentInfos || [])
-      .filter((attachment) => String(attachment.contentType || "").startsWith("image/"))
-      .map((attachment) => ({
-        image_url: `${SURVEY123_EVIDENCE_LAYER_URL}/${objectId}/attachments/${attachment.id}`,
-        submitted_at: attrs.CreationDate || attrs.creationdate,
-        evidence_source: "Survey123",
-        survey_source: "Survey123",
-        attachment_name: attachment.name
-      }));
+    const objectId = attrs.assignment_id;
+    if (objectId == null || !attrs.image_attachment_url) continue;
+    const images = [{
+      image_url: attrs.image_attachment_url,
+      submitted_at: attrs.submitted_at,
+      evidence_source: "Survey123",
+      survey_source: "Survey123",
+      attachment_name: attrs.image_attachment_name
+    }];
     records.push({
       ...attrs,
       OBJECTID: objectId,
-      assignment_object_id: attrs.untitled_question_2,
+      assignment_object_id: objectId,
       evidence_photos: images
     });
   }
@@ -167,7 +164,7 @@ function assignmentValidationIndex(features) {
   const index = new Set();
   for (const feature of features || []) {
     const props = feature.properties || {};
-    const objectId = props.objectid ?? props.OBJECTID;
+    const objectId = props.assignment_id ?? props.objectid ?? props.OBJECTID;
     if (objectId == null) continue;
     index.add(evidenceKey({
       period: props.period_month || props.period_label,
