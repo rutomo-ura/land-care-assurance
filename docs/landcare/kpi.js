@@ -574,15 +574,14 @@ function returnedKeysByDate(records, assignmentKeys, startDateKey, endDateKey) {
   return recordsByDate;
 }
 
-function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, now = new Date()) {
-  const currentStart = servicePeriodStartFor(now);
+function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, selectedPeriod, now = new Date()) {
+  const currentStart = `${selectedPeriod}-15`;
+  const axisEnd = shiftServicePeriodStart(currentStart, 1);
   const previousStart = shiftServicePeriodStart(currentStart, -1);
   const today = easternDateKey(now);
-  const elapsedDays = Math.max(
-    Math.floor((dateFromKey(today) - dateFromKey(currentStart)) / 86400000),
-    0
-  );
-  const currentEnd = dateKeyForOffset(currentStart, elapsedDays);
+  const activePeriod = servicePeriodLabel(servicePeriodStartFor(now));
+  const currentEnd = selectedPeriod === activePeriod && today < axisEnd ? today : axisEnd;
+  const elapsedDays = Math.max(Math.floor((dateFromKey(currentEnd) - dateFromKey(currentStart)) / 86400000), 0);
   const previousEnd = dateKeyForOffset(previousStart, elapsedDays);
   const currentAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(currentStart));
   const previousAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
@@ -612,6 +611,7 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
   return {
     currentStart,
     currentEnd,
+    axisEnd,
     previousStart,
     previousEnd,
     currentAssigned: currentAssignmentKeys.size,
@@ -621,14 +621,14 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
   };
 }
 
-async function loadMtdCompletionComparison(geojson) {
-  const currentStart = servicePeriodStartFor();
+async function loadMtdCompletionComparison(geojson, selectedPeriod) {
+  const currentStart = `${selectedPeriod}-15`;
   const previousStart = shiftServicePeriodStart(currentStart, -1);
   const [currentRecords, previousRecords] = await Promise.all([
     fetchSurveyRecordsForPeriod(servicePeriodLabel(currentStart)),
     fetchSurveyRecordsForPeriod(servicePeriodLabel(previousStart))
   ]);
-  return buildMtdCompletionComparison(geojson, currentRecords, previousRecords);
+  return buildMtdCompletionComparison(geojson, currentRecords, previousRecords, selectedPeriod);
 }
 
 function contractorRowsForMonth(contractorMonthly, month) {
@@ -1090,6 +1090,33 @@ function renderLineChart(monthlyMetrics) {
   bindLineChartTooltips(container, monthlyMetrics);
 }
 
+function bindDailyChartTooltips(container, selector, contentForMarker) {
+  const shell = container.querySelector(".line-chart-shell");
+  const tooltip = container.querySelector(".chart-floating-tooltip");
+  if (!shell || !tooltip) return;
+  const show = (marker) => {
+    tooltip.innerHTML = contentForMarker(marker);
+    tooltip.removeAttribute("hidden");
+    tooltip.classList.add("is-visible");
+    const shellRect = shell.getBoundingClientRect();
+    const markerRect = marker.getBoundingClientRect();
+    tooltip.style.left = `${markerRect.left - shellRect.left + markerRect.width / 2}px`;
+    tooltip.style.top = `${markerRect.top - shellRect.top}px`;
+    marker.classList.add("is-active");
+  };
+  const hide = (marker) => {
+    tooltip.setAttribute("hidden", "");
+    tooltip.classList.remove("is-visible");
+    marker.classList.remove("is-active");
+  };
+  for (const marker of container.querySelectorAll(selector)) {
+    marker.addEventListener("mouseenter", () => show(marker));
+    marker.addEventListener("focus", () => show(marker));
+    marker.addEventListener("mouseleave", () => hide(marker));
+    marker.addEventListener("blur", () => hide(marker));
+  }
+}
+
 function renderMtdCompletionComparison(comparison) {
   const container = document.getElementById("mtdCompletionComparisonChart");
   const summary = document.getElementById("mtdCompletionSummary");
@@ -1111,15 +1138,17 @@ function renderMtdCompletionComparison(comparison) {
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
   const days = comparison.days;
-  const toX = (index) => margin.left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const axisSpanDays = Math.max(Math.floor((dateFromKey(comparison.axisEnd) - dateFromKey(comparison.currentStart)) / 86400000), 1);
+  const toX = (dateKey) => margin.left + (Math.floor((dateFromKey(dateKey) - dateFromKey(comparison.currentStart)) / 86400000) / axisSpanDays) * plotWidth;
   const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(100, Number(value || 0))) / 100) * plotHeight;
-  const pathFor = (field) => days.map((day, index) => `${index ? "L" : "M"}${toX(index).toFixed(1)},${toY(day[field]).toFixed(1)}`).join(" ");
-  const labelEvery = Math.max(1, Math.ceil((days.length - 1) / 6));
-  const xLabels = days.filter((_, index) => index === 0 || index === days.length - 1 || index % labelEvery === 0);
+  const pathFor = (field) => days.map((day, index) => `${index ? "L" : "M"}${toX(day.currentDate).toFixed(1)},${toY(day[field]).toFixed(1)}`).join(" ");
+  const xLabels = [];
+  for (let offset = 0; offset <= axisSpanDays; offset += 5) xLabels.push(dateKeyForOffset(comparison.currentStart, offset));
+  if (xLabels.at(-1) !== comparison.axisEnd) xLabels.push(comparison.axisEnd);
 
   container.innerHTML = `
     <div class="line-chart-shell">
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate for the current service period compared to the previous service period">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate for the selected service period compared to the previous service period">
         ${[0, 50, 100].map((tick) => {
           const y = toY(tick);
           return `<line class="chart-grid" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line><text class="chart-tick" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>`;
@@ -1128,14 +1157,21 @@ function renderMtdCompletionComparison(comparison) {
         <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
         <path class="mtd-previous-line" d="${pathFor("previousRate")}"></path>
         <path class="mtd-current-line" d="${pathFor("currentRate")}"></path>
-        ${days.map((day, index) => `<circle class="mtd-current-marker" cx="${toX(index).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="3" tabindex="0" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} current, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
-        ${xLabels.map((day) => {
-          const index = days.indexOf(day);
-          return `<text class="chart-count-label" x="${toX(index).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(day.currentDate)}</text>`;
-        }).join("")}
+        ${days.map((day, index) => `<circle class="daily-hover-marker" style="--series-color:var(--ura-blue)" cx="${toX(day.currentDate).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="8" data-day-index="${index}" tabindex="0" role="button" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} selected period, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
+        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
       </svg>
+      <div class="chart-floating-tooltip" hidden></div>
     </div>
   `;
+  bindDailyChartTooltips(container, ".daily-hover-marker", (marker) => {
+    const day = days[Number(marker.dataset.dayIndex)];
+    return `
+      <span class="chart-tooltip-month">${escapeHtml(shortDate(day.currentDate))} · service day ${day.serviceDay}</span>
+      <strong class="chart-tooltip-rate">${formatPct(day.currentRate)}</strong>
+      <span class="chart-tooltip-delta">M-1 ${escapeHtml(shortDate(day.previousDate))}: ${formatPct(day.previousRate)}</span>
+      <span class="chart-tooltip-count">Selected: ${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} · M-1: ${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)}</span>
+    `;
+  });
 }
 
 function renderContractorPaceChart(comparison) {
@@ -1162,15 +1198,17 @@ function renderContractorPaceChart(comparison) {
   const margin = { top: 20, right: 30, bottom: 46, left: 50 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
-  const toX = (index) => margin.left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const axisSpanDays = Math.max(Math.floor((dateFromKey(comparison.axisEnd) - dateFromKey(comparison.currentStart)) / 86400000), 1);
+  const toX = (dateKey) => margin.left + (Math.floor((dateFromKey(dateKey) - dateFromKey(comparison.currentStart)) / 86400000) / axisSpanDays) * plotWidth;
   const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(100, Number(value || 0))) / 100) * plotHeight;
-  const pathFor = (item) => item.days.map((day, index) => `${index ? "L" : "M"}${toX(index).toFixed(1)},${toY(day.completionRate).toFixed(1)}`).join(" ");
-  const labelEvery = Math.max(1, Math.ceil((days.length - 1) / 6));
-  const xLabels = days.filter((_, index) => index === 0 || index === days.length - 1 || index % labelEvery === 0);
+  const pathFor = (item) => item.days.map((day, index) => `${index ? "L" : "M"}${toX(day.date).toFixed(1)},${toY(day.completionRate).toFixed(1)}`).join(" ");
+  const xLabels = [];
+  for (let offset = 0; offset <= axisSpanDays; offset += 5) xLabels.push(dateKeyForOffset(comparison.currentStart, offset));
+  if (xLabels.at(-1) !== comparison.axisEnd) xLabels.push(comparison.axisEnd);
 
   container.innerHTML = `
     <div class="line-chart-shell">
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate by contractor for the current service period">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate by contractor for the selected service period">
         ${[0, 50, 100].map((tick) => {
           const y = toY(tick);
           return `<line class="chart-grid" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line><text class="chart-tick" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>`;
@@ -1178,13 +1216,21 @@ function renderContractorPaceChart(comparison) {
         <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
         <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
         ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} returned)</title></path>`).join("")}
-        ${xLabels.map((day) => {
-          const index = days.indexOf(day);
-          return `<text class="chart-count-label" x="${toX(index).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(day.date)}</text>`;
-        }).join("")}
+        ${series.flatMap((item, seriesIndex) => item.days.map((day, dayIndex) => `<circle class="daily-hover-marker contractor-daily-marker" style="--series-color:${item.color}" cx="${toX(day.date).toFixed(1)}" cy="${toY(day.completionRate).toFixed(1)}" r="7" data-series-index="${seriesIndex}" data-day-index="${dayIndex}" tabindex="0" role="button" aria-label="${escapeHtml(item.label)}, ${shortDate(day.date)}: ${formatPct(day.completionRate)}, ${formatNumber(day.returned)} of ${formatNumber(item.assigned)} returned"></circle>`)).join("")}
+        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
       </svg>
+      <div class="chart-floating-tooltip" hidden></div>
     </div>
   `;
+  bindDailyChartTooltips(container, ".contractor-daily-marker", (marker) => {
+    const item = series[Number(marker.dataset.seriesIndex)];
+    const day = item.days[Number(marker.dataset.dayIndex)];
+    return `
+      <span class="chart-tooltip-month">${escapeHtml(item.label)} · ${escapeHtml(shortDate(day.date))}</span>
+      <strong class="chart-tooltip-rate">${formatPct(day.completionRate)}</strong>
+      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} returned</span>
+    `;
+  });
 }
 
 function renderTable(table, columns, rows) {
@@ -1344,7 +1390,6 @@ async function loadData() {
   const liveContractorMonthly = assignmentHistoryResult.geojson
     ? aggregateLiveContractorMonthly(mergedGeojson)
     : null;
-  const mtdCompletionComparison = await loadMtdCompletionComparison(mergedGeojson).catch(() => null);
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
@@ -1352,8 +1397,7 @@ async function loadData() {
     financeSummary,
     summary: enrichedSummary,
     currentMetrics,
-    assignmentGeojson: mergedGeojson,
-    mtdCompletionComparison
+    assignmentGeojson: mergedGeojson
   };
 }
 
@@ -1365,13 +1409,23 @@ async function main() {
     financeSummary,
     summary,
     currentMetrics,
-    assignmentGeojson,
-    mtdCompletionComparison
+    assignmentGeojson
   } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   let selectedQuarter = quarterKey(selectedMonth);
+  let comparisonRenderId = 0;
+  const comparisonCache = new Map();
 
-  const renderSelectedMonth = () => {
+  const comparisonForMonth = (month) => {
+    if (!comparisonCache.has(month)) {
+      comparisonCache.set(month, loadMtdCompletionComparison(assignmentGeojson, month).catch(() => null));
+    }
+    return comparisonCache.get(month);
+  };
+
+  const renderSelectedMonth = async () => {
+    const renderId = ++comparisonRenderId;
+    const monthAtRender = selectedMonth;
     const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
     const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, selectedContractorRows);
 
@@ -1383,8 +1437,6 @@ async function main() {
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
-    renderMtdCompletionComparison(mtdCompletionComparison);
-    renderContractorPaceChart(mtdCompletionComparison);
     renderParcelDetailsTable(detailRows);
     renderAreaDistribution(aggregateAssignmentArea(assignmentGeojson, selectedMonth), selectedMonth);
     renderFinance(financeSummary, selectedQuarter);
@@ -1392,15 +1444,25 @@ async function main() {
     document.getElementById("contractorSelect").onchange = (event) => {
       renderContractorGroupedChart(selectedContractorRows, event.target.value, selectedMonth);
     };
+
+    document.getElementById("mtdCompletionSummary").textContent = `Loading ${shortMonth(monthAtRender)} and M-1 daily pace...`;
+    document.getElementById("contractorPaceSummary").textContent = `Loading ${shortMonth(monthAtRender)} contractor pace...`;
+    document.getElementById("mtdCompletionComparisonChart").innerHTML = '<p class="chart-empty-state">Loading daily comparison...</p>';
+    document.getElementById("contractorPaceChart").innerHTML = '<p class="chart-empty-state">Loading contractor detail...</p>';
+    document.getElementById("contractorPaceLegend").innerHTML = "";
+    const comparison = await comparisonForMonth(monthAtRender);
+    if (renderId !== comparisonRenderId || monthAtRender !== selectedMonth) return;
+    renderMtdCompletionComparison(comparison);
+    renderContractorPaceChart(comparison);
   };
 
-  renderSelectedMonth();
+  await renderSelectedMonth();
   renderSubmissionRateTable(monthlyMetrics);
 
-  document.getElementById("kpiMonthSelect").addEventListener("change", (event) => {
+  document.getElementById("kpiMonthSelect").addEventListener("change", async (event) => {
     selectedMonth = event.target.value;
     selectedQuarter = quarterKey(selectedMonth);
-    renderSelectedMonth();
+    await renderSelectedMonth();
   });
 }
 

@@ -1622,6 +1622,21 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   outline: none;
 }
 
+.daily-hover-marker {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  cursor: pointer;
+  outline: none;
+}
+
+.daily-hover-marker:hover,
+.daily-hover-marker:focus-visible,
+.daily-hover-marker.is-active {
+  fill: var(--series-color);
+  stroke: #ffffff;
+}
+
 .chart-empty-state {
   display: grid;
   min-height: 220px;
