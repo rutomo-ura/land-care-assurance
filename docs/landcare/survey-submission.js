@@ -26,6 +26,7 @@ let selectedParcelGraphic;
 let selectedParcelLabelGraphic;
 let availableParcelGraphics = [];
 let selectedAssignment;
+const PARCEL_LABEL_SCALE = 5000;
 
 function isSurvey123Url(value) {
   try {
@@ -75,6 +76,40 @@ function normalizeAssignmentGeometry(geometry) {
     : null;
 }
 
+function polygonCenter(geometry) {
+  const points = geometry?.rings?.flat?.(1) || [];
+  const coordinates = points.filter((point) => Array.isArray(point) && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])));
+  if (!coordinates.length) return null;
+  const xs = coordinates.map((point) => Number(point[0]));
+  const ys = coordinates.map((point) => Number(point[1]));
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}
+
+function parcelLabelGraphic(assignment, { selected = false } = {}) {
+  const center = polygonCenter(assignment.geometry);
+  if (!center) return null;
+  return new Graphic({
+    geometry: { type: "point", longitude: center[0], latitude: center[1], spatialReference: { wkid: 4326 } },
+    attributes: { assignmentObjectId: assignment.objectId, parcelLabel: true, selected },
+    symbol: {
+      type: "text",
+      color: selected ? "#00334f" : "#17212b",
+      haloColor: "#ffffff",
+      haloSize: selected ? 1.7 : 1.35,
+      text: selected ? `SELECTED\n${assignment.parcelNumber}` : assignment.parcelNumber,
+      font: { family: "Arial", size: selected ? 11 : 9, weight: "bold" },
+      yoffset: 4
+    }
+  });
+}
+
+function syncAvailableParcelLabels() {
+  if (!parcelMapView) return;
+  const showLabels = parcelMapView.scale <= PARCEL_LABEL_SCALE;
+  availableParcelGraphics.filter((graphic) => graphic.attributes?.parcelLabel)
+    .forEach((graphic) => { graphic.visible = showLabels; });
+}
+
 function setOptions(select, options, placeholder) {
   select.replaceChildren(new Option(placeholder, ""), ...options.map(({ label, value }) => new Option(label, value)));
 }
@@ -98,6 +133,7 @@ async function initializeParcelMap() {
     ui: { components: ["zoom"] }
   });
   await parcelMapView.when();
+  parcelMapView.watch("scale", syncAvailableParcelLabels);
   parcelMapView.on("click", async (event) => {
     const hit = await parcelMapView.hitTest(event).catch(() => null);
     const graphic = hit?.results
@@ -125,21 +161,26 @@ function showAvailableParcels() {
   selectedAssignment = null;
   availableParcelGraphics = assignments
     .filter((assignment) => assignment.geometry)
-    .map((assignment) => new Graphic({
-      geometry: assignment.geometry,
-      attributes: { assignmentObjectId: assignment.objectId },
-      symbol: {
-        type: "simple-fill",
-        color: [0, 152, 211, 0.08],
-        outline: { color: "#007eae", width: 1.5 }
-      }
-    }));
+    .flatMap((assignment) => {
+      const parcel = new Graphic({
+        geometry: assignment.geometry,
+        attributes: { assignmentObjectId: assignment.objectId },
+        symbol: {
+          type: "simple-fill",
+          color: [0, 152, 211, 0.08],
+          outline: { color: "#007eae", width: 1.5 }
+        }
+      });
+      const label = parcelLabelGraphic(assignment);
+      return label ? [parcel, label] : [parcel];
+    });
   availableParcelGraphics.forEach((graphic) => parcelMapView.graphics.add(graphic));
   if (!availableParcelGraphics.length) return;
   selectedParcelLabel.textContent = "Tap an outlined parcel on the map or use the list";
   selectedParcelBadge.hidden = true;
   selectedParcelMeta.textContent = "Every outline is assigned to the selected organization. Tap a parcel to select it for this service record.";
   parcelMapView.goTo(availableParcelGraphics, { duration: 450 }).catch(() => {});
+  syncAvailableParcelLabels();
 }
 
 function showSelectedParcel(assignment) {
@@ -155,20 +196,9 @@ function showSelectedParcel(assignment) {
       outline: { color: "#006c9f", width: 4 }
     }
   });
-  selectedParcelLabelGraphic = new Graphic({
-    geometry: assignment.geometry.extent?.center,
-    symbol: {
-      type: "text",
-      color: "#00334f",
-      haloColor: "#ffffff",
-      haloSize: 1.5,
-      text: `SELECTED\n${assignment.parcelNumber}`,
-      font: { family: "Arial", size: 11, weight: "bold" },
-      yoffset: 4
-    }
-  });
+  selectedParcelLabelGraphic = parcelLabelGraphic(assignment, { selected: true });
   parcelMapView.graphics.add(selectedParcelGraphic);
-  if (selectedParcelLabelGraphic.geometry) parcelMapView.graphics.add(selectedParcelLabelGraphic);
+  if (selectedParcelLabelGraphic?.geometry) parcelMapView.graphics.add(selectedParcelLabelGraphic);
   parcelMapView.goTo(assignment.geometry.extent?.expand(1.55) || selectedParcelGraphic, { duration: 450 }).catch(() => {});
   selectedParcelLabel.textContent = `${assignment.parcelNumber} - ${assignment.address}`;
   selectedParcelBadge.hidden = false;
@@ -271,6 +301,14 @@ function buildSurveyUrl(assignment) {
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.parcelNumber}`, assignment.parcelNumber);
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.address}`, assignment.address);
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.assignmentPeriod}`, assignment.period);
+  url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.assignmentObjectId}`, assignment.objectId);
+  const center = polygonCenter(assignment.geometry);
+  if (center) {
+    const [longitude, latitude] = center;
+    url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.parcelLocation}`, `${latitude} ${longitude}`);
+    url.searchParams.set("center", `${latitude},${longitude}`);
+    url.searchParams.set("hide", `field:${SURVEY123_PREFILL_FIELDS.parcelLocation},field:${SURVEY123_PREFILL_FIELDS.assignmentObjectId}`);
+  }
   return url;
 }
 

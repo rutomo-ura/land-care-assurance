@@ -17,11 +17,12 @@ import {
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
   enrichSummaryWithSurveyLayer,
-  loadSurveyEvidenceByPeriod,
+  loadCombinedEvidenceByPeriod,
+  loadSurvey123EvidenceByPeriod,
   mergeAvailableMonths,
-  mergeSurveyEvidenceIntoGeojson
+  mergeSurveyEvidenceIntoGeojson,
+  survey123EvidenceMatchesAssignment
 } from "./survey-layer.js";
-import { APPROVED_EVIDENCE_GEOJSON_URL } from "./survey-submission-config.js";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -108,8 +109,7 @@ const state = {
   assignmentPeriodStats: [],
   surveyLayerMode: "all",
   evidenceCache: new globalThis.Map(),
-  approvedEvidenceByParcel: new globalThis.Map(),
-  approvedEvidenceLoadPromise: null
+  survey123EvidenceByPeriod: {}
 };
 
 const DEFAULT_EXPORT_METRICS = ["completionRate", "open", "returned", "active", "annualRunRate"];
@@ -489,18 +489,6 @@ function surveyRenderer() {
 }
 
 function statusRenderer(mode = state.dataView) {
-  if (mode === "current" && isLiveCurrentDataset()) {
-    return {
-      type: "unique-value",
-      valueExpression: "IIF(Find('LandCare - Request Only', $feature.tags) > -1, 'request_only', 'current_active')",
-      defaultSymbol: fillSymbol("#8a8f98"),
-      uniqueValueInfos: ["current_active", "request_only"].map((value) => ({
-        value,
-        label: statusLabel(value),
-        symbol: fillSymbol(statusColors[value])
-      }))
-    };
-  }
   return {
     type: "unique-value",
     field: "completion_status",
@@ -514,19 +502,6 @@ function statusRenderer(mode = state.dataView) {
 }
 
 function contractorRenderer(mode = state.dataView) {
-  if (mode === "current" && isLiveCurrentDataset()) {
-    return {
-      type: "unique-value",
-      valueExpression:
-        "When(IsEmpty($feature.property_maint_mgr_name), 'Unassigned', Replace($feature.property_maint_mgr_name, ' Primary Contact', ''))",
-      defaultSymbol: fillSymbol("#8a8f98"),
-      uniqueValueInfos: contractorItems().map((item) => ({
-        value: item.name,
-        label: item.label,
-        symbol: fillSymbol(item.color)
-      }))
-    };
-  }
   return {
     type: "unique-value",
     field: "organization",
@@ -577,12 +552,9 @@ function assignmentHistoryWhereForFilter(mode = state.dataView) {
 function whereForFilter(mode = state.dataView) {
   const clauses = [];
   if (mode === "current") {
-    if (isLiveCurrentDataset()) clauses.push(CURRENT_WHERE);
     if (state.ownershipFilter !== "all") {
       const value = state.ownershipFilter === "URA" ? "URA Owned" : "PLB Owned";
-      clauses.push(isLiveCurrentDataset()
-        ? `inventory_type = ${sqlValue(value)}`
-        : `(ownership_group = ${sqlValue(state.ownershipFilter)} OR ownership_type = ${sqlValue(state.ownershipFilter)})`);
+      clauses.push(`(ownership_group = ${sqlValue(state.ownershipFilter)} OR ownership_type = ${sqlValue(state.ownershipFilter)} OR inventory_type = ${sqlValue(value)})`);
     }
     if (state.districtFilter !== "all") {
       clauses.push(`council_district = ${sqlValue(state.districtFilter)}`);
@@ -592,12 +564,7 @@ function whereForFilter(mode = state.dataView) {
     return assignmentHistoryWhereForFilter("history");
   }
   if (state.contractorFilter !== "all") {
-    if (mode === "current") {
-      const contactClause = contractorContactClause(state.contractorFilter);
-      if (contactClause) clauses.push(contactClause);
-    } else {
-      clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
-    }
+    clauses.push(`organization = ${sqlValue(state.contractorFilter)}`);
   }
   return clauses.length ? clauses.join(" AND ") : "1=1";
 }
@@ -936,54 +903,23 @@ function setParcelDetail(props) {
   document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
 }
 
-async function loadApprovedEvidenceByParcel() {
-  if (!safeImageUrl(APPROVED_EVIDENCE_GEOJSON_URL)) return state.approvedEvidenceByParcel;
-  if (state.approvedEvidenceLoadPromise) return state.approvedEvidenceLoadPromise;
-
-  state.approvedEvidenceLoadPromise = fetch(APPROVED_EVIDENCE_GEOJSON_URL, {
-    headers: { Accept: "application/geo+json, application/json" }
-  })
-    .then((response) => {
-      if (!response.ok) throw new Error(`Approved evidence feed returned ${response.status}`);
-      return response.json();
-    })
-    .then((collection) => {
-      for (const feature of collection?.features || []) {
-        const props = feature?.properties || {};
-        const parcelKey = parcelDigits(props.parcelnumb || props.parcel_number || props.parcel_key);
-        const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
-        if (parcelKey && imageUrl) {
-          const photos = state.approvedEvidenceByParcel.get(parcelKey) || [];
-          photos.push({ ...props, image_url: imageUrl, survey_source: "Survey123 approved evidence", evidence_source: "approved_internal_survey123" });
-          state.approvedEvidenceByParcel.set(parcelKey, photos);
-        }
-      }
-      for (const photos of state.approvedEvidenceByParcel.values()) {
-        photos.sort((a, b) => String(b.submitted_at || b.service_date || "").localeCompare(String(a.submitted_at || a.service_date || "")));
-      }
-      return state.approvedEvidenceByParcel;
-    })
-    .catch((error) => {
-      console.warn("Approved Survey123 evidence is unavailable; continuing without it.", error);
-      return state.approvedEvidenceByParcel;
-    });
-  return state.approvedEvidenceLoadPromise;
-}
-
 async function enrichWithSurveyEvidence(props) {
   const parcelKey = props.parcel_key || props.parcelnumb || props.parcel_number;
   const cacheKey = `${parcelDigits(parcelKey)}:${state.selectedMonth || "Current"}`;
   if (!parcelKey) return props;
 
   const selectedPeriod = state.selectedMonth === "Current" ? null : state.selectedMonth;
-  const approvedEvidence = (await loadApprovedEvidenceByParcel()).get(parcelDigits(parcelKey)) || [];
+  const survey123Period = selectedPeriod || state.summary?.latest_month;
+  const survey123Evidence = (state.survey123EvidenceByPeriod[survey123Period] || [])
+    .filter((record) => survey123EvidenceMatchesAssignment(record, props))
+    .flatMap((record) => record.evidence_photos || []);
   let evidence = state.evidenceCache.get(cacheKey);
   if (evidence === undefined) {
     evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod).catch(() => []);
     state.evidenceCache.set(cacheKey, evidence);
   }
   const periodPhotos = [
-    ...approvedEvidence.filter((photo) => !selectedPeriod || String(photo.service_date || photo.submitted_at || "").startsWith(selectedPeriod)),
+    ...survey123Evidence,
     ...evidence.map((photo) => ({ ...photo, survey_source: SURVEY_LAYER_NAME }))
   ].filter((photo, index, all) => safeImageUrl(photo.image_url) && all.findIndex((candidate) => candidate.image_url === photo.image_url) === index)
     .sort((a, b) => String(b.created_at || b.submitted_at || b.service_date || "").localeCompare(String(a.created_at || a.submitted_at || a.service_date || "")));
@@ -994,7 +930,7 @@ async function enrichWithSurveyEvidence(props) {
     image_url: latest.image_url,
     created_at: latest.created_at || latest.submitted_at,
     address: latest.address || props.address,
-    survey_status: latest.status || (latest.evidence_source ? "Approved" : props.survey_status),
+    survey_status: latest.status || (latest.evidence_source ? "Complete evidence received" : props.survey_status),
     survey_source: latest.survey_source,
     evidence_photos: periodPhotos
   };
@@ -1862,9 +1798,16 @@ async function loadData() {
     assignmentHistoryMetadata,
     assignmentPeriodStats
   );
-  const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
   const liveAssignmentGeojson = assignmentHistoryResult.geojson;
   const baseHistoryGeojson = liveAssignmentGeojson || staticHistoryGeojson;
+  const evidenceByPeriod = await loadCombinedEvidenceByPeriod(
+    enrichedSummary.available_months,
+    baseHistoryGeojson.features
+  ).catch(() => ({}));
+  state.survey123EvidenceByPeriod = await loadSurvey123EvidenceByPeriod(
+    enrichedSummary.available_months,
+    baseHistoryGeojson.features
+  ).catch(() => ({}));
   const mergedHistoryGeojson = mergeSurveyEvidenceIntoGeojson(baseHistoryGeojson, evidenceByPeriod);
   mergedHistoryGeojson.metadata = {
     ...(mergedHistoryGeojson.metadata || {}),
@@ -1874,7 +1817,19 @@ async function loadData() {
     assignment_source_error: assignmentHistoryResult.error?.message || null
   };
 
-  const currentDataset = currentDatasetResult.dataset || buildCurrentFallbackDataset(enrichedSummary, mergedHistoryGeojson);
+  const rawCurrentDataset = currentDatasetResult.dataset || buildCurrentFallbackDataset(enrichedSummary, mergedHistoryGeojson);
+  const currentPeriod = enrichedSummary.latest_month;
+  const currentGeojsonWithPeriod = {
+    ...rawCurrentDataset.geojson,
+    features: (rawCurrentDataset.geojson.features || []).map((feature) => ({
+      ...feature,
+      properties: { ...feature.properties, period_month: currentPeriod }
+    }))
+  };
+  const currentDataset = {
+    ...rawCurrentDataset,
+    geojson: mergeSurveyEvidenceIntoGeojson(currentGeojsonWithPeriod, evidenceByPeriod)
+  };
   state.currentDataWarning = currentDatasetResult.error ? "live ArcGIS fallback" : "";
   if (currentDatasetResult.error) {
     console.warn("Live ArcGIS current inventory unavailable; using latest published dashboard data.", currentDatasetResult.error);
@@ -2013,6 +1968,17 @@ function buildHistoryAssignmentLayer({ url, title, mode, visible }) {
     definitionExpression: assignmentHistoryWhereForFilter(mode),
     renderer: statusRenderer(mode),
     opacity: 0.88,
+    labelingInfo: [{
+      labelExpressionInfo: { expression: "DefaultValue($feature.parcel_number, $feature.parcel_key)" },
+      minScale: 5000,
+      symbol: {
+        type: "text",
+        color: "#17212b",
+        haloColor: "#ffffff",
+        haloSize: 1.35,
+        font: { family: "Arial", size: 9, weight: "bold" }
+      }
+    }],
     popupTemplate: {
       title: "{organization}",
       content: `
@@ -2054,36 +2020,9 @@ function buildHistorySurveyLayer({ visible }) {
 }
 
 function buildApprovedEvidenceLayer() {
-  if (!safeImageUrl(APPROVED_EVIDENCE_GEOJSON_URL)) return null;
-  return new GeoJSONLayer({
-    url: APPROVED_EVIDENCE_GEOJSON_URL,
-    title: "Approved Internal Survey Evidence",
-    outFields: ["*"],
-    visible: true,
-    renderer: {
-      type: "simple",
-      symbol: {
-        type: "simple-marker",
-        style: "diamond",
-        size: 8,
-        color: "#0098d3",
-        outline: { color: "#ffffff", width: 1.2 }
-      }
-    },
-    popupTemplate: {
-      title: "Approved evidence {parcelnumb}",
-      content: (event) => {
-        const props = event.graphic?.attributes || {};
-        return `
-          <div class="survey-popup-detail">
-            <b>Contractor:</b> ${escapeHtml(props.maintained_by || "Unknown")}<br>
-            <b>Service date:</b> ${escapeHtml(props.service_date || "Unknown")}<br>
-            <b>Reviewed:</b> ${escapeHtml(props.reviewed_at || "Unknown")}
-            ${surveyPhotoMarkup(props)}
-          </div>`;
-      }
-    }
-  });
+  // Survey123 stores point evidence only. The public map uses the matched
+  // assignment polygon, so no evidence point layer is rendered here.
+  return null;
 }
 
 function buildHistoryLayer({ url, title, mode, visible }) {
@@ -2091,50 +2030,15 @@ function buildHistoryLayer({ url, title, mode, visible }) {
 }
 
 function buildCurrentLayer({ visible }) {
-  if (!isLiveCurrentDataset()) {
-    const currentUrl = URL.createObjectURL(new Blob(
-      [JSON.stringify(state.datasets.current.geojson)],
-      { type: "application/geo+json" }
-    ));
-    return buildHistoryLayer({
-      url: currentUrl,
-      title: "Published Latest LandCare Parcels",
-      mode: "current",
-      visible
-    });
-  }
-  return new FeatureLayer({
-    url: EPP_LAYER_URL,
-    title: "Current URA-Owned LandCare Parcels",
-    outFields: ["*"],
-    visible,
-    definitionExpression: whereForFilter("current"),
-    renderer: statusRenderer("current"),
-    opacity: 0.9,
-    popupTemplate: {
-      title: "Parcel {parcel_number}",
-      content: [
-        {
-          type: "fields",
-          fieldInfos: [
-            { fieldName: "property_id", label: "Property ID" },
-            { fieldName: "property_maint_mgr_name", label: "LandCare contractor" },
-            { fieldName: "tags", label: "LandCare tags" },
-            { fieldName: "current_status", label: "Property status" },
-            { fieldName: "inventory_type", label: "Inventory type" },
-            { fieldName: "property_class", label: "Property class" },
-            { fieldName: "project_name", label: "Project" },
-            { fieldName: "council_district", label: "Council district" },
-            { fieldName: "neighborhood", label: "Neighborhood" },
-            { fieldName: "census_tract", label: "Census tract" },
-            { fieldName: "zoned_as", label: "Zoning" },
-            { fieldName: "parcel_sqft", label: "Parcel sq ft", format: { digitSeparator: true, places: 0 } },
-            { fieldName: "par_calcacreag", label: "Acres", format: { places: 2 } },
-            { fieldName: "mod_dt", label: "Last modified", format: { dateFormat: "short-date" } }
-          ]
-        }
-      ]
-    }
+  const currentUrl = URL.createObjectURL(new Blob(
+    [JSON.stringify(state.datasets.current.geojson)],
+    { type: "application/geo+json" }
+  ));
+  return buildHistoryLayer({
+    url: currentUrl,
+    title: "Current LandCare Parcels",
+    mode: "current",
+    visible
   });
 }
 
@@ -2176,10 +2080,6 @@ async function initMap() {
     approvedEvidence: approvedEvidenceLayer,
     current: currentLayer
   };
-  // Fetch metadata only (not the image files) so a parcel hover can show its
-  // approved Survey123 photo immediately. Images remain lazy-loaded by the card.
-  void loadApprovedEvidenceByParcel();
-
   const neighborhoodLayer = new FeatureLayer({
     url: "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebNeighborhoods/FeatureServer/0",
     title: "City Neighborhoods",

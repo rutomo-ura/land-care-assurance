@@ -9,7 +9,7 @@ import {
   enrichLatestMonthlyMetrics,
   enrichSummaryWithSurveyLayer,
   countReturnedAssigned,
-  loadSurveyEvidenceByPeriod,
+  loadCombinedEvidenceByPeriod,
   mergeSurveyEvidenceIntoGeojson,
   parcelDigits
 } from "./survey-layer.js";
@@ -1464,8 +1464,11 @@ async function loadData() {
     assignmentHistoryMetadata,
     assignmentPeriodStats
   );
-  const evidenceByPeriod = await loadSurveyEvidenceByPeriod(enrichedSummary.available_months).catch(() => ({}));
   const baseGeojson = assignmentHistoryResult.geojson || allMonthsGeojson;
+  const evidenceByPeriod = await loadCombinedEvidenceByPeriod(
+    enrichedSummary.available_months,
+    baseGeojson.features
+  ).catch(() => ({}));
   const mergedGeojson = mergeSurveyEvidenceIntoGeojson(baseGeojson, evidenceByPeriod);
   const liveMonthlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats)
