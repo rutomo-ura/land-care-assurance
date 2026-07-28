@@ -96,9 +96,12 @@ function parcelLabelGraphic(assignment, { selected = false } = {}) {
       color: selected ? "#00334f" : "#17212b",
       haloColor: "#ffffff",
       haloSize: selected ? 1.7 : 1.35,
-      text: selected ? `SELECTED\n${assignment.parcelNumber}` : assignment.parcelNumber,
-      font: { family: "Arial", size: selected ? 11 : 9, weight: "bold" },
-      yoffset: 4
+      // The selected boundary and confirmation card already communicate state.
+      // Keep a single parcel number on the map rather than stacking a second
+      // "SELECTED" label over the regular zoom label.
+      text: assignment.parcelNumber,
+      font: { family: "Arial", size: selected ? 10 : 9, weight: "bold" },
+      yoffset: selected ? 12 : 4
     }
   });
 }
@@ -107,7 +110,11 @@ function syncAvailableParcelLabels() {
   if (!parcelMapView) return;
   const showLabels = parcelMapView.scale <= PARCEL_LABEL_SCALE;
   availableParcelGraphics.filter((graphic) => graphic.attributes?.parcelLabel)
-    .forEach((graphic) => { graphic.visible = showLabels; });
+    .forEach((graphic) => {
+      // A selected parcel has its own persistent label. Hide its ordinary
+      // zoom-level label so the two labels can never overlap.
+      graphic.visible = showLabels && graphic.attributes.assignmentObjectId !== selectedAssignment?.objectId;
+    });
 }
 
 function setOptions(select, options, placeholder) {
@@ -199,6 +206,7 @@ function showSelectedParcel(assignment) {
   selectedParcelLabelGraphic = parcelLabelGraphic(assignment, { selected: true });
   parcelMapView.graphics.add(selectedParcelGraphic);
   if (selectedParcelLabelGraphic?.geometry) parcelMapView.graphics.add(selectedParcelLabelGraphic);
+  syncAvailableParcelLabels();
   parcelMapView.goTo(assignment.geometry.extent?.expand(1.55) || selectedParcelGraphic, { duration: 450 }).catch(() => {});
   selectedParcelLabel.textContent = `${assignment.parcelNumber} - ${assignment.address}`;
   selectedParcelBadge.hidden = false;
