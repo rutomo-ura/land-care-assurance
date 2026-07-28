@@ -6,19 +6,16 @@ This is the canonical handoff for the contractor submission path and its relatio
 
 ## Outcome
 
-A contractor can anonymously choose an assigned parcel from a list or map, submit service evidence in Survey123, and receive a clear record of what parcel and period were used. URA reviewers control whether that new evidence becomes visible to the public Map Monitor. Existing Regrid data remains the official completion source for v1.
+A contractor can anonymously choose an assigned parcel from a list or map, submit service evidence in Survey123, and receive a clear record of what parcel and period were used. A submission with a matching parcel, period, contractor, assignment ID, and image attachment immediately marks the authoritative assignment polygon complete. The submitted point is evidence storage only and is never shown on the public map.
 
 ```mermaid
 flowchart LR
     Bundle["Monthly Regrid assignment bundle"] --> Assign["AGOL assignment history/current layers"]
     Assign --> Intake["Survey Submission page\norganization + map/list parcel selection"]
-    Intake --> Form["Public Survey123 form\npending + required photo"]
-    Form --> Inbox["URA Survey123 Inbox\napprove or reject"]
-    Inbox -->|"approved only"| Hook["VM webhook receiver"]
-    Hook --> PG["gis.ura_landcare_survey_submissions_internal"]
-    PG --> View["gis.landcare_approved_survey_evidence"]
-    View --> Feed["/public/approved-evidence GeoJSON"]
-    Feed --> Monitor["Map Monitor hover/detail\nSurvey123 approved photo"]
+    Intake --> Form["Public Survey123 form\nassignment ID + required photo"]
+    Form --> EvidenceView["Public query-only evidence view"]
+    EvidenceView --> Match["Canonical assignment match"]
+    Match --> Monitor["Authoritative parcel polygon\nDone + Survey123 photo"]
     Regrid["Daily Regrid survey pipeline"] --> Official["Official completion metrics\n+ Regrid photo URL"]
     Official --> Monitor
 ```

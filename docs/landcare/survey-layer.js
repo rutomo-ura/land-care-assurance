@@ -1,3 +1,5 @@
+import { SURVEY123_EVIDENCE_LAYER_URL } from "./survey-submission-config.js";
+
 export const SURVEY_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
 export const SURVEY_AGOL_ITEM_ID = "a4012693d5d74dd8998610c4d235068d";
@@ -7,6 +9,14 @@ export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys";
 
 export function parcelDigits(value) {
   return String(value || "").replace(/\D/g, "");
+}
+
+export function cleanOrganization(value) {
+  return String(value || "").replace(/\s+Primary Contact$/i, "").trim();
+}
+
+export function evidenceKey({ period, parcelNumber, organization, assignmentObjectId }) {
+  return [String(period || "").slice(0, 7), parcelDigits(parcelNumber), cleanOrganization(organization), String(assignmentObjectId || "")].join("|");
 }
 
 export function dateFromMillis(value) {
@@ -117,6 +127,106 @@ export async function loadSurveyEvidenceByPeriod(periodLabels) {
   return Object.fromEntries(entries);
 }
 
+export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
+  if (!SURVEY123_EVIDENCE_LAYER_URL) return [];
+  const safePeriod = String(periodLabel || "").replace(/'/g, "''");
+  const payload = await fetchArcgisJson(`${SURVEY123_EVIDENCE_LAYER_URL}/query`, {
+    f: "json",
+    where: `assignment_period = '${safePeriod}'`,
+    outFields: "objectid,globalid,organization,parcel_number,address,assignment_period,untitled_question_2,date_of_services,CreationDate",
+    returnGeometry: "false",
+    orderByFields: "CreationDate DESC",
+    resultRecordCount: "2000"
+  });
+  const records = [];
+  for (const feature of payload.features || []) {
+    const attrs = feature.attributes || {};
+    const objectId = attrs.OBJECTID ?? attrs.objectid;
+    if (objectId == null) continue;
+    const attachments = await fetchArcgisJson(`${SURVEY123_EVIDENCE_LAYER_URL}/${objectId}/attachments`, { f: "json" }).catch(() => ({}));
+    const images = (attachments.attachmentInfos || [])
+      .filter((attachment) => String(attachment.contentType || "").startsWith("image/"))
+      .map((attachment) => ({
+        image_url: `${SURVEY123_EVIDENCE_LAYER_URL}/${objectId}/attachments/${attachment.id}`,
+        submitted_at: attrs.CreationDate || attrs.creationdate,
+        evidence_source: "Survey123",
+        survey_source: "Survey123",
+        attachment_name: attachment.name
+      }));
+    records.push({
+      ...attrs,
+      OBJECTID: objectId,
+      assignment_object_id: attrs.untitled_question_2,
+      evidence_photos: images
+    });
+  }
+  return records;
+}
+
+function assignmentValidationIndex(features) {
+  const index = new Set();
+  for (const feature of features || []) {
+    const props = feature.properties || {};
+    const objectId = props.objectid ?? props.OBJECTID;
+    if (objectId == null) continue;
+    index.add(evidenceKey({
+      period: props.period_month || props.period_label,
+      parcelNumber: props.parcel_number || props.parcel_key,
+      organization: props.organization,
+      assignmentObjectId: objectId
+    }));
+  }
+  return index;
+}
+
+export async function loadSurvey123EvidenceByPeriod(periodLabels, assignmentFeatures) {
+  const index = assignmentValidationIndex(assignmentFeatures);
+  const entries = await Promise.all([...new Set(periodLabels || [])].filter(Boolean).map(async (period) => {
+    const records = await fetchSurvey123EvidenceRecordsForPeriod(period).catch(() => []);
+    const valid = records.filter((record) => (
+      (record.evidence_photos || []).length > 0 &&
+      index.has(evidenceKey({
+        period: record.assignment_period,
+        parcelNumber: record.parcel_number,
+        organization: record.organization,
+        assignmentObjectId: record.assignment_object_id
+      }))
+    ));
+    return [period, valid];
+  }));
+  return Object.fromEntries(entries);
+}
+
+export async function loadCombinedEvidenceByPeriod(periodLabels, assignmentFeatures) {
+  const [regrid, survey123] = await Promise.all([
+    loadSurveyEvidenceByPeriod(periodLabels),
+    loadSurvey123EvidenceByPeriod(periodLabels, assignmentFeatures)
+  ]);
+  const combined = {};
+  for (const period of new Set([...(periodLabels || []), ...Object.keys(regrid), ...Object.keys(survey123)])) {
+    combined[period] = new Set(regrid[period] || []);
+    for (const record of survey123[period] || []) combined[period].add(parcelDigits(record.parcel_number));
+  }
+  return combined;
+}
+
+export function survey123EvidenceMatchesAssignment(record, properties) {
+  return Boolean(
+    (record?.evidence_photos || []).length &&
+    evidenceKey({
+      period: record.assignment_period,
+      parcelNumber: record.parcel_number,
+      organization: record.organization,
+      assignmentObjectId: record.assignment_object_id
+    }) === evidenceKey({
+      period: properties?.period_month || properties?.period_label,
+      parcelNumber: properties?.parcel_number || properties?.parcel_key,
+      organization: properties?.organization,
+      assignmentObjectId: properties?.objectid ?? properties?.OBJECTID
+    })
+  );
+}
+
 export function mergeAvailableMonths(staticMonths, periodStats) {
   const merged = new Set(staticMonths || []);
   for (const row of periodStats || []) {
@@ -156,7 +266,9 @@ export function mergeSurveyEvidenceIntoGeojson(geojson, evidenceByPeriod) {
       ...(geojson?.metadata || {}),
       survey_layer_url: SURVEY_LAYER_URL,
       survey_layer_item_url: SURVEY_AGOL_ITEM_URL,
-      survey_evidence_source: `ArcGIS Online ${SURVEY_LAYER_NAME}`
+      survey_evidence_source: SURVEY123_EVIDENCE_LAYER_URL
+        ? `ArcGIS Online ${SURVEY_LAYER_NAME} and Survey123 immediate evidence`
+        : `ArcGIS Online ${SURVEY_LAYER_NAME}`
     },
     features
   };
