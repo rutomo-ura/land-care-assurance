@@ -58,6 +58,8 @@ const compactMoneyFormatter = new Intl.NumberFormat("en-US", {
 });
 const SERVICE_PERIOD_START_DAY = 15;
 const EASTERN_TIME_ZONE = "America/New_York";
+const CONTRACTOR_PALETTE = ["#4477AA", "#EE6677", "#228833", "#AA3377", "#66CCEE", "#EE7733", "#009988", "#332288", "#CCBB44", "#8C564B"];
+const UNASSIGNED_CONTRACTOR_COLOR = "#6b7280";
 const easternDateParts = new Intl.DateTimeFormat("en-US", {
   timeZone: EASTERN_TIME_ZONE,
   year: "numeric",
@@ -227,6 +229,21 @@ function buildQuarterFinance(financeSummary, selectedQuarterKey) {
     quarterlyForecast,
     quarterlyCostPerAcre: acres ? quarterlyForecast / acres : 0,
     monthlyCostPerParcel: parcels ? monthlyInvoice / parcels : 0
+  };
+}
+
+function buildMonthFinance(financeSummary, selectedMonth) {
+  const start = new Date(`${selectedMonth}-01T00:00:00Z`);
+  const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
+  const rows = (financeSummary.current_contracts || []).filter((row) => {
+    const contractStart = isoDate(row.start_date);
+    const contractEnd = isoDate(row.end_date);
+    return contractStart && contractEnd && contractStart <= end && contractEnd >= start;
+  });
+  return {
+    label: shortMonth(selectedMonth),
+    monthlyInvoice: rows.reduce((sum, row) => sum + Number(row.monthly_invoice_amount || 0), 0),
+    organizationCount: rows.length
   };
 }
 
@@ -468,6 +485,81 @@ function activeAssignmentKeysForPeriod(geojson, periodLabel) {
   return keys;
 }
 
+function activeAssignmentKeysByContractor(geojson, periodLabel) {
+  const assignments = new Map();
+  for (const feature of geojson?.features || []) {
+    const props = feature.properties || {};
+    if (props.period_month !== periodLabel || props.maintenance_level !== "Active") continue;
+    const parcelKey = parcelDigits(props.parcel_key);
+    if (!parcelKey) continue;
+    const contractor = normalizeContractorName(props.organization);
+    const keys = assignments.get(contractor) || new Set();
+    keys.add(parcelKey);
+    assignments.set(contractor, keys);
+  }
+  return assignments;
+}
+
+function contractorColor(geojson, contractor) {
+  if (contractor === "Unassigned") return UNASSIGNED_CONTRACTOR_COLOR;
+  const names = [...new Set(
+    (geojson?.features || [])
+      .map((feature) => normalizeContractorName(feature.properties?.organization))
+      .filter((name) => name && name !== "Unassigned")
+  )].sort((a, b) => a.localeCompare(b));
+  const index = Math.max(0, names.indexOf(contractor));
+  return CONTRACTOR_PALETTE[index % CONTRACTOR_PALETTE.length];
+}
+
+function contractorReturnedKeysByDate(records, assignmentsByContractor, startDateKey, endDateKey) {
+  const parcelContractors = new Map();
+  for (const [contractor, parcelKeys] of assignmentsByContractor) {
+    for (const parcelKey of parcelKeys) parcelContractors.set(parcelKey, contractor);
+  }
+  const returnedByContractor = new Map();
+  for (const record of records || []) {
+    const parcelKey = parcelDigits(record.parcelnumb);
+    const submittedDate = easternDateKey(record.created_at);
+    const contractor = parcelContractors.get(parcelKey);
+    if (!contractor || !submittedDate || submittedDate < startDateKey || submittedDate > endDateKey) continue;
+    const byDate = returnedByContractor.get(contractor) || new Map();
+    const keys = byDate.get(submittedDate) || new Set();
+    keys.add(parcelKey);
+    byDate.set(submittedDate, keys);
+    returnedByContractor.set(contractor, byDate);
+  }
+  return returnedByContractor;
+}
+
+function buildContractorDailyCompletionSeries(geojson, records, startDateKey, endDateKey) {
+  const assignmentsByContractor = activeAssignmentKeysByContractor(geojson, servicePeriodLabel(startDateKey));
+  const returnedByContractor = contractorReturnedKeysByDate(records, assignmentsByContractor, startDateKey, endDateKey);
+  const totalDays = Math.max(Math.floor((dateFromKey(endDateKey) - dateFromKey(startDateKey)) / 86400000), 0);
+  return [...assignmentsByContractor.entries()]
+    .map(([contractor, assignmentKeys]) => {
+      const returned = new Set();
+      const byDate = returnedByContractor.get(contractor) || new Map();
+      const days = [];
+      for (let offset = 0; offset <= totalDays; offset += 1) {
+        const date = dateKeyForOffset(startDateKey, offset);
+        for (const parcelKey of byDate.get(date) || []) returned.add(parcelKey);
+        days.push({
+          date,
+          completionRate: assignmentKeys.size ? (100 * returned.size) / assignmentKeys.size : 0,
+          returned: returned.size
+        });
+      }
+      return {
+        contractor,
+        label: shortContractor(contractor),
+        color: contractorColor(geojson, contractor),
+        assigned: assignmentKeys.size,
+        days
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function returnedKeysByDate(records, assignmentKeys, startDateKey, endDateKey) {
   const recordsByDate = new Map();
   for (const record of records || []) {
@@ -496,6 +588,7 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
   const previousAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
   const currentByDate = returnedKeysByDate(currentRecords, currentAssignmentKeys, currentStart, currentEnd);
   const previousByDate = returnedKeysByDate(previousRecords, previousAssignmentKeys, previousStart, previousEnd);
+  const contractorSeries = buildContractorDailyCompletionSeries(geojson, currentRecords, currentStart, currentEnd);
   const currentReturned = new Set();
   const previousReturned = new Set();
   const days = [];
@@ -523,7 +616,8 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
     previousEnd,
     currentAssigned: currentAssignmentKeys.size,
     previousAssigned: previousAssignmentKeys.size,
-    days
+    days,
+    contractorSeries
   };
 }
 
@@ -581,21 +675,10 @@ function buildContractorDetailRows(currentRows, latestRows) {
   return Array.from(byName.values()).sort((a, b) => b.currentParcels - a.currentParcels);
 }
 
-function renderQuarterOptions(monthlyMetrics, selectedQuarter) {
-  const select = document.getElementById("kpiQuarterSelect");
-  if (!select) return;
-  const quarters = [...new Set(monthlyMetrics.map((row) => quarterKey(row.period_month)))];
-  select.innerHTML = quarters
-    .map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(quarterLabelFromKey(key))}</option>`)
-    .join("");
-  select.value = selectedQuarter;
-}
-
-function renderMonthOptions(monthlyMetrics, selectedMonth, selectedQuarter) {
+function renderMonthOptions(monthlyMetrics, selectedMonth) {
   const select = document.getElementById("kpiMonthSelect");
   if (!select) return;
   select.innerHTML = monthlyMetrics
-    .filter((row) => quarterKey(row.period_month) === selectedQuarter)
     .map((row) => `<option value="${escapeHtml(row.period_month)}">${escapeHtml(shortMonth(row.period_month))}</option>`)
     .join("");
   select.value = selectedMonth;
@@ -606,7 +689,7 @@ function renderSourceSummary(summary, currentMetrics, selectedMonth) {
   const surveyEdited = summary.survey_layer_summary?.data_last_edit || currentMetrics.surveyEdited;
   document.getElementById("freshnessNote").textContent = "Ready";
   document.getElementById("periodKpi").textContent =
-    `${quarterLabel(latestMonth)} · ${shortMonth(latestMonth)}`;
+    shortMonth(latestMonth);
   document.getElementById("reportUpdatedKpi").textContent =
     `${summary.generated_on || currentMetrics.eppEdited || "today"} · surveys ${surveyEdited || "live"}`;
   document.getElementById("liveUniverseNote").textContent =
@@ -746,7 +829,7 @@ function bindLineChartTooltips(container, monthlyMetrics) {
   }
 }
 
-function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary, selectedMonth, selectedQuarter) {
+function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeSummary, selectedMonth) {
   const latest = metricForMonth(monthlyMetrics, selectedMonth);
   const prior = priorMetricForMonth(monthlyMetrics, selectedMonth);
   const latestRate = Number(latest.active_completion_rate_pct || 0);
@@ -781,14 +864,14 @@ function renderLeadershipInsights(monthlyMetrics, latestContractorRows, financeS
     : "All active returned";
   openCopy.className = "card-trend";
 
-  const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
+  const monthFinance = buildMonthFinance(financeSummary, selectedMonth);
   document.getElementById("budgetRunRateInsight").textContent =
-    formatMoneyCompact(quarterFinance.quarterlyForecast);
+    formatMoneyCompact(monthFinance.monthlyInvoice);
   const budgetCopy = document.getElementById("budgetRunRateCopy");
   budgetCopy.textContent =
     `${formatMoneyCompact(financeSummary?.summary?.monthly_invoice_total || 0)}/mo · ${formatNumber(financeSummary?.summary?.organization_count || 0)} contractors`;
   budgetCopy.textContent =
-    `${quarterFinance.label} forecast · ${formatMoneyCompact(quarterFinance.monthlyInvoice)}/mo · ${formatNumber(quarterFinance.rows.length)} contractors`;
+    `${monthFinance.label} · ${formatNumber(monthFinance.organizationCount)} active contractors`;
   budgetCopy.className = "card-trend";
 }
 
@@ -1055,6 +1138,55 @@ function renderMtdCompletionComparison(comparison) {
   `;
 }
 
+function renderContractorPaceChart(comparison) {
+  const container = document.getElementById("contractorPaceChart");
+  const summary = document.getElementById("contractorPaceSummary");
+  const legend = document.getElementById("contractorPaceLegend");
+  if (!container || !summary || !legend) return;
+  const series = comparison?.contractorSeries || [];
+  const days = series[0]?.days || [];
+  if (!series.length || !days.length) {
+    summary.textContent = "Daily contractor pace is unavailable until active assignments are published.";
+    legend.innerHTML = "";
+    container.innerHTML = '<p class="chart-empty-state">No active contractor assignments are available for this service period.</p>';
+    return;
+  }
+
+  summary.textContent = `${shortDate(comparison.currentStart)}–${shortDate(comparison.currentEnd)} · ${series.length} contractor${series.length === 1 ? "" : "s"} · daily cumulative completion`;
+  legend.innerHTML = series.map((item) => `
+    <span><i class="contractor-pace-swatch" style="background:${item.color}"></i>${escapeHtml(item.label)}</span>
+  `).join("");
+
+  const width = 720;
+  const height = 270;
+  const margin = { top: 20, right: 30, bottom: 46, left: 50 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const toX = (index) => margin.left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const toY = (value) => margin.top + plotHeight - (Math.max(0, Math.min(100, Number(value || 0))) / 100) * plotHeight;
+  const pathFor = (item) => item.days.map((day, index) => `${index ? "L" : "M"}${toX(index).toFixed(1)},${toY(day.completionRate).toFixed(1)}`).join(" ");
+  const labelEvery = Math.max(1, Math.ceil((days.length - 1) / 6));
+  const xLabels = days.filter((_, index) => index === 0 || index === days.length - 1 || index % labelEvery === 0);
+
+  container.innerHTML = `
+    <div class="line-chart-shell">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily cumulative completion rate by contractor for the current service period">
+        ${[0, 50, 100].map((tick) => {
+          const y = toY(tick);
+          return `<line class="chart-grid" x1="${margin.left}" x2="${width - margin.right}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line><text class="chart-tick" x="${margin.left - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${tick}%</text>`;
+        }).join("")}
+        <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
+        <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
+        ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} returned)</title></path>`).join("")}
+        ${xLabels.map((day) => {
+          const index = days.indexOf(day);
+          return `<text class="chart-count-label" x="${toX(index).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(day.date)}</text>`;
+        }).join("")}
+      </svg>
+    </div>
+  `;
+}
+
 function renderTable(table, columns, rows) {
   table.innerHTML = `
     <thead>
@@ -1243,16 +1375,16 @@ async function main() {
     const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
     const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, selectedContractorRows);
 
-    renderQuarterOptions(monthlyMetrics, selectedQuarter);
-    renderMonthOptions(monthlyMetrics, selectedMonth, selectedQuarter);
+    renderMonthOptions(monthlyMetrics, selectedMonth);
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
     renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth);
-    renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth, selectedQuarter);
+    renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth);
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
     renderMtdCompletionComparison(mtdCompletionComparison);
+    renderContractorPaceChart(mtdCompletionComparison);
     renderParcelDetailsTable(detailRows);
     renderAreaDistribution(aggregateAssignmentArea(assignmentGeojson, selectedMonth), selectedMonth);
     renderFinance(financeSummary, selectedQuarter);
@@ -1268,13 +1400,6 @@ async function main() {
   document.getElementById("kpiMonthSelect").addEventListener("change", (event) => {
     selectedMonth = event.target.value;
     selectedQuarter = quarterKey(selectedMonth);
-    renderSelectedMonth();
-  });
-
-  document.getElementById("kpiQuarterSelect").addEventListener("change", (event) => {
-    selectedQuarter = event.target.value;
-    const quarterMonths = monthlyMetrics.filter((row) => quarterKey(row.period_month) === selectedQuarter);
-    selectedMonth = quarterMonths.at(-1)?.period_month || selectedMonth;
     renderSelectedMonth();
   });
 }

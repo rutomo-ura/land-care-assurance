@@ -50,10 +50,6 @@
           <span class="eyebrow">Period</span>
           <strong id="periodKpi">Loading...</strong>
         </div>
-        <label class="field-label compact-field" for="kpiQuarterSelect">
-          <span>Quarter</span>
-          <select id="kpiQuarterSelect" aria-label="KPI quarter"></select>
-        </label>
         <label class="field-label compact-field" for="kpiMonthSelect">
           <span>Month</span>
           <select id="kpiMonthSelect" aria-label="KPI month"></select>
@@ -96,8 +92,8 @@
           </article>
           <article class="insight-card" data-tone="finance">
             <div class="card-top">
-              <span class="eyebrow">Budget Forecast</span>
-              <span class="metric-status-chip">Selected quarter</span>
+              <span class="eyebrow">Monthly Invoice Baseline</span>
+              <span class="metric-status-chip">Selected month</span>
             </div>
             <strong id="budgetRunRateInsight">--</strong>
             <p class="card-trend" id="budgetRunRateCopy">Loading...</p>
@@ -146,6 +142,18 @@
             </div>
             <div class="chart-legend chart-legend-inline"><span class="legend-line returned"></span> Returned <span class="legend-line open"></span> Open</div>
             <div class="grouped-chart" id="contractorGroupedChart" aria-label="Contractor assigned and returned grouped bar chart"></div>
+          </article>
+
+          <article class="panel powerbi-panel contractor-pace-panel">
+            <div class="panel-head">
+              <div>
+                <h1>Daily Contractor Completion</h1>
+                <p class="panel-sub" id="contractorPaceSummary">Loading current service-period pace...</p>
+              </div>
+            </div>
+            <div class="chart-legend chart-legend-inline contractor-pace-legend" id="contractorPaceLegend"></div>
+            <div class="line-chart contractor-pace-chart" id="contractorPaceChart" aria-label="Daily completion rate by contractor for the current service period"></div>
+            <p class="source-footnote mtd-comparison-note">Each line is cumulative returned assignments divided by that contractor’s active assignments in the current service period.</p>
           </article>
         </section>
       </section>
@@ -265,6 +273,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260728-1"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260728-2"></script>
   </body>
 </html>

@@ -672,7 +672,7 @@ body[data-page="kpi"] .report-context > :first-child { border-left: 0; padding-l
 body[data-page="kpi"] .report-context strong { font-size: 15px; }
 
 body[data-page="kpi"] .insight-grid {
-  grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   overflow: hidden;
   background: var(--paper);
@@ -691,6 +691,8 @@ body[data-page="kpi"] .insight-card {
 }
 
 body[data-page="kpi"] .insight-card:first-child { border-left: 0; }
+body[data-page="kpi"] .insight-card:nth-child(3) { border-top: 1px solid #e0e7ea; border-left: 0; }
+body[data-page="kpi"] .insight-card:nth-child(4) { border-top: 1px solid #e0e7ea; }
 body[data-page="kpi"] .insight-card[data-tone="risk"] {
   border-top: 4px solid var(--orange);
   background: linear-gradient(180deg, #fffaf7 0%, #ffffff 72%);
@@ -708,6 +710,53 @@ body[data-page="kpi"] .panel {
 }
 body[data-page="kpi"] .panel h1 { font-size: 17px; font-weight: 780; letter-spacing: -.015em; }
 body[data-page="kpi"] select { border-radius: 5px; }
+
+body[data-page="kpi"] .powerbi-grid.landing-charts .trend-panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+body[data-page="kpi"] .powerbi-grid.landing-charts .mtd-comparison-panel {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-pace-panel {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.contractor-pace-chart {
+  min-height: 230px;
+}
+
+.contractor-pace-legend {
+  gap: 8px 12px;
+}
+
+.contractor-pace-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.contractor-pace-swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.contractor-pace-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
 
 @media (max-width: 980px) {
   body[data-page="kpi"] .kpi-shell { padding: 20px 18px 28px; }
@@ -1513,6 +1562,16 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
 
 .trend-panel .line-chart {
   padding-top: 8px;
+}
+
+@media (max-width: 1180px) {
+  body[data-page="kpi"] .powerbi-grid.landing-charts .trend-panel,
+  body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-panel,
+  body[data-page="kpi"] .powerbi-grid.landing-charts .mtd-comparison-panel,
+  body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-pace-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
 }
 
 .mtd-comparison-panel {
