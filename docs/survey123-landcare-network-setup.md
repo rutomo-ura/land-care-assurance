@@ -59,6 +59,7 @@ LANDCARE_SURVEY_WEBHOOK_TOKEN=<long-random-secret>
 SURVEY123_FEATURE_LAYER_URL=https://services.../FeatureServer/0
 SURVEY123_ARCGIS_TOKEN=<service-token-if-the-layer-is-private>
 SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL=https://services.../FeatureServer/0
+LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL=https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_history/FeatureServer/0
 ```
 
 Apply [`sql/20260715_landcare_survey_submission_internal.sql`](../sql/20260715_landcare_survey_submission_internal.sql), then run the receiver behind the URA HTTPS reverse proxy:
@@ -67,13 +68,13 @@ Apply [`sql/20260715_landcare_survey_submission_internal.sql`](../sql/20260715_l
 python -m uvicorn scripts.landcare_survey_webhook:app --host 127.0.0.1 --port 8091
 ```
 
-`SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL` must be a read-only public view if the
-approved photos are intentionally shown in the public Map Monitor. It must not
-contain a token.
-
-After the receiver is behind HTTPS, set `APPROVED_EVIDENCE_GEOJSON_URL` in
-`docs/landcare/survey-submission-config.js` to its `/public/approved-evidence`
-endpoint. That endpoint exposes only approved records with valid public photos.
+`SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL` must be a read-only public view if
+photos are intentionally shown in the public Map Monitor. It must not contain a
+token. The receiver validates the submitted parcel, period, contractor,
+assignment ID, and photo against `LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL`, then
+stores that assignment's polygon. Add `/public/evidence-parcels` to ArcGIS as a
+GeoJSON layer named **LandCare Survey123 Evidence Parcels**; use it for maps
+instead of the Survey123 point-storage layer.
 
 Update [`docs/landcare/survey-submission-config.js`](landcare/survey-submission-config.js) with the Survey123 public share URL. This repository intentionally contains no Survey123 IDs, PostgreSQL passwords, tokens, or webhook secrets.
 

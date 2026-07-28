@@ -1,8 +1,10 @@
-"""Survey123 webhook receiver for approved LandCare survey evidence.
+"""Survey123 webhook receiver for canonical LandCare parcel evidence.
 
 The public Survey123 form writes to ArcGIS. This service receives Survey123
-webhooks, reads the authoritative submission from ArcGIS, and upserts only
-approved records into PostgreSQL. Configure it on the VM; never put its secrets
+webhooks, reads the authoritative submission and its selected assignment polygon
+from ArcGIS, then upserts only a fully matched photo submission.  The Survey123
+point remains evidence storage; the public evidence feed always returns the
+authoritative assignment polygon. Configure it on the VM; never put its secrets
 in the GitHub Pages site.
 """
 
@@ -59,6 +61,14 @@ def first_value(attributes: dict[str, Any], *keys: str) -> Any:
     return None
 
 
+def parcel_digits(value: Any) -> str:
+    return "".join(character for character in str(value or "") if character.isdigit())
+
+
+def clean_organization(value: Any) -> str:
+    return " ".join(str(value or "").replace("Primary Contact", "").split()).casefold()
+
+
 def to_iso(value: Any) -> str | None:
     if value in (None, ""):
         return None
@@ -78,10 +88,15 @@ def normalise_submission(feature: dict[str, Any], attachment_url: str | None) ->
     return {
         "source_global_id": str(global_id),
         "source_object_id": first_value(attributes, "objectid", "object_id"),
+        "source_survey_id": first_value(attributes, "survey_id") or env("SURVEY123_SURVEY_ID", required=False) or "survey123",
         "approval_status": approval_status,
         "parcel_number": first_value(attributes, "parcelnumb", "parcel_number", "parcel_id"),
         "address": first_value(attributes, "address", "service_address"),
         "maintained_by": first_value(attributes, "maintained_by", "contractor", "organization"),
+        "assignment_period": first_value(attributes, "assignment_period", "period_label", "period"),
+        # The existing Survey123 designer generated this field name. Keep that
+        # implementation detail at the source boundary.
+        "assignment_object_id": first_value(attributes, "assignment_object_id", "untitled_question_2"),
         "service_date": first_value(attributes, "date_of_services", "service_date", "date_services"),
         "submitted_at": to_iso(first_value(attributes, "creationdate", "created_at", "submitted_at")),
         "first_visit": bool_answer(first_value(attributes, "first_visit")),
@@ -141,14 +156,57 @@ def fetch_arcgis_attachment_url(object_id: str | int) -> tuple[str | None, str |
     return f"{public_layer}/{object_id}/attachments/{attachment['id']}", attachment.get("name")
 
 
-def upsert_approved_submission(record: dict[str, Any]) -> bool:
-    if record["approval_status"] != "approved":
-        return False
+def fetch_assignment_feature(assignment_object_id: str | int) -> dict[str, Any]:
+    """Read the authoritative polygon selected in the Submission page."""
+    layer_url = env("LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL").rstrip("/")
+    params = {
+        "f": "json",
+        "objectIds": str(assignment_object_id),
+        "outFields": "OBJECTID,parcelnumb,period_label,maintained_by,address",
+        "returnGeometry": "true",
+    }
+    with urlopen(f"{layer_url}/query?{urlencode(params)}", timeout=30) as response:
+        payload = json.load(response)
+    if payload.get("error") or not payload.get("features"):
+        raise ValueError(f"Unable to read assignment {assignment_object_id}: {payload.get('error', {})}")
+    assignment = payload["features"][0]
+    if not assignment.get("geometry", {}).get("rings"):
+        raise ValueError("Authoritative assignment has no parcel polygon")
+    return assignment
+
+
+def assignment_matches_submission(record: dict[str, Any], assignment: dict[str, Any]) -> bool:
+    attrs = assignment.get("attributes", {})
+    return bool(
+        record.get("image_attachment_url")
+        and record.get("assignment_object_id")
+        and parcel_digits(record.get("parcel_number")) == parcel_digits(first_value(attrs, "parcelnumb", "parcel_number"))
+        and str(record.get("assignment_period") or "") == str(first_value(attrs, "period_label", "period") or "")
+        and clean_organization(record.get("maintained_by")) == clean_organization(first_value(attrs, "maintained_by", "organization"))
+    )
+
+
+def attach_canonical_assignment(record: dict[str, Any], assignment: dict[str, Any]) -> dict[str, Any]:
+    if not assignment_matches_submission(record, assignment):
+        raise ValueError("Survey123 evidence does not match the selected authoritative assignment")
+    attrs = assignment.get("attributes", {})
+    return {
+        **record,
+        # "approved" is retained only for backward-compatible database/view
+        # schemas. It means canonical validation passed; no reviewer gate.
+        "approval_status": "approved",
+        "assignment_object_id": first_value(attrs, "objectid", "OBJECTID"),
+        "assignment_period": first_value(attrs, "period_label", "period"),
+        "assignment_geometry": assignment["geometry"],
+    }
+
+
+def upsert_canonical_submission(record: dict[str, Any]) -> bool:
     if not record["parcel_number"] or not record["maintained_by"]:
         raise ValueError("Approved Survey123 submission requires parcel number and contractor")
     dsn = env("LANDCARE_PG_DSN")
     columns = list(record.keys())
-    values = [json.dumps(value) if key == "source_payload" else value for key, value in record.items()]
+    values = [json.dumps(value) if key in {"source_payload", "assignment_geometry"} else value for key, value in record.items()]
     updates = ", ".join(f"{column} = EXCLUDED.{column}" for column in columns if column != "source_global_id")
     sql = f"""
       INSERT INTO gis.ura_landcare_survey_submissions_internal ({', '.join(columns)})
@@ -193,15 +251,19 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/public/approved-evidence")
-def approved_evidence() -> JSONResponse:
-    """Public GeoJSON feed: approved records only, for the GitHub Pages Monitor."""
+@app.get("/public/evidence-parcels")
+def evidence_parcels() -> JSONResponse:
+    """Public canonical polygon feed for ArcGIS and Map Monitor.
+
+    Never return the Survey123 point geometry here.  A record reaches this feed
+    only after its photo, parcel, period, contractor, and assignment ID match.
+    """
     dsn = env("LANDCARE_PG_DSN")
     sql = """
-      SELECT source_global_id, parcelnumb, address, maintained_by, service_date,
-             submitted_at, image_url, reviewed_at, lat, lon
-      FROM gis.landcare_approved_survey_evidence
-      WHERE image_url IS NOT NULL
+      SELECT source_global_id, parcel_number, address, maintained_by,
+             assignment_period, assignment_object_id, submitted_at,
+             image_attachment_url, assignment_geometry
+      FROM gis.landcare_survey_evidence_parcels
       ORDER BY submitted_at DESC NULLS LAST
       LIMIT 10000
     """
@@ -211,19 +273,17 @@ def approved_evidence() -> JSONResponse:
         rows = [dict(zip(fields, row)) for row in cursor.fetchall()]
     features = []
     for row in rows:
-        longitude, latitude = row.pop("lon"), row.pop("lat")
+        geometry = row.pop("assignment_geometry")
+        if isinstance(geometry, str):
+            geometry = json.loads(geometry)
         features.append({
             "type": "Feature",
             "id": str(row.pop("source_global_id")),
-            # A selected parcel can supply the geometry in Map Monitor, so do
-            # not hide approved photo evidence merely because a survey lacks a
-            # device location. GeoJSON permits a null geometry.
-            "geometry": (
-                {"type": "Point", "coordinates": [float(longitude), float(latitude)]}
-                if longitude is not None and latitude is not None
-                else None
-            ),
-            "properties": {key: value.isoformat() if hasattr(value, "isoformat") else value for key, value in row.items()},
+            "geometry": {"type": "Polygon", "coordinates": geometry["rings"]},
+            "properties": {
+                key: value.isoformat() if hasattr(value, "isoformat") else value
+                for key, value in row.items()
+            },
         })
     return JSONResponse(
         {"type": "FeatureCollection", "features": features},
@@ -253,9 +313,15 @@ async def survey123_webhook(request: FastApiRequest, x_landcare_webhook_token: s
         attachment_url, attachment_name = fetch_arcgis_attachment_url(object_id) if object_id is not None else (None, None)
         record = normalise_submission(feature, attachment_url=attachment_url)
         record["image_attachment_name"] = attachment_name
-        synced = upsert_approved_submission(record)
+        if not attachment_url:
+            raise ValueError("Survey123 submission needs at least one image attachment")
+        if not record.get("assignment_object_id"):
+            raise ValueError("Survey123 submission is missing assignment_object_id")
+        assignment = fetch_assignment_feature(record["assignment_object_id"])
+        record = attach_canonical_assignment(record, assignment)
+        synced = upsert_canonical_submission(record)
         mark_event(key)
-        return {"status": "synced" if synced else "pending", "source_global_id": record["source_global_id"]}
+        return {"status": "synced" if synced else "invalid", "source_global_id": record["source_global_id"]}
     except Exception as error:
         mark_event(key, str(error))
         LOG.exception("Survey123 webhook processing failed")

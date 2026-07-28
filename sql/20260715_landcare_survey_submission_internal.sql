@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS gis.ura_landcare_survey_submissions_internal (
   parcel_number text NOT NULL,
   address text,
   maintained_by text NOT NULL,
+  assignment_period text,
+  assignment_object_id bigint,
+  assignment_geometry jsonb,
   service_date date,
   submitted_at timestamptz,
   first_visit boolean,
@@ -34,10 +37,19 @@ CREATE TABLE IF NOT EXISTS gis.ura_landcare_survey_submissions_internal (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Existing VM deployments created this table before polygon evidence was
+-- introduced, so make the migration additive and safe to re-run.
+ALTER TABLE gis.ura_landcare_survey_submissions_internal
+  ADD COLUMN IF NOT EXISTS assignment_period text,
+  ADD COLUMN IF NOT EXISTS assignment_object_id bigint,
+  ADD COLUMN IF NOT EXISTS assignment_geometry jsonb;
+
 CREATE INDEX IF NOT EXISTS ura_landcare_survey_submissions_internal_parcel_idx
   ON gis.ura_landcare_survey_submissions_internal (parcel_number);
 CREATE INDEX IF NOT EXISTS ura_landcare_survey_submissions_internal_approved_idx
   ON gis.ura_landcare_survey_submissions_internal (approval_status, reviewed_at DESC);
+CREATE INDEX IF NOT EXISTS ura_landcare_survey_submissions_internal_assignment_idx
+  ON gis.ura_landcare_survey_submissions_internal (assignment_object_id, assignment_period);
 
 CREATE TABLE IF NOT EXISTS gis.ura_landcare_survey_webhook_events (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -85,5 +97,21 @@ SELECT
   'approved_internal_survey123'::text AS evidence_source
 FROM gis.ura_landcare_survey_submissions_internal
 WHERE approval_status = 'approved';
+
+CREATE OR REPLACE VIEW gis.landcare_survey_evidence_parcels AS
+SELECT
+  source_global_id,
+  parcel_number,
+  address,
+  maintained_by,
+  assignment_period,
+  assignment_object_id,
+  submitted_at,
+  image_attachment_url,
+  assignment_geometry
+FROM gis.ura_landcare_survey_submissions_internal
+WHERE approval_status = 'approved'
+  AND image_attachment_url IS NOT NULL
+  AND assignment_geometry IS NOT NULL;
 
 COMMIT;
