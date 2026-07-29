@@ -46,6 +46,8 @@ if not defined PSQL_PATH (
 
 echo.
 if "%LANDCARE_PG_DSN%"=="" (
+  if "%PG_HOST%"=="" set "PG_HOST=localhost"
+  if "%PG_PORT%"=="" set "PG_PORT=5432"
   set "PGPASSWORD=%PG_PWD%"
   set "PGCONNECT=-h %PG_HOST% -p %PG_PORT% -U %PG_USER% -d %PG_DB%"
 ) else (
