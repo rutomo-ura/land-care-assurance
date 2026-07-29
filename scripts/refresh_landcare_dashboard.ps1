@@ -1,5 +1,5 @@
 param(
-  [string]$RepoRoot = "C:\srv\land-care-assurance",
+  [string]$RepoRoot = "C:\srv\GISWebApp\land-care-assurance",
   [string]$Python = "$RepoRoot\.venv\Scripts\python.exe",
   [string]$ArcGisPython = "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe",
   [string]$SecretsFile = "C:\srv\secrets\.env",
