@@ -23,7 +23,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260729-evidence-photo";
+} from "./survey-layer.js?v=20260729-evidence-photo-final";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
