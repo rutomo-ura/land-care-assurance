@@ -671,7 +671,6 @@ function renderLegend() {
       <button class="legend-item legend-button ${state.contractorFilter === item.name ? "is-active" : ""}" type="button" data-contractor="${escapeHtml(item.name)}">
         <span class="legend-swatch" style="background:${item.color}"></span>
         <strong>${escapeHtml(item.label)}</strong>
-        <span>${formatNumber(item.count)}</span>
       </button>
     `).join("");
     return;
@@ -692,12 +691,10 @@ function renderLegend() {
   const statuses = state.dataView === "current"
     ? ["current_active", "request_only"]
     : ["returned", "missing", "request_only"];
-  const allCount = uniqueCount(legendFeatures);
   const allButton = state.dataView === "history"
     ? `<button class="legend-item legend-button ${state.landcareStatusFilter === "all" ? "is-active" : ""}" type="button" data-landcare-status="all">
         <span class="legend-swatch" style="background:#8a8f98"></span>
         <strong>All LandCare status</strong>
-        <span>${formatNumber(allCount)}</span>
       </button>`
     : "";
   list.innerHTML = allButton + statuses
@@ -715,7 +712,6 @@ function renderLegend() {
       <${tag} ${attrs}>
         <span class="legend-swatch" style="background:${color}"></span>
         <strong>${statusLabel(status)}</strong>
-        <span>${formatNumber(counts[status]?.size || 0)}</span>
       </${tag}>
     `;
     }).join("");
