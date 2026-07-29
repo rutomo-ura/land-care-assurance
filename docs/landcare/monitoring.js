@@ -886,12 +886,7 @@ async function enrichWithSurveyEvidence(props) {
     .flatMap((record) => record.evidence_photos || []);
   let evidence = state.evidenceCache.get(cacheKey);
   if (evidence === undefined) {
-    try {
-      evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod);
-    } catch (error) {
-      console.warn("Unable to load Regrid evidence for selected parcel", { parcelKey, selectedPeriod, error });
-      evidence = [];
-    }
+    evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod).catch(() => []);
     state.evidenceCache.set(cacheKey, evidence);
   }
   const periodPhotos = [
@@ -1309,6 +1304,8 @@ async function selectParcelSearchResult(feature) {
       ? { ...props, ownership_group: group, history_note: `No assignment in ${state.selectedMonth}.` }
       : props;
   setParcelDetail(detail);
+  const enriched = await enrichWithSurveyEvidence(detail);
+  setParcelDetail(enriched);
   const center = featureCenter(feature);
   if (center) await state.view?.goTo({ center, zoom: 18 }, { duration: 500 }).catch(() => {});
 }
