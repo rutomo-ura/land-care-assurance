@@ -63,7 +63,7 @@ LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL=https://services1.arcgis.com/0DMNBNaacQNEf
 ```
 
 The legacy receiver and `/public/evidence-parcels` GeoJSON route are retired.
-Apply `URA-Data-Repository/sql/20260728_landcare_survey123_evidence_parcels.sql`, then run the upstream receiver behind the URA HTTPS reverse proxy:
+Apply `sql/20260728_landcare_survey123_evidence_parcels.sql`, then run the receiver behind the URA HTTPS reverse proxy:
 
 ```powershell
 python -m uvicorn landcare_survey123_webhook:app --host 127.0.0.1 --port 8091

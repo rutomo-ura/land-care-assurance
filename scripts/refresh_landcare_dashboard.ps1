@@ -1,7 +1,6 @@
 param(
   [string]$RepoRoot = "C:\srv\land-care-assurance",
   [string]$Python = "$RepoRoot\.venv\Scripts\python.exe",
-  [string]$UpstreamRepoRoot = "C:\srv\URA-Data-Repository",
   [string]$ArcGisPython = "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe",
   [string]$LogRoot = "C:\srv\logs\land-care-assurance",
   [string]$Branch = "master",
@@ -169,24 +168,18 @@ try {
     & $Python -m pip install -r requirements-landcare-refresh.txt
   }
 
-  # The upstream repository owns Survey123 ingestion, canonical PostGIS
-  # evidence, and its stable ArcGIS polygon layer. Keep this explicitly gated
-  # until the VM migration, publisher profile, and item ID are configured.
+  # This repository owns Survey123 ingestion, canonical PostGIS evidence, and
+  # the stable ArcGIS polygon layer. Keep it gated until the VM migration,
+  # publisher profile, and item ID are configured.
   if ($env:LANDCARE_SURVEY_EVIDENCE_ENABLED -eq "true") {
-    if (-not (Test-Path -LiteralPath $UpstreamRepoRoot)) {
-      throw "LANDCARE_SURVEY_EVIDENCE_ENABLED=true but upstream repository was not found: $UpstreamRepoRoot"
-    }
     if (-not (Test-Path -LiteralPath $ArcGisPython)) {
       throw "LANDCARE_SURVEY_EVIDENCE_ENABLED=true but ArcGIS Pro Python was not found: $ArcGisPython"
     }
-    Invoke-Checked "Pull upstream Survey123 evidence publisher" {
-      git -C $UpstreamRepoRoot pull --ff-only origin main
-    }
     Invoke-Checked "Reconcile Survey123 evidence to canonical parcels" {
-      & $Python "$UpstreamRepoRoot\survey123_evidence_sync.py"
+      & $Python survey123_evidence_sync.py
     }
     Invoke-Checked "Publish Survey123 evidence parcel layer" {
-      & $ArcGisPython "$UpstreamRepoRoot\publish_landcare_survey_evidence_parcels.py"
+      & $ArcGisPython publish_landcare_survey_evidence_parcels.py
     }
   }
 
