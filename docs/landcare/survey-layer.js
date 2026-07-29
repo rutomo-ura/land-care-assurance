@@ -104,7 +104,10 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
     const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
       f: "json",
       where: `period_label = '${safePeriod}'`,
-      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url,original_url",
+      // The published Regrid feature layer exposes the resolved target as
+      // image_url. `original_url` belongs to the raw export and is not a
+      // public layer field; asking ArcGIS for it rejects the entire query.
+      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url",
       returnGeometry: "false",
       resultRecordCount: String(pageSize),
       resultOffset: String(offset),
@@ -128,7 +131,7 @@ export async function fetchSurveyEvidenceForParcel(parcelNumber, periodLabel = n
   const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
     f: "json",
     where: clauses.join(" AND "),
-    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,original_url,owner",
+    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,owner",
     returnGeometry: "false",
     orderByFields: "created_at DESC",
     resultRecordCount: "50"
