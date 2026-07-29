@@ -20,6 +20,8 @@ REQUIRED_DATA_FILES = [
     "all_months.geojson",
     "latest_month.geojson",
     "finance_summary.json",
+    "quarterly_metrics.json",
+    "area_compliance.json",
 ]
 
 
@@ -176,6 +178,90 @@ def validate_finance_summary(finance: dict[str, Any]) -> None:
     if not isinstance(annual_run_rate, (int, float)) or annual_run_rate <= 0:
         raise ValidationError(f"finance annual_invoice_run_rate must be positive; got {annual_run_rate!r}")
 
+    actual_source = finance.get("actual_invoice_source", {})
+    if not isinstance(actual_source, dict) or actual_source.get("status") not in {"available", "unavailable"}:
+        raise ValidationError("finance_summary.json has an invalid actual_invoice_source status")
+    invoices = finance.get("actual_invoices", [])
+    if not isinstance(invoices, list):
+        raise ValidationError("finance_summary.json actual_invoices must be a list")
+    invoice_ids: set[str] = set()
+    for invoice in invoices:
+        if not isinstance(invoice, dict) or not invoice.get("invoice_id"):
+            raise ValidationError("finance_summary.json has an actual invoice without invoice_id")
+        invoice_id = str(invoice["invoice_id"])
+        if invoice_id in invoice_ids:
+            raise ValidationError(f"finance_summary.json has duplicate invoice ID {invoice_id!r}")
+        invoice_ids.add(invoice_id)
+    if actual_source.get("status") == "available" and not invoices:
+        warnings.warn("NetSuite source is marked available but contains no invoice rows.", stacklevel=2)
+
+
+def validate_quarterly_metrics(payload: Any) -> None:
+    if not isinstance(payload, dict) or not isinstance(payload.get("quarters"), list):
+        raise ValidationError("quarterly_metrics.json missing quarters")
+    seen_quarters: set[str] = set()
+    for row in payload["quarters"]:
+        if not isinstance(row, dict):
+            raise ValidationError("quarterly_metrics.json contains an invalid quarter row")
+        quarter = str(row.get("quarter") or "")
+        if len(quarter) != 7 or quarter[4:] not in {"-Q1", "-Q2", "-Q3", "-Q4"} or not quarter[:4].isdigit():
+            raise ValidationError(f"quarterly_metrics.json has invalid quarter {quarter!r}")
+        if quarter in seen_quarters:
+            raise ValidationError(f"quarterly_metrics.json has duplicate quarter {quarter!r}")
+        seen_quarters.add(quarter)
+        months = row.get("months")
+        if not isinstance(months, list) or not months:
+            raise ValidationError(f"quarterly_metrics.json {quarter} has no month rows")
+        for measure in ("active_assignments", "returned_assignments", "open_assignments", "request_only_assignments"):
+            if not isinstance(row.get(measure), int) or row[measure] < 0:
+                raise ValidationError(f"quarterly_metrics.json {quarter} has invalid {measure}")
+            month_total = sum(int(month.get(measure, 0)) for month in months if isinstance(month, dict))
+            if month_total != row[measure]:
+                raise ValidationError(f"quarterly_metrics.json {quarter} {measure} does not reconcile to monthly rows")
+        if row["open_assignments"] != row["active_assignments"] - row["returned_assignments"]:
+            raise ValidationError(f"quarterly_metrics.json {quarter} open assignments do not reconcile")
+        for owner in row.get("owner_breakdown", []):
+            if not isinstance(owner, dict) or owner.get("ownership_group") not in {"URA", "PLB"}:
+                raise ValidationError(f"quarterly_metrics.json {quarter} has unsupported ownership data")
+            area = owner.get("sq_footage")
+            if area is not None and (not isinstance(area, (int, float)) or area < 0):
+                raise ValidationError(f"quarterly_metrics.json {quarter} has invalid ownership square footage")
+
+
+def validate_area_compliance(payload: Any) -> None:
+    if not isinstance(payload, dict) or not isinstance(payload.get("rows"), list):
+        raise ValidationError("area_compliance.json missing rows")
+    seen: set[tuple[str, str]] = set()
+    statuses = {"within_limit", "above_limit", "below_limit", "baseline_unavailable"}
+    for row in payload["rows"]:
+        if not isinstance(row, dict):
+            raise ValidationError("area_compliance.json contains an invalid row")
+        key = (str(row.get("period_month") or ""), str(row.get("organization") or ""))
+        if not all(key):
+            raise ValidationError("area_compliance.json has a row without period_month or organization")
+        if key in seen:
+            raise ValidationError(f"area_compliance.json has duplicate contractor-period {key!r}")
+        seen.add(key)
+        status = row.get("compliance_status")
+        if status not in statuses:
+            raise ValidationError(f"area_compliance.json has unsupported compliance status {status!r}")
+        baseline = row.get("baseline_sqft")
+        if status == "baseline_unavailable":
+            if baseline is not None:
+                raise ValidationError("baseline_unavailable rows cannot contain a baseline_sqft")
+            continue
+        assigned = row.get("assigned_sqft")
+        limits = (row.get("lower_limit_sqft"), row.get("upper_limit_sqft"))
+        if not isinstance(baseline, (int, float)) or baseline <= 0 or not isinstance(assigned, (int, float)):
+            raise ValidationError("area compliance rows with a baseline require positive baseline and assigned_sqft")
+        if not all(isinstance(limit, (int, float)) for limit in limits):
+            raise ValidationError("area compliance rows with a baseline require lower and upper limits")
+        if round(float(limits[0]), 2) != round(float(baseline) * 0.9, 2) or round(float(limits[1]), 2) != round(float(baseline) * 1.1, 2):
+            raise ValidationError("area compliance limits do not match the contractual ±10% band")
+        expected_status = "within_limit" if limits[0] <= assigned <= limits[1] else "above_limit" if assigned > limits[1] else "below_limit"
+        if status != expected_status:
+            raise ValidationError("area compliance status does not match assigned square footage")
+
 
 def validate_daily_refresh(args: argparse.Namespace) -> None:
     data_dir = args.data_dir
@@ -274,6 +360,8 @@ def validate_daily_refresh(args: argparse.Namespace) -> None:
 
     validate_latest_status_counts(latest_summary)
     validate_finance_summary(payloads["finance_summary.json"])
+    validate_quarterly_metrics(payloads["quarterly_metrics.json"])
+    validate_area_compliance(payloads["area_compliance.json"])
 
 
 def main() -> None:

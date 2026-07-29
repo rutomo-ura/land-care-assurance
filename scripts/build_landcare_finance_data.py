@@ -97,6 +97,7 @@ def build_summary(source: Path) -> dict[str, Any]:
     total_acres = sum(row["acres"] for row in current_rows)
     return {
         "metadata": {
+            "schema_version": 2,
             "generated_on": date.today().isoformat(),
             "source_kind": "landcare_budget_workbook",
             "source_file": str(source),
@@ -122,6 +123,25 @@ def build_summary(source: Path) -> dict[str, Any]:
         },
         "current_contracts": current_rows,
         "check_request_history": history_rows,
+        "actual_invoices": [],
+        "actual_invoice_source": {
+            "status": "unavailable",
+            "message": "NetSuite actual invoices have not been configured for this published snapshot.",
+            "refreshed_at": None,
+        },
+        "owner_quarter_responsibility": [],
+        "owner_responsibility_source": {
+            "status": "unavailable",
+            "message": "Approved Power BI ownership responsibility output has not been imported.",
+            "formula_version": None,
+            "refreshed_at": None,
+        },
+        "contract_area_baselines": [],
+        "contract_area_baseline_source": {
+            "status": "unavailable",
+            "message": "Approved Power BI beginning-of-contract area baseline has not been imported.",
+            "refreshed_at": None,
+        },
     }
 
 

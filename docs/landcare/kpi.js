@@ -26,7 +26,7 @@ import {
   ASSIGNMENT_HISTORY_LAYER_URL,
   ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
   ASSIGNMENT_HISTORY_AGOL_ITEM_URL
-} from "./assignment-layer.js";
+} from "./assignment-layer.js?v=20260729-assignment-bundle";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -85,6 +85,15 @@ function formatMoneyCompact(value) {
 
 function formatAcres(value) {
   return `${formatter.format(Number(value || 0).toFixed(1))}`;
+}
+
+function formatSquareFeet(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "Unavailable";
+  return `${formatter.format(Math.round(Number(value)))} sq ft`;
+}
+
+function formatOptionalMoney(value) {
+  return value === null || value === undefined || value === "" ? "Unavailable" : formatMoney(value);
 }
 
 function dateKeyFromParts(parts) {
@@ -193,15 +202,6 @@ function contractMonthsInQuarter(row, quarter) {
   }).length;
 }
 
-function rowsOverlappingQuarter(rows, quarter) {
-  if (!quarter) return [];
-  return (rows || []).filter((row) => {
-    const start = isoDate(row.start_date);
-    const end = isoDate(row.end_date);
-    return start && end && start <= quarter.end && end >= quarter.start;
-  });
-}
-
 function buildQuarterFinance(financeSummary, selectedQuarterKey) {
   const quarter = quarterBounds(selectedQuarterKey);
   const rows = (financeSummary.current_contracts || [])
@@ -211,24 +211,57 @@ function buildQuarterFinance(financeSummary, selectedQuarterKey) {
       const quarterlyForecast = Number(row.monthly_invoice_amount || 0) * row.active_months_in_quarter;
       return {
         ...row,
-        quarterly_forecast: quarterlyForecast,
-        quarterly_cost_per_acre: Number(row.acres || 0) ? quarterlyForecast / Number(row.acres) : 0
+        quarterly_forecast: quarterlyForecast
       };
     });
-  const acres = rows.reduce((sum, row) => sum + Number(row.acres || 0), 0);
   const parcels = rows.reduce((sum, row) => sum + Number(row.parcels || 0), 0);
   const monthlyInvoice = rows.reduce((sum, row) => sum + Number(row.monthly_invoice_amount || 0), 0);
   const quarterlyForecast = rows.reduce((sum, row) => sum + Number(row.quarterly_forecast || 0), 0);
   return {
     label: quarterLabelFromKey(selectedQuarterKey),
     rows,
-    checkRequestRows: rowsOverlappingQuarter(financeSummary.check_request_history, quarter),
-    acres,
     parcels,
     monthlyInvoice,
     quarterlyForecast,
-    quarterlyCostPerAcre: acres ? quarterlyForecast / acres : 0,
     monthlyCostPerParcel: parcels ? monthlyInvoice / parcels : 0
+  };
+}
+
+function buildYearFinance(financeSummary, selectedYear) {
+  const year = Number(selectedYear);
+  const start = new Date(Date.UTC(year, 0, 1));
+  const end = new Date(Date.UTC(year, 11, 31));
+  const now = new Date();
+  const monthsThroughDate = year < now.getFullYear()
+    ? 12
+    : year > now.getFullYear()
+      ? 0
+      : now.getMonth() + 1;
+  const rows = (financeSummary.current_contracts || []).map((row) => {
+    const contractStart = isoDate(row.start_date);
+    const contractEnd = isoDate(row.end_date);
+    if (!contractStart || !contractEnd || contractStart > end || contractEnd < start) return null;
+    let activeMonths = 0;
+    let activeMonthsToDate = 0;
+    for (let month = 0; month < 12; month += 1) {
+      const monthStart = new Date(Date.UTC(year, month, 1));
+      const monthEnd = new Date(Date.UTC(year, month + 1, 0));
+      if (contractStart <= monthEnd && contractEnd >= monthStart) {
+        activeMonths += 1;
+        if (month < monthsThroughDate) activeMonthsToDate += 1;
+      }
+    }
+    return {
+      ...row,
+      annual_expected: Number(row.monthly_invoice_amount || 0) * activeMonths,
+      expected_to_date: Number(row.monthly_invoice_amount || 0) * activeMonthsToDate,
+    };
+  }).filter(Boolean).filter((row) => row.annual_expected > 0);
+  return {
+    label: String(year),
+    rows,
+    annualExpected: rows.reduce((sum, row) => sum + row.annual_expected, 0),
+    expectedToDate: rows.reduce((sum, row) => sum + row.expected_to_date, 0),
   };
 }
 
@@ -928,43 +961,24 @@ function renderContractorGroupedChart(rows, selected = "all", latestMonth = "") 
   }).join("");
 }
 
-function aggregateAssignmentArea(geojson, selectedMonth) {
-  const byContractor = new Map();
-  for (const feature of geojson.features || []) {
-    const props = feature.properties || {};
-    if (props.period_month !== selectedMonth || !props.parcel_key) continue;
-    const organization = normalizeContractorName(props.organization);
-    const row = byContractor.get(organization) || { organization, parcels: new Map() };
-    if (!row.parcels.has(props.parcel_key)) row.parcels.set(props.parcel_key, Number(props.acreage || 0));
-    byContractor.set(organization, row);
-  }
-  return [...byContractor.values()]
-    .map((row) => ({
-      organization: row.organization,
-      currentParcels: row.parcels.size,
-      currentAcres: [...row.parcels.values()].reduce((sum, acres) => sum + acres, 0)
-    }))
-    .sort((a, b) => b.currentAcres - a.currentAcres);
-}
-
 function renderAreaDistribution(rows, selectedMonth) {
-  const maxAcres = Math.max(1, ...rows.map((row) => Number(row.currentAcres || 0)));
+  const maxSquareFeet = Math.max(1, ...rows.map((row) => Number(row.assigned_sqft || 0)));
   document.getElementById("areaDistributionChart").innerHTML = rows.map((row) => `
     <div class="grouped-row single-bar-row">
       <div class="grouped-label">
         <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-        <span>${formatNumber(row.currentParcels)} parcels</span>
+        <span>${formatNumber(row.assigned_parcels)} parcels · ${escapeHtml(String(row.compliance_status || "baseline_unavailable").replaceAll("_", " "))}</span>
       </div>
       <div class="grouped-bars">
-        <span class="grouped-bar assigned" style="width:${Math.max((100 * row.currentAcres) / maxAcres, 2)}%"></span>
+        <span class="grouped-bar assigned" style="width:${Math.max((100 * Number(row.assigned_sqft || 0)) / maxSquareFeet, 2)}%"></span>
       </div>
       <div class="grouped-values">
-        <span>${formatAcres(row.currentAcres)} ac</span>
+        <span>${formatSquareFeet(row.assigned_sqft)}</span>
       </div>
     </div>
   `).join("");
   const summary = document.getElementById("areaDistributionSummary");
-  if (summary) summary.textContent = `${shortMonth(selectedMonth)} assignment acreage, ranked by organization`;
+  if (summary) summary.textContent = `${shortMonth(selectedMonth)} assignment square footage, ranked by organization`;
 }
 
 function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = formatMoney) {
@@ -976,7 +990,7 @@ function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = forma
       <div class="grouped-row single-bar-row">
         <div class="grouped-label">
           <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-          <span>${formatNumber(row.parcels)} parcels / ${formatAcres(row.acres)} ac</span>
+          <span>${formatNumber(row.parcels)} parcels / ${formatSquareFeet(row.sq_footage || Number(row.acres || 0) * 43560)}</span>
         </div>
         <div class="grouped-bars">
           <span class="grouped-bar assigned" style="width:${Math.max((100 * value) / maxValue, 2)}%"></span>
@@ -992,27 +1006,145 @@ function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = forma
 function renderFinance(financeSummary, selectedQuarter) {
   const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
   const rows = quarterFinance.rows;
-  document.getElementById("annualRunRateKpi").textContent = formatMoney(quarterFinance.quarterlyForecast);
-  document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(quarterFinance.monthlyInvoice);
-  document.getElementById("totalContractKpi").textContent = `${formatAcres(quarterFinance.acres)} ac`;
-  document.getElementById("financeContractorsKpi").textContent = formatNumber(rows.length);
-  document.getElementById("annualCostPerAcreKpi").textContent = formatMoney(quarterFinance.quarterlyCostPerAcre);
+  const squareFeet = rows.reduce((sum, row) => sum + Number(row.sq_footage || 0), 0);
+  document.getElementById("quarterForecastPerSqFtKpi").textContent = formatMoney(squareFeet ? quarterFinance.quarterlyForecast / squareFeet : 0);
   document.getElementById("monthlyCostPerParcelKpi").textContent = formatMoney(quarterFinance.monthlyCostPerParcel);
-  document.getElementById("contractAcresKpi").textContent = `${formatAcres(quarterFinance.acres)} ac`;
+  document.getElementById("contractAcresKpi").textContent = formatSquareFeet(squareFeet);
   document.getElementById("contractParcelsKpi").textContent = formatNumber(quarterFinance.parcels);
   document.getElementById("quarterlyForecastNote").textContent = `${quarterFinance.label} · monthly invoice × active contract months`;
-  renderMoneyBarChart("budgetContractChart", rows, "quarterly_forecast");
-  renderMoneyBarChart("expenseIntensityChart", rows, "quarterly_cost_per_acre");
-  renderCheckRequestTable(quarterFinance.checkRequestRows);
+  renderMoneyBarChart("expenseIntensityChart", rows, "quarterly_forecast");
   renderMaintenanceExpenseTable(rows);
-  const requestSummary = document.getElementById("checkRequestSummary");
-  if (requestSummary) requestSummary.textContent = quarterFinance.checkRequestRows.length
-    ? `${quarterFinance.checkRequestRows.length} source record(s) overlapping ${quarterFinance.label}`
-    : `No documented request records overlap ${quarterFinance.label}`;
   const note = `Finance workbook · refreshed ${financeSummary.metadata?.generated_on || "unknown"}`;
   const scopedNote = `${note} · ${quarterFinance.label} contract forecast`;
   document.getElementById("financeSourceNote").textContent = scopedNote;
   document.getElementById("expenseSourceNote").textContent = scopedNote;
+}
+
+function renderBudget(financeSummary, selectedYear) {
+  const yearFinance = buildYearFinance(financeSummary, selectedYear);
+  const actualAvailable = financeSummary.actual_invoice_source?.status === "available";
+  const actualToDate = actualAvailable
+    ? (financeSummary.actual_invoices || [])
+      .filter((invoice) => String(invoice.posting_date || invoice.invoice_date || "").startsWith(String(selectedYear)))
+      .reduce((sum, invoice) => sum + Number(invoice.actual_amount || invoice.amount || 0), 0)
+    : null;
+  document.getElementById("annualRunRateKpi").textContent = formatMoney(yearFinance.annualExpected);
+  document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(yearFinance.expectedToDate);
+  document.getElementById("totalContractKpi").textContent = formatOptionalMoney(actualToDate);
+  document.getElementById("financeContractorsKpi").textContent = actualToDate === null
+    ? "Unavailable"
+    : formatMoney(yearFinance.annualExpected - actualToDate);
+  document.getElementById("quarterlyForecastNote").textContent = actualAvailable
+    ? `${selectedYear} contract expectation; actuals from NetSuite`
+    : `${selectedYear} contract expectation; actual NetSuite feed unavailable`;
+  renderMoneyBarChart("budgetContractChart", yearFinance.rows, "annual_expected");
+}
+
+function dayOfMonth(dateKey) {
+  return String(dateFromKey(dateKey).getUTCDate());
+}
+
+function renderInvoices(financeSummary, selectedQuarter) {
+  const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
+  const actualStatus = financeSummary.actual_invoice_source?.status || "unavailable";
+  const actualByOrganization = new Map();
+  for (const invoice of financeSummary.actual_invoices || []) {
+    const key = normalizeContractorName(invoice.organization || invoice.vendor);
+    actualByOrganization.set(key, (actualByOrganization.get(key) || 0) + Number(invoice.actual_amount || invoice.amount || 0));
+  }
+  const rows = quarterFinance.rows.map((row) => {
+    const actual = actualStatus === "available" ? actualByOrganization.get(normalizeContractorName(row.organization)) ?? 0 : null;
+    return {
+      invoice_id: actualStatus === "available" ? "Posted NetSuite invoice(s)" : "Expected invoice forecast",
+      organization: row.organization,
+      service_period: quarterFinance.label,
+      invoice_date: actualStatus === "available" ? "Posted transaction date" : "—",
+      expected_amount: row.quarterly_forecast,
+      actual_amount: actual,
+      variance: actual === null ? null : actual - Number(row.quarterly_forecast || 0),
+      status: actualStatus === "available" ? "Posted" : "Expected · actual unavailable",
+      reference: actualStatus === "available" ? "NetSuite" : "Workbook contract schedule"
+    };
+  });
+  renderTable(document.getElementById("invoiceTable"), [
+    { label: "Invoice", value: (row) => row.invoice_id },
+    { label: "Contractor", value: (row) => shortContractor(row.organization) },
+    { label: "Service period", value: (row) => row.service_period },
+    { label: "Invoice / posting date", value: (row) => row.invoice_date },
+    { label: "Expected", value: (row) => formatMoney(row.expected_amount) },
+    { label: "Actual", value: (row) => formatOptionalMoney(row.actual_amount) },
+    { label: "Variance", value: (row) => formatOptionalMoney(row.variance) },
+    { label: "Status", value: (row) => row.status },
+    { label: "Source", value: (row) => row.reference }
+  ], rows);
+  document.getElementById("invoiceSummary").textContent = actualStatus === "available"
+    ? `${rows.length} contractor invoice comparison(s) in ${quarterFinance.label}`
+    : `${rows.length} expected contractor invoice forecast(s) in ${quarterFinance.label}; actual NetSuite invoices are unavailable.`;
+  document.getElementById("financeSourceNote").textContent = actualStatus === "available"
+    ? `Expected: workbook; actual: NetSuite · ${quarterFinance.label}`
+    : `Expected: finance workbook · actual NetSuite feed unavailable · ${quarterFinance.label}`;
+}
+
+function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuarter) {
+  const quarter = (quarterlyMetrics?.quarters || []).find((row) => row.quarter === selectedQuarter);
+  if (!quarter) return;
+  document.getElementById("quarterActiveKpi").textContent = formatNumber(quarter.active_assignments);
+  document.getElementById("quarterReturnedKpi").textContent = formatNumber(quarter.returned_assignments);
+  document.getElementById("quarterOpenKpi").textContent = formatNumber(quarter.open_assignments);
+  document.getElementById("quarterParcelsKpi").textContent = formatNumber(quarter.distinct_parcels);
+  document.getElementById("quarterThroughNote").textContent = `${quarterLabelFromKey(selectedQuarter)}${quarter.is_complete ? " complete" : ` through ${shortMonth(quarter.through_month)}`}`;
+  document.getElementById("quarterCompletionNote").textContent = `${formatPct(quarter.completion_rate_pct)} active completion`;
+  document.getElementById("quarterContractorsNote").textContent = `${formatNumber(quarter.contractors)} contractors`;
+  renderTable(document.getElementById("quarterMonthlyTable"), [
+    { label: "Month", value: (row) => shortMonth(row.period_month) },
+    { label: "Active", value: (row) => formatNumber(row.active_assignments) },
+    { label: "Returned", value: (row) => formatNumber(row.returned_assignments) },
+    { label: "Open", value: (row) => formatNumber(row.open_assignments) },
+    { label: "Request only", value: (row) => formatNumber(row.request_only_assignments) },
+    { label: "Completion", value: (row) => formatPct(row.completion_rate_pct) }
+  ], quarter.months || []);
+  const totalSquareFeet = (quarter.owner_breakdown || []).reduce((sum, row) => sum + Number(row.sq_footage || 0), 0);
+  const responsibility = financeSummary.owner_quarter_responsibility || [];
+  const ownershipRows = (quarter.owner_breakdown || []).map((row) => {
+    const finance = responsibility.find((item) => item.quarter === selectedQuarter && item.ownership_group === row.ownership_group);
+    return {
+      ...row,
+      share_pct: totalSquareFeet ? (100 * Number(row.sq_footage || 0)) / totalSquareFeet : null,
+      expected_responsibility: finance?.expected_responsibility ?? null,
+      billed_amount: finance?.billed_amount ?? null,
+      paid_amount: finance?.paid_amount ?? null,
+      outstanding_balance: finance?.outstanding_balance ?? null,
+    };
+  });
+  renderTable(document.getElementById("quarterOwnershipTable"), [
+    { label: "Owner", value: (row) => row.ownership_group },
+    { label: "Parcels", value: (row) => formatNumber(row.parcels) },
+    { label: "Square feet", value: (row) => formatSquareFeet(row.sq_footage) },
+    { label: "Portfolio share", value: (row) => row.share_pct === null ? "Unavailable" : formatPct(row.share_pct) },
+    { label: "Expected responsibility", value: (row) => formatOptionalMoney(row.expected_responsibility) },
+    { label: "Billed", value: (row) => formatOptionalMoney(row.billed_amount) },
+    { label: "Paid", value: (row) => formatOptionalMoney(row.paid_amount) },
+    { label: "Outstanding", value: (row) => formatOptionalMoney(row.outstanding_balance) }
+  ], ownershipRows);
+  document.getElementById("quarterOwnershipNote").textContent = financeSummary.owner_responsibility_source?.status === "available"
+    ? `Approved Power BI formula output · ${financeSummary.owner_responsibility_source?.formula_version || "version not supplied"}`
+    : "Square footage is awaiting the refreshed assignment export; Power BI responsibility formula output has not been imported.";
+}
+
+function renderAreaCompliance(areaCompliance, selectedMonth) {
+  const rows = (areaCompliance?.rows || []).filter((row) => row.period_month === selectedMonth);
+  renderAreaDistribution(rows, selectedMonth);
+  renderTable(document.getElementById("areaComplianceTable"), [
+    { label: "Contractor", value: (row) => shortContractor(row.organization) },
+    { label: "Assigned square feet", value: (row) => formatSquareFeet(row.assigned_sqft) },
+    { label: "Baseline", value: (row) => formatSquareFeet(row.baseline_sqft) },
+    { label: "Allowed range", value: (row) => row.lower_limit_sqft === null ? "Unavailable" : `${formatSquareFeet(row.lower_limit_sqft)} – ${formatSquareFeet(row.upper_limit_sqft)}` },
+    { label: "Variance", value: (row) => row.variance_pct === null ? "Unavailable" : formatPct(row.variance_pct) },
+    { label: "Status", value: (row) => String(row.compliance_status || "baseline_unavailable").replaceAll("_", " ") }
+  ], rows);
+  document.getElementById("areaComplianceSourceNote").textContent = areaCompliance?.metadata?.source_status === "available"
+    ? "Approved Power BI beginning-of-contract baselines applied."
+    : "Baseline unavailable: Power BI beginning-of-contract square-foot import is required before compliance can be evaluated.";
 }
 
 function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
@@ -1211,7 +1343,7 @@ function renderMtdCompletionComparison(comparison) {
         <path class="daily-line-hit" d="${pathFor(days, "currentRate", "currentDate")}" data-series="current" tabindex="0" role="button" aria-label="Hover for selected-period daily detail"></path>
         ${previousDays.map((day, index) => `<circle class="daily-hover-marker mtd-previous-hover" style="--series-color:#6b7785" cx="${toX(day.axisDate).toFixed(1)}" cy="${toY(day.previousRate).toFixed(1)}" r="8" data-series="previous" data-day-index="${index}" tabindex="0" role="button" aria-label="M-1 service day ${day.serviceDay}, ${shortDate(day.previousDate)}: ${formatPct(day.previousRate)}"></circle>`).join("")}
         ${days.map((day, index) => `<circle class="daily-hover-marker mtd-current-hover" style="--series-color:var(--ura-blue)" cx="${toX(day.currentDate).toFixed(1)}" cy="${toY(day.currentRate).toFixed(1)}" r="8" data-series="current" data-day-index="${index}" tabindex="0" role="button" aria-label="Service day ${day.serviceDay}, ${shortDate(day.currentDate)}: ${formatPct(day.currentRate)} selected period, ${formatPct(day.previousRate)} previous period"></circle>`).join("")}
-        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
+        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${dayOfMonth(dateKey)}</text>`).join("")}
       </svg>
       <div class="chart-floating-tooltip" hidden></div>
     </div>
@@ -1299,7 +1431,7 @@ function renderContractorPaceChart(comparison) {
         ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} returned)</title></path>`).join("")}
         ${series.map((item, seriesIndex) => `<path class="daily-line-hit" d="${pathFor(item)}" data-series-index="${seriesIndex}" tabindex="0" role="button" aria-label="Hover for ${escapeHtml(item.label)} daily detail"></path>`).join("")}
         ${series.flatMap((item, seriesIndex) => item.days.map((day, dayIndex) => `<circle class="daily-hover-marker contractor-daily-marker" style="--series-color:${item.color}" cx="${toX(day.date).toFixed(1)}" cy="${toY(day.completionRate).toFixed(1)}" r="7" data-series-index="${seriesIndex}" data-day-index="${dayIndex}" tabindex="0" role="button" aria-label="${escapeHtml(item.label)}, ${shortDate(day.date)}: ${formatPct(day.completionRate)}, ${formatNumber(day.returned)} of ${formatNumber(item.assigned)} returned"></circle>`)).join("")}
-        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${shortDate(dateKey)}</text>`).join("")}
+        ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${dayOfMonth(dateKey)}</text>`).join("")}
       </svg>
       <div class="chart-floating-tooltip" hidden></div>
     </div>
@@ -1341,68 +1473,24 @@ function renderTable(table, columns, rows) {
   `;
 }
 
-function renderSubmissionRateTable(monthlyMetrics) {
-  renderTable(
-    document.getElementById("submissionRateTable"),
-    [
-      { label: "Month", value: (row) => shortMonth(row.period_month) },
-      { label: "Assigned", value: (row) => formatNumber(row.assigned_total) },
-      { label: "Active Assigned", value: (row) => formatNumber(row.assigned_active) },
-      { label: "Returned", value: (row) => formatNumber(row.returned_assigned) },
-      { label: "Active Completion", value: (row) => formatPct(row.active_completion_rate_pct) },
-      { label: "Blended Completion", value: (row) => formatPct(row.blended_completion_rate_pct) }
-    ],
-    [...monthlyMetrics].reverse()
-  );
-}
-
-function renderParcelDetailsTable(rows) {
-  renderTable(
-    document.getElementById("parcelDetailsTable"),
-    [
-      { label: "Contractor", value: (row) => shortContractor(row.organization) },
-      { label: "Inventory Parcels", value: (row) => formatNumber(row.currentParcels) },
-      { label: "Current Acres", value: (row) => `${formatAcres(row.currentAcres)} ac` },
-      { label: "Period Assigned", value: (row) => formatNumber(row.latestAssigned) },
-      { label: "Period Returned", value: (row) => formatNumber(row.latestReturned) },
-      { label: "Period Rate", value: (row) => formatPct(row.latestRate) }
-    ],
-    rows
-  );
-}
-
-function renderCheckRequestTable(rows) {
-  renderTable(
-    document.getElementById("checkRequestTable"),
-    [
-      { label: "Organization", value: (row) => shortContractor(row.organization) },
-      { label: "Start", value: (row) => row.start_date },
-      { label: "End", value: (row) => row.end_date },
-      { label: "Parcels", value: (row) => formatNumber(row.parcels) },
-      { label: "Invoice Amount", value: (row) => formatMoney(row.invoice_amount) },
-      { label: "MR Check Note", value: (row) => row.mr_check_note || "" }
-    ],
-    rows
-  );
-}
-
 function renderMaintenanceExpenseTable(rows) {
   renderTable(
     document.getElementById("maintenanceExpenseTable"),
     [
       { label: "Organization", value: (row) => shortContractor(row.organization) },
       { label: "Parcels", value: (row) => formatNumber(row.parcels) },
-      { label: "Acres", value: (row) => formatAcres(row.acres) },
-      { label: "Monthly Invoice", value: (row) => formatMoney(row.monthly_invoice_amount) },
-      { label: "Annual Run Rate", value: (row) => formatMoney(row.annual_invoice_run_rate) },
+      { label: "Square feet", value: (row) => formatSquareFeet(row.sq_footage) },
+      { label: "Expected monthly", value: (row) => formatMoney(row.monthly_invoice_amount) },
+      { label: "Actual monthly", value: () => "Unavailable" },
+      { label: "Expected quarter", value: (row) => formatMoney(row.quarterly_forecast) },
       { label: "Monthly / Parcel", value: (row) => formatMoney(row.monthly_cost_per_parcel) },
-      { label: "Annual / Acre", value: (row) => formatMoney(row.annual_cost_per_acre) }
+      { label: "Expected / Sq Ft", value: (row) => formatMoney(Number(row.monthly_invoice_amount || 0) / Math.max(Number(row.sq_footage || 0), 1)) }
     ],
     rows
   );
 }
 
-function setupTabs() {
+function setupTabs(onTabChange = null) {
   const buttons = Array.from(document.querySelectorAll(".report-tabs button"));
   const panels = Array.from(document.querySelectorAll(".tab-panel"));
   for (const button of buttons) {
@@ -1425,17 +1513,20 @@ function setupTabs() {
         panel.classList.toggle("is-active", isActive);
         panel.setAttribute("aria-hidden", String(!isActive));
       });
+      if (onTabChange) onTabChange(tab);
     });
   }
 }
 
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, currentMetrics, allMonthsGeojson, surveyPeriodStats, assignmentCurrentMetadata, assignmentHistoryMetadata, assignmentPeriodStats, assignmentHistoryResult] =
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, quarterlyMetrics, areaCompliance, currentMetrics, allMonthsGeojson, surveyPeriodStats, assignmentCurrentMetadata, assignmentHistoryMetadata, assignmentPeriodStats, assignmentHistoryResult] =
     await Promise.all([
       fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/quarterly_metrics.json`).then((response) => response.json()),
+      fetch(`${DATA_ROOT}/area_compliance.json`).then((response) => response.json()),
       loadCurrentArcgisMetrics(),
       fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
       fetchSurveyPeriodStats().catch(() => []),
@@ -1491,6 +1582,8 @@ async function loadData() {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
+    quarterlyMetrics,
+    areaCompliance,
     summary: enrichedSummary,
     currentMetrics,
     assignmentGeojson: mergedGeojson
@@ -1498,19 +1591,55 @@ async function loadData() {
 }
 
 async function main() {
-  setupTabs();
   const {
     monthlyMetrics,
     contractorMonthly,
     financeSummary,
+    quarterlyMetrics,
+    areaCompliance,
     summary,
     currentMetrics,
     assignmentGeojson
   } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   let selectedQuarter = quarterKey(selectedMonth);
+  let selectedYear = selectedMonth.slice(0, 4);
   let comparisonRenderId = 0;
   const comparisonCache = new Map();
+
+  const renderQuarterOptions = () => {
+    const select = document.getElementById("kpiQuarterSelect");
+    const quarters = (quarterlyMetrics?.quarters || []).map((row) => row.quarter);
+    select.innerHTML = quarters.map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(quarterLabelFromKey(key))}</option>`).join("");
+    select.value = quarters.includes(selectedQuarter) ? selectedQuarter : quarters.at(-1) || "";
+    selectedQuarter = select.value || selectedQuarter;
+  };
+
+  const renderYearOptions = () => {
+    const select = document.getElementById("kpiYearSelect");
+    const years = [...new Set((financeSummary.current_contracts || []).flatMap((row) => [
+      String(row.start_date || "").slice(0, 4),
+      String(row.end_date || "").slice(0, 4),
+    ]).filter((year) => /^\d{4}$/.test(year)))].sort();
+    select.innerHTML = years.map((year) => `<option value="${year}">${year}</option>`).join("");
+    select.value = years.includes(selectedYear) ? selectedYear : years.at(-1) || selectedYear;
+    selectedYear = select.value || selectedYear;
+  };
+
+  const renderQuarterScoped = () => {
+    renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuarter);
+    renderFinance(financeSummary, selectedQuarter);
+    renderInvoices(financeSummary, selectedQuarter);
+    renderBudget(financeSummary, selectedYear);
+  };
+
+  const setContextControls = (tab) => {
+    const usesMonth = tab === "landing" || tab === "areaDistribution";
+    const usesYear = tab === "budget";
+    document.getElementById("monthControl").hidden = !usesMonth;
+    document.getElementById("quarterControl").hidden = usesMonth || usesYear;
+    document.getElementById("yearControl").hidden = !usesYear;
+  };
 
   const comparisonForMonth = (month) => {
     if (!comparisonCache.has(month)) {
@@ -1523,9 +1652,9 @@ async function main() {
     const renderId = ++comparisonRenderId;
     const monthAtRender = selectedMonth;
     const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
-    const detailRows = buildContractorDetailRows(currentMetrics.contractorRows, selectedContractorRows);
-
     renderMonthOptions(monthlyMetrics, selectedMonth);
+    renderQuarterOptions();
+    renderYearOptions();
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
     renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth);
@@ -1533,9 +1662,8 @@ async function main() {
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
-    renderParcelDetailsTable(detailRows);
-    renderAreaDistribution(aggregateAssignmentArea(assignmentGeojson, selectedMonth), selectedMonth);
-    renderFinance(financeSummary, selectedQuarter);
+    renderAreaCompliance(areaCompliance, selectedMonth);
+    renderQuarterScoped();
 
     document.getElementById("contractorSelect").onchange = (event) => {
       renderContractorGroupedChart(selectedContractorRows, event.target.value, selectedMonth);
@@ -1553,13 +1681,47 @@ async function main() {
   };
 
   await renderSelectedMonth();
-  renderSubmissionRateTable(monthlyMetrics);
+  setupTabs((tab) => {
+    setContextControls(tab);
+    renderQuarterScoped();
+  });
+  setContextControls("landing");
 
   document.getElementById("kpiMonthSelect").addEventListener("change", async (event) => {
     selectedMonth = event.target.value;
     selectedQuarter = quarterKey(selectedMonth);
+    selectedYear = selectedMonth.slice(0, 4);
     await renderSelectedMonth();
   });
+
+  document.getElementById("kpiQuarterSelect").addEventListener("change", (event) => {
+    selectedQuarter = event.target.value;
+    renderQuarterScoped();
+  });
+
+  document.getElementById("kpiYearSelect").addEventListener("change", (event) => {
+    selectedYear = event.target.value;
+    renderBudget(financeSummary, selectedYear);
+  });
+
+  document.getElementById("exportQuarterCsvButton").addEventListener("click", () => {
+    const quarter = (quarterlyMetrics?.quarters || []).find((row) => row.quarter === selectedQuarter);
+    if (!quarter) return;
+    const responsibility = financeSummary.owner_quarter_responsibility || [];
+    const rows = [["Section", "Quarter", "Period / owner", "Active assignments", "Returned assignments", "Open assignments", "Request only", "Completion rate", "Parcels", "Square feet", "Expected responsibility", "Billed", "Paid", "Outstanding"]]
+      .concat((quarter.months || []).map((row) => ["Monthly assignment summary", selectedQuarter, row.period_month, row.active_assignments, row.returned_assignments, row.open_assignments, row.request_only_assignments, row.completion_rate_pct, row.assigned_parcels, "", "", "", "", ""]))
+      .concat((quarter.owner_breakdown || []).map((row) => {
+        const finance = responsibility.find((item) => item.quarter === selectedQuarter && item.ownership_group === row.ownership_group) || {};
+        return ["Ownership responsibility", selectedQuarter, row.ownership_group, "", "", "", "", "", row.parcels, row.sq_footage ?? "Unavailable", finance.expected_responsibility ?? "Unavailable", finance.billed_amount ?? "Unavailable", finance.paid_amount ?? "Unavailable", finance.outstanding_balance ?? "Unavailable"];
+      }));
+    const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    link.download = `landcare-quarterly-report-${selectedQuarter}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+  document.getElementById("printQuarterButton").addEventListener("click", () => window.print());
 }
 
 main().catch((error) => {

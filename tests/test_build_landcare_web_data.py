@@ -50,3 +50,23 @@ def test_build_data_keeps_ura_and_plb_and_excludes_other_owners(tmp_path):
     assert groups == {"URA", "PLB"}
     assert len(collection["features"]) == 2
     assert manifest["ownership_counts"] == {"PLB": 1, "URA": 1}
+
+
+def test_quarterly_output_reconciles_months_and_keeps_area_baseline_unavailable():
+    first = feature("001", "URA")
+    first["properties"].update({"parcel_sqft": 1000, "returned_flag": True})
+    second = feature("002", "Pittsburgh Land Bank", "50-B-46")
+    second["properties"].update({"parcel_sqft": 500, "organization": "Contractor B"})
+    third = feature("003", "URA", "50-B-47")
+    third["properties"].update({"period_month": "2026-08", "parcel_sqft": 1000})
+
+    quarterly, compliance = MODULE.build_quarterly_outputs([first, second, third])
+
+    quarter = quarterly["quarters"][0]
+    assert quarter["quarter"] == "2026-Q3"
+    assert quarter["active_assignments"] == 3
+    assert quarter["returned_assignments"] == 1
+    assert quarter["open_assignments"] == 2
+    assert sum(month["active_assignments"] for month in quarter["months"]) == 3
+    assert all(row["baseline_sqft"] is None for row in compliance["rows"])
+    assert all(row["compliance_status"] == "baseline_unavailable" for row in compliance["rows"])

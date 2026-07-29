@@ -19,7 +19,7 @@
   "survey_submission_count": null,
   "survey_distinct_parcels": null,
   "source_note": "PostgreSQL export filtered to URA- and PLB-owned LandCare parcels across all available months. Assignments updated through 2026-06-15; survey completion shown through 2026-05-15.",
-  "generated_on": "2026-07-28",
+  "generated_on": "2026-07-29",
   "geometry_mode": "postgres_readonly_export",
   "source_tables": [
     "gis.regrid_bundle_assignments",
@@ -51,7 +51,7 @@
   },
   "source_contract": {
     "current_universe": "ArcGIS gisdb_gis_epp_parcels_full FeatureServer filtered to URA Owned LandCare records.",
-    "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to gis.regrid_survey_submissions and parcel ownership tables. Surveys are ingested daily by URA-Data-Repository into gis.regrid_survey_submissions and published to ArcGIS Online gisdb_gis_regrid_surveys, which the web app queries live for all-period returned evidence. Bundle assignments are loaded monthly via bundle_assignment_creation.py and BundlesDriveToSQL.py.",
+    "historical_assignments": "PostgreSQL export from gis.regrid_bundle_assignments joined to Regrid returns and canonical Survey123 evidence polygons. URA-Data-Repository validates Survey123 against stable assignment IDs, then publishes only authoritative parcel polygons; invalid raw submissions remain in restricted QA. Bundle assignments are loaded monthly via bundle_assignment_creation.py and BundlesDriveToSQL.py.",
     "budget_expenses": "Finance dashboard metrics are built separately from the LandCare budgeting workbook and published as finance_summary.json."
   }
 }

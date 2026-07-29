@@ -1,6 +1,7 @@
 {
   "metadata": {
-    "generated_on": "2026-07-28",
+    "schema_version": 2,
+    "generated_on": "2026-07-29",
     "source_kind": "landcare_budget_workbook",
     "source_file": "\\\\ura-fs\\share\\Public\\LandCare\\Land Care Annual Budgeting and Contracting.xlsx",
     "workbook_sheets": [
@@ -293,5 +294,24 @@
       "invoice_amount": 5695.12,
       "mr_check_note": "Current amount OK; was $5,821.68 from Nov 23 - Jul 24, $5,758.40 for Aug 24, and $5,695.12 from Sep 24 on)"
     }
-  ]
+  ],
+  "actual_invoices": [],
+  "actual_invoice_source": {
+    "status": "unavailable",
+    "message": "NetSuite actual invoices have not been configured for this published snapshot.",
+    "refreshed_at": null
+  },
+  "owner_quarter_responsibility": [],
+  "owner_responsibility_source": {
+    "status": "unavailable",
+    "message": "Approved Power BI ownership responsibility output has not been imported.",
+    "formula_version": null,
+    "refreshed_at": null
+  },
+  "contract_area_baselines": [],
+  "contract_area_baseline_source": {
+    "status": "unavailable",
+    "message": "Approved Power BI beginning-of-contract area baseline has not been imported.",
+    "refreshed_at": null
+  }
 }

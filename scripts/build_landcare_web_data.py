@@ -115,6 +115,131 @@ def summarize_features(features: list[dict[str, object]]) -> tuple[list[dict[str
     return monthly_metrics, contractor_monthly
 
 
+def square_feet(props: dict[str, object]) -> float:
+    value = props.get("parcel_sqft") or props.get("sq_footage")
+    try:
+        if value not in (None, ""):
+            return float(value)
+        return float(props.get("acreage") or 0) * 43560
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def quarter_key(month: str) -> str:
+    year, raw_month = month.split("-", 1)
+    return f"{year}-Q{(int(raw_month) - 1) // 3 + 1}"
+
+
+def build_quarterly_outputs(features: list[dict[str, object]]) -> tuple[dict[str, object], dict[str, object]]:
+    """Build public quarterly reporting and area facts at parcel-period grain.
+
+    Baselines deliberately remain unavailable until the approved Power BI import
+    is supplied; this prevents a current-contract snapshot being misrepresented
+    as the contractual opening square footage.
+    """
+    by_month: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for feature in features:
+        props = feature["properties"]
+        assert isinstance(props, dict)
+        month = str(props.get("period_month") or "")
+        if month:
+            by_month[month].append(feature)
+
+    quarterly: dict[str, dict[str, object]] = {}
+    compliance_rows: list[dict[str, object]] = []
+    for month, month_features in sorted(by_month.items()):
+        quarter = quarter_key(month)
+        target = quarterly.setdefault(quarter, {"quarter": quarter, "months": [], "distinct_parcels": set(), "contractors": set()})
+        active, returned, request_only, all_parcels = set(), set(), set(), set()
+        owner_parcels: dict[str, set[str]] = defaultdict(set)
+        owner_sqft: dict[str, float] = defaultdict(float)
+        area_available = False
+        contractor_sqft: dict[str, dict[str, object]] = {}
+        seen_owner_parcels: set[tuple[str, str]] = set()
+        for feature in month_features:
+            props = feature["properties"]
+            assert isinstance(props, dict)
+            parcel = str(props.get("parcel_key") or "")
+            if not parcel:
+                continue
+            owner = str(props.get("ownership_group") or "Other")
+            contractor = str(props.get("organization") or "Unassigned")
+            level = str(props.get("maintenance_level") or "")
+            all_parcels.add(parcel)
+            target["distinct_parcels"].add(parcel)
+            target["contractors"].add(contractor)
+            owner_parcels[owner].add(parcel)
+            if (owner, parcel) not in seen_owner_parcels:
+                parcel_area = square_feet(props)
+                area_available = area_available or any(props.get(key) not in (None, "") for key in ("parcel_sqft", "sq_footage", "acreage"))
+                owner_sqft[owner] += parcel_area
+                seen_owner_parcels.add((owner, parcel))
+            contractor_row = contractor_sqft.setdefault(contractor, {"organization": contractor, "assigned_sqft": 0.0, "parcels": set()})
+            if parcel not in contractor_row["parcels"]:
+                contractor_row["assigned_sqft"] += square_feet(props)
+                contractor_row["parcels"].add(parcel)
+            if level == "Active":
+                active.add(parcel)
+                if truthy(props.get("returned_flag")):
+                    returned.add(parcel)
+            elif level == "Request Only":
+                request_only.add(parcel)
+        monthly = {
+            "period_month": month,
+            "active_assignments": len(active),
+            "returned_assignments": len(returned),
+            "open_assignments": max(len(active) - len(returned), 0),
+            "request_only_assignments": len(request_only),
+            "assigned_parcels": len(all_parcels),
+            "completion_rate_pct": round(100 * len(returned) / len(active), 1) if active else 0,
+            "owner_breakdown": [
+                {"ownership_group": owner, "parcels": len(owner_parcels[owner]), "sq_footage": round(owner_sqft[owner], 2) if area_available else None}
+                for owner in sorted(owner_parcels)
+            ],
+        }
+        target["months"].append(monthly)
+        for row in contractor_sqft.values():
+            assigned_sqft = round(float(row["assigned_sqft"]), 2) if area_available else None
+            compliance_rows.append({
+                "period_month": month,
+                "organization": row["organization"],
+                "assigned_sqft": assigned_sqft,
+                "assigned_parcels": len(row["parcels"]),
+                "baseline_sqft": None,
+                "lower_limit_sqft": None,
+                "upper_limit_sqft": None,
+                "variance_pct": None,
+                "compliance_status": "baseline_unavailable",
+            })
+
+    quarters = []
+    for key, value in sorted(quarterly.items()):
+        months = value["months"]
+        active = sum(int(row["active_assignments"]) for row in months)
+        returned = sum(int(row["returned_assignments"]) for row in months)
+        request_only = sum(int(row["request_only_assignments"]) for row in months)
+        owner_latest = months[-1].get("owner_breakdown", []) if months else []
+        quarters.append({
+            "quarter": key,
+            "through_month": months[-1]["period_month"] if months else None,
+            "is_complete": len(months) == 3,
+            "active_assignments": active,
+            "returned_assignments": returned,
+            "open_assignments": max(active - returned, 0),
+            "request_only_assignments": request_only,
+            "distinct_parcels": len(value["distinct_parcels"]),
+            "contractors": len(value["contractors"]),
+            "completion_rate_pct": round(100 * returned / active, 1) if active else 0,
+            "months": months,
+            "owner_breakdown": owner_latest,
+            "owner_responsibility_status": "unavailable",
+        })
+    return (
+        {"metadata": {"source_status": "assignment_export", "baseline_source_status": "unavailable"}, "quarters": quarters},
+        {"metadata": {"baseline_source": "Power BI contract baseline", "source_status": "unavailable"}, "rows": compliance_rows},
+    )
+
+
 def month_summary(features: list[dict[str, object]], month: str) -> dict[str, object]:
     month_features = [
         feature for feature in features if feature["properties"].get("period_month") == month
@@ -171,6 +296,7 @@ def build_data(source: Path, output_dir: Path) -> None:
         feature for feature in features if feature["properties"].get("period_month") == latest_month
     ]
     monthly_metrics, contractor_monthly = summarize_features(features)
+    quarterly_metrics, area_compliance = build_quarterly_outputs(features)
     latest_metric = next(row for row in monthly_metrics if row["period_month"] == latest_month)
     latest_summary = month_summary(features, latest_month)
     generated_on = date.today().isoformat()
@@ -244,6 +370,8 @@ def build_data(source: Path, output_dir: Path) -> None:
     write_json(output_dir / "latest_month_summary.json", latest_month_summary)
     write_json(output_dir / "monthly_metrics.json", monthly_metrics)
     write_json(output_dir / "contractor_monthly.json", contractor_monthly)
+    write_json(output_dir / "quarterly_metrics.json", quarterly_metrics)
+    write_json(output_dir / "area_compliance.json", area_compliance)
     write_json(output_dir / "kpi_summary.json", kpi_summary)
     write_json(
         output_dir / "refresh_manifest.json",

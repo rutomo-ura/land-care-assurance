@@ -220,6 +220,7 @@ parcel_month as (
             when r.parcel_key is not null and a.maintenance_level = 'Active' then 'returned'
             else 'missing'
         end as completion_status,
+        round(st_area(g.geom::geography)::numeric, 2) as parcel_sqft,
         g.geom
     from assignments a
     left join returned r
@@ -248,6 +249,7 @@ feature_rows as (
                 'assigned_flag', assigned_flag,
                 'returned_flag', returned_flag,
                 'completion_status', completion_status,
+                'parcel_sqft', parcel_sqft,
                 'masked_geometry', false
             ),
             'geometry', st_asgeojson(st_simplifypreservetopology(geom, 0.000003), 6)::jsonb

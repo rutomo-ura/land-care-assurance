@@ -2312,12 +2312,12 @@ select {
 .stacked-segment.returned,
 .grouped-bar.returned,
 .legend-line.returned {
-  background: #2e7d32;
+  background: #D6A21C;
 }
 
 .stacked-segment.open,
 .legend-line.open {
-  background: var(--orange);
+  background: #C62828;
 }
 
 .grouped-bar {
@@ -2365,7 +2365,7 @@ select {
 }
 
 .legend-line.returned {
-  background: var(--gold);
+  background: #D6A21C;
 }
 
 .source-required {

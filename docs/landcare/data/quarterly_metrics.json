@@ -1,0 +1,395 @@
+{
+  "metadata": {
+    "source_status": "assignment_export",
+    "baseline_source_status": "unavailable"
+  },
+  "quarters": [
+    {
+      "quarter": "2025-Q2",
+      "through_month": "2025-06",
+      "is_complete": false,
+      "active_assignments": 376,
+      "returned_assignments": 191,
+      "open_assignments": 185,
+      "request_only_assignments": 70,
+      "distinct_parcels": 223,
+      "contractors": 8,
+      "completion_rate_pct": 50.8,
+      "months": [
+        {
+          "period_month": "2025-05",
+          "active_assignments": 188,
+          "returned_assignments": 91,
+          "open_assignments": 97,
+          "request_only_assignments": 35,
+          "assigned_parcels": 223,
+          "completion_rate_pct": 48.4,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 1,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2025-06",
+          "active_assignments": 188,
+          "returned_assignments": 100,
+          "open_assignments": 88,
+          "request_only_assignments": 35,
+          "assigned_parcels": 223,
+          "completion_rate_pct": 53.2,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 1,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        }
+      ],
+      "owner_breakdown": [
+        {
+          "ownership_group": "PLB",
+          "parcels": 1,
+          "sq_footage": null
+        },
+        {
+          "ownership_group": "URA",
+          "parcels": 222,
+          "sq_footage": null
+        }
+      ],
+      "owner_responsibility_status": "unavailable"
+    },
+    {
+      "quarter": "2025-Q3",
+      "through_month": "2025-09",
+      "is_complete": false,
+      "active_assignments": 371,
+      "returned_assignments": 232,
+      "open_assignments": 139,
+      "request_only_assignments": 70,
+      "distinct_parcels": 224,
+      "contractors": 9,
+      "completion_rate_pct": 62.5,
+      "months": [
+        {
+          "period_month": "2025-07",
+          "active_assignments": 189,
+          "returned_assignments": 114,
+          "open_assignments": 75,
+          "request_only_assignments": 35,
+          "assigned_parcels": 224,
+          "completion_rate_pct": 60.3,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 2,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2025-09",
+          "active_assignments": 182,
+          "returned_assignments": 118,
+          "open_assignments": 64,
+          "request_only_assignments": 35,
+          "assigned_parcels": 224,
+          "completion_rate_pct": 64.8,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 2,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        }
+      ],
+      "owner_breakdown": [
+        {
+          "ownership_group": "PLB",
+          "parcels": 2,
+          "sq_footage": null
+        },
+        {
+          "ownership_group": "URA",
+          "parcels": 222,
+          "sq_footage": null
+        }
+      ],
+      "owner_responsibility_status": "unavailable"
+    },
+    {
+      "quarter": "2025-Q4",
+      "through_month": "2025-12",
+      "is_complete": true,
+      "active_assignments": 561,
+      "returned_assignments": 269,
+      "open_assignments": 292,
+      "request_only_assignments": 106,
+      "distinct_parcels": 225,
+      "contractors": 9,
+      "completion_rate_pct": 48.0,
+      "months": [
+        {
+          "period_month": "2025-10",
+          "active_assignments": 182,
+          "returned_assignments": 118,
+          "open_assignments": 64,
+          "request_only_assignments": 35,
+          "assigned_parcels": 224,
+          "completion_rate_pct": 64.8,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 2,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2025-11",
+          "active_assignments": 189,
+          "returned_assignments": 63,
+          "open_assignments": 126,
+          "request_only_assignments": 36,
+          "assigned_parcels": 225,
+          "completion_rate_pct": 33.3,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2025-12",
+          "active_assignments": 190,
+          "returned_assignments": 88,
+          "open_assignments": 102,
+          "request_only_assignments": 35,
+          "assigned_parcels": 225,
+          "completion_rate_pct": 46.3,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        }
+      ],
+      "owner_breakdown": [
+        {
+          "ownership_group": "PLB",
+          "parcels": 3,
+          "sq_footage": null
+        },
+        {
+          "ownership_group": "URA",
+          "parcels": 222,
+          "sq_footage": null
+        }
+      ],
+      "owner_responsibility_status": "unavailable"
+    },
+    {
+      "quarter": "2026-Q1",
+      "through_month": "2026-03",
+      "is_complete": true,
+      "active_assignments": 567,
+      "returned_assignments": 153,
+      "open_assignments": 414,
+      "request_only_assignments": 106,
+      "distinct_parcels": 225,
+      "contractors": 16,
+      "completion_rate_pct": 27.0,
+      "months": [
+        {
+          "period_month": "2026-01",
+          "active_assignments": 190,
+          "returned_assignments": 51,
+          "open_assignments": 139,
+          "request_only_assignments": 35,
+          "assigned_parcels": 225,
+          "completion_rate_pct": 26.8,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2026-02",
+          "active_assignments": 190,
+          "returned_assignments": 16,
+          "open_assignments": 174,
+          "request_only_assignments": 35,
+          "assigned_parcels": 225,
+          "completion_rate_pct": 8.4,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2026-03",
+          "active_assignments": 187,
+          "returned_assignments": 86,
+          "open_assignments": 101,
+          "request_only_assignments": 36,
+          "assigned_parcels": 223,
+          "completion_rate_pct": 46.0,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 220,
+              "sq_footage": null
+            }
+          ]
+        }
+      ],
+      "owner_breakdown": [
+        {
+          "ownership_group": "PLB",
+          "parcels": 3,
+          "sq_footage": null
+        },
+        {
+          "ownership_group": "URA",
+          "parcels": 220,
+          "sq_footage": null
+        }
+      ],
+      "owner_responsibility_status": "unavailable"
+    },
+    {
+      "quarter": "2026-Q2",
+      "through_month": "2026-05",
+      "is_complete": false,
+      "active_assignments": 377,
+      "returned_assignments": 114,
+      "open_assignments": 263,
+      "request_only_assignments": 71,
+      "distinct_parcels": 225,
+      "contractors": 8,
+      "completion_rate_pct": 30.2,
+      "months": [
+        {
+          "period_month": "2026-04",
+          "active_assignments": 188,
+          "returned_assignments": 17,
+          "open_assignments": 171,
+          "request_only_assignments": 35,
+          "assigned_parcels": 223,
+          "completion_rate_pct": 9.0,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 220,
+              "sq_footage": null
+            }
+          ]
+        },
+        {
+          "period_month": "2026-05",
+          "active_assignments": 189,
+          "returned_assignments": 97,
+          "open_assignments": 92,
+          "request_only_assignments": 36,
+          "assigned_parcels": 225,
+          "completion_rate_pct": 51.3,
+          "owner_breakdown": [
+            {
+              "ownership_group": "PLB",
+              "parcels": 3,
+              "sq_footage": null
+            },
+            {
+              "ownership_group": "URA",
+              "parcels": 222,
+              "sq_footage": null
+            }
+          ]
+        }
+      ],
+      "owner_breakdown": [
+        {
+          "ownership_group": "PLB",
+          "parcels": 3,
+          "sq_footage": null
+        },
+        {
+          "ownership_group": "URA",
+          "parcels": 222,
+          "sq_footage": null
+        }
+      ],
+      "owner_responsibility_status": "unavailable"
+    }
+  ]
+}

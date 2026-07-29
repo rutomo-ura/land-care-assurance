@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260715-2" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260729-kpi-reporting" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -37,11 +37,10 @@
       </section>
       <nav class="report-tabs" aria-label="LandCare report sections" role="tablist">
         <button class="is-active" type="button" data-tab="landing" role="tab" aria-selected="true">Overview</button>
+        <button type="button" data-tab="quarterlyReporting" role="tab" aria-selected="false">Quarterly Reporting</button>
         <button type="button" data-tab="budget" role="tab" aria-selected="false">Budget</button>
-        <button type="button" data-tab="checkRequests" role="tab" aria-selected="false">Requests</button>
-        <button type="button" data-tab="submissionRate" role="tab" aria-selected="false">Submission Rate</button>
+        <button type="button" data-tab="invoices" role="tab" aria-selected="false">Invoices</button>
         <button type="button" data-tab="areaDistribution" role="tab" aria-selected="false">Parcel Area</button>
-        <button type="button" data-tab="parcelDetails" role="tab" aria-selected="false">Parcels</button>
         <button type="button" data-tab="maintenanceExpenses" role="tab" aria-selected="false">Expenses</button>
       </nav>
 
@@ -50,9 +49,17 @@
           <span class="eyebrow">Period</span>
           <strong id="periodKpi">Loading...</strong>
         </div>
-        <label class="field-label compact-field" for="kpiMonthSelect">
+        <label class="field-label compact-field" id="monthControl" for="kpiMonthSelect">
           <span>Month</span>
           <select id="kpiMonthSelect" aria-label="KPI month"></select>
+        </label>
+        <label class="field-label compact-field" id="quarterControl" for="kpiQuarterSelect" hidden>
+          <span>Calendar quarter</span>
+          <select id="kpiQuarterSelect" aria-label="KPI calendar quarter"></select>
+        </label>
+        <label class="field-label compact-field" id="yearControl" for="kpiYearSelect" hidden>
+          <span>Calendar year</span>
+          <select id="kpiYearSelect" aria-label="KPI calendar year"></select>
         </label>
         <div class="period-status" id="periodStatusCard">
           <span class="eyebrow">Data Status</span>
@@ -62,6 +69,30 @@
           <span class="eyebrow">Refreshed</span>
           <strong id="reportUpdatedKpi">Checking data...</strong>
         </div>
+      </section>
+
+      <section class="tab-panel" data-panel="quarterlyReporting" aria-label="Quarterly Reporting">
+        <header class="tab-intro">
+          <div><span class="section-kicker">Quarterly operating report</span><h2>LandCare quarterly reporting</h2></div>
+          <p>Calendar-quarter assignment completion, ownership responsibility, and financial readiness.</p>
+        </header>
+        <article class="metric-band metric-group">
+          <div class="reference-card-grid four-up executive-band">
+            <div class="reference-card featured"><span>Active assignments</span><strong id="quarterActiveKpi">--</strong><small id="quarterThroughNote">Selected quarter</small></div>
+            <div class="reference-card"><span>Returned assignments</span><strong id="quarterReturnedKpi">--</strong><small id="quarterCompletionNote">Completion</small></div>
+            <div class="reference-card"><span>Open assignments</span><strong id="quarterOpenKpi">--</strong><small>Active parcel-periods still open</small></div>
+            <div class="reference-card"><span>Distinct parcels</span><strong id="quarterParcelsKpi">--</strong><small id="quarterContractorsNote">Contractor coverage</small></div>
+          </div>
+        </article>
+        <article class="panel data-ledger">
+          <div class="panel-head compact-head"><div><h1>Monthly reconciliation</h1><p class="panel-sub">Each month remains visible so quarterly totals can be checked.</p></div></div>
+          <div class="data-table-wrap"><table class="data-table" id="quarterMonthlyTable"></table></div>
+        </article>
+        <article class="panel data-ledger">
+          <div class="panel-head compact-head"><div><h1>Ownership and responsibility</h1><p class="panel-sub" id="quarterOwnershipNote">Loading ownership scope...</p></div></div>
+          <div class="data-table-wrap"><table class="data-table" id="quarterOwnershipTable"></table></div>
+        </article>
+        <div class="report-actions"><button class="export-button" type="button" id="exportQuarterCsvButton">Export CSV</button><button class="export-button" type="button" id="printQuarterButton">Print / PDF</button></div>
       </section>
 
       <section class="tab-panel is-active" data-panel="landing" aria-label="Landing Page">
@@ -165,76 +196,48 @@
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Quarterly Forecast</span><strong id="annualRunRateKpi">--</strong><small id="quarterlyForecastNote">Selected-quarter contract forecast</small></div>
-            <div class="reference-card"><span>Monthly Invoice Baseline</span><strong id="monthlyInvoiceKpi">--</strong><small>Active contracts in selected quarter</small></div>
-            <div class="reference-card"><span>Contracted Acres</span><strong id="totalContractKpi">--</strong><small>Contracts active in selected quarter</small></div>
-            <div class="reference-card"><span>Contractors</span><strong id="financeContractorsKpi">--</strong><small>Active supplier base for selected quarter</small></div>
+            <div class="reference-card featured"><span>Annual contracted budget</span><strong id="annualRunRateKpi">--</strong><small id="quarterlyForecastNote">Contract workbook expectation</small></div>
+            <div class="reference-card"><span>Expected to date</span><strong id="monthlyInvoiceKpi">--</strong><small>Calendar-year contract pace</small></div>
+            <div class="reference-card"><span>Actual to date</span><strong id="totalContractKpi">--</strong><small>NetSuite feed required</small></div>
+            <div class="reference-card"><span>Remaining budget</span><strong id="financeContractorsKpi">--</strong><small>Contracted less actual</small></div>
           </div>
         </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Quarterly forecast by contractor</h1><p class="panel-sub">Contract forecast for the selected calendar quarter</p></div>
+            <div><h1>Expected invoices by contractor</h1><p class="panel-sub">Workbook expectation for the selected calendar year</p></div>
           </div>
           <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
         </article>
       </section>
 
-      <section class="tab-panel" data-panel="checkRequests" aria-label="Check Request History">
+      <section class="tab-panel" data-panel="invoices" aria-label="Invoice History">
         <header class="tab-intro">
-          <div><span class="section-kicker">Payment operations</span><h2>Check request history</h2></div>
-          <p>Audit the finance records whose documented term overlaps the selected calendar quarter.</p>
+          <div><span class="section-kicker">Payment operations</span><h2>Invoice tracking</h2></div>
+          <p>Compare workbook expectations with posted NetSuite invoices when the secured finance feed is available.</p>
         </header>
         <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <div><h1>Request ledger</h1><p class="panel-sub" id="checkRequestSummary">Finance records overlapping the selected quarter</p></div>
+            <div><h1>Invoice ledger</h1><p class="panel-sub" id="invoiceSummary">Loading selected-quarter invoices...</p></div>
           </div>
           <div class="data-table-wrap">
-            <table class="data-table" id="checkRequestTable"></table>
+            <table class="data-table" id="invoiceTable"></table>
           </div>
           <p class="source-footnote" id="financeSourceNote">Checking finance records...</p>
         </article>
       </section>
 
-      <section class="tab-panel" data-panel="submissionRate" aria-label="Survey Submission Rate">
-        <header class="tab-intro">
-          <div><span class="section-kicker">Delivery assurance</span><h2>Survey submission performance</h2></div>
-          <p>Track monthly evidence return and identify periods that require contractor follow-up.</p>
-        </header>
-        <article class="panel data-ledger">
-          <div class="panel-head compact-head">
-            <div><h1>Submission rate by month</h1><p class="panel-sub">Assigned parcels compared with returned survey evidence</p></div>
-          </div>
-          <div class="data-table-wrap">
-            <table class="data-table" id="submissionRateTable"></table>
-          </div>
-        </article>
-      </section>
-
       <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
         <header class="tab-intro">
-          <div><span class="section-kicker">Portfolio allocation</span><h2>Parcel area distribution</h2></div>
-          <p>Understand acreage concentration in the selected month within the selected quarter.</p>
+          <div><span class="section-kicker">Contract compliance</span><h2>Parcel area compliance</h2></div>
+          <p>Track contractor assignment square footage against the approved beginning-of-contract ±10% threshold.</p>
         </header>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Parcel area by contractor</h1><p class="panel-sub" id="areaDistributionSummary">Selected-month assignment acreage, ranked by organization</p></div>
+            <div><h1>Contractor square-foot compliance</h1><p class="panel-sub" id="areaDistributionSummary">Selected-month assignment square footage and contractual limits</p></div>
           </div>
-          <div class="grouped-chart" id="areaDistributionChart" aria-label="Current parcel acreage by contractor"></div>
-        </article>
-      </section>
-
-      <section class="tab-panel" data-panel="parcelDetails" aria-label="Parcel Details">
-        <header class="tab-intro">
-          <div><span class="section-kicker">Portfolio register</span><h2>Contractor parcel detail</h2></div>
-          <p>Review assignment volume, acreage, and completion evidence at contractor level.</p>
-        </header>
-        <article class="panel data-ledger">
-          <div class="panel-head compact-head">
-            <div><h1>Contractor register</h1><p class="panel-sub">Operational scope and current performance detail</p></div>
-          </div>
-          <div class="data-table-wrap">
-            <table class="data-table" id="parcelDetailsTable"></table>
-          </div>
+          <div class="grouped-chart" id="areaDistributionChart" aria-label="Contractor parcel-area compliance"></div>
+          <div class="data-table-wrap"><table class="data-table" id="areaComplianceTable"></table></div>
+          <p class="source-footnote" id="areaComplianceSourceNote">Checking approved Power BI baseline...</p>
         </article>
       </section>
 
@@ -245,17 +248,17 @@
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Quarter Forecast / Acre</span><strong id="annualCostPerAcreKpi">--</strong><small>Quarter-scoped contract intensity</small></div>
+            <div class="reference-card featured"><span>Quarter Forecast / Sq Ft</span><strong id="quarterForecastPerSqFtKpi">--</strong><small>Quarter-scoped contract intensity</small></div>
             <div class="reference-card"><span>Monthly / Contract Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong><small>Active contract baseline</small></div>
-            <div class="reference-card"><span>Contract Acres</span><strong id="contractAcresKpi">--</strong><small>Active in selected quarter</small></div>
+            <div class="reference-card"><span>Contract square feet</span><strong id="contractAcresKpi">--</strong><small>Active in selected quarter</small></div>
             <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong><small>Active in selected quarter</small></div>
           </div>
         </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Quarter forecast per acre by contractor</h1><p class="panel-sub">Ranked selected-quarter contract intensity</p></div>
+            <div><h1>Expected versus actual by contractor</h1><p class="panel-sub">Actuals remain explicitly unavailable until NetSuite is connected.</p></div>
           </div>
-          <div class="grouped-chart" id="expenseIntensityChart" aria-label="Annual cost per acre by contractor"></div>
+          <div class="grouped-chart" id="expenseIntensityChart" aria-label="Quarter expected cost by contractor"></div>
         </article>
         <article class="panel data-ledger">
           <div class="panel-head compact-head">
@@ -273,6 +276,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260728-4"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260729-kpi-reporting"></script>
   </body>
 </html>
