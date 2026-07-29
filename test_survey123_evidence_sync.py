@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import sys
 import types
 from pathlib import Path
@@ -23,6 +24,19 @@ def test_field_normalization():
     assert MODULE.iso_timestamp(0).startswith("1970-01-01T00:00:00")
 
 
+def test_database_dsn_uses_existing_regrid_environment():
+    original = {key: os.environ.get(key) for key in ("LANDCARE_PG_DSN", "PG_HOST", "PG_PORT", "PG_DB", "PG_USER", "PG_PWD")}
+    try:
+        for key in original: os.environ.pop(key, None)
+        os.environ.update({"PG_HOST": "localhost", "PG_PORT": "5432", "PG_DB": "gisdb", "PG_USER": "gis_user", "PG_PWD": "safe password"})
+        assert MODULE.database_dsn() == "postgresql://gis_user:safe%20password@localhost:5432/gisdb"
+    finally:
+        for key, value in original.items():
+            if value is None: os.environ.pop(key, None)
+            else: os.environ[key] = value
+
+
 if __name__ == "__main__":
     test_field_normalization()
+    test_database_dsn_uses_existing_regrid_environment()
     print("survey123 evidence sync mapping tests passed")

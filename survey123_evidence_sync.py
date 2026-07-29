@@ -10,7 +10,7 @@ import json
 import os
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 import psycopg2
@@ -21,6 +21,21 @@ def required(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def database_dsn() -> str:
+    """Use the existing Regrid VM PostgreSQL variables when no DSN is supplied."""
+    configured = os.getenv("LANDCARE_PG_DSN", "").strip()
+    if configured:
+        return configured
+    database = os.getenv("PG_DB", "").strip()
+    user = os.getenv("PG_USER", "").strip()
+    password = os.getenv("PG_PWD", "")
+    if not database or not user or not password:
+        raise RuntimeError("Set LANDCARE_PG_DSN or the existing Regrid PG_DB, PG_USER, and PG_PWD variables.")
+    host = os.getenv("PG_HOST", "localhost").strip() or "localhost"
+    port = os.getenv("PG_PORT", "5432").strip() or "5432"
+    return f"postgresql://{quote(user, safe='')}:{quote(password, safe='')}@{host}:{port}/{quote(database, safe='')}"
 
 
 def first(attributes: dict[str, Any], *names: str) -> Any:
@@ -161,7 +176,7 @@ def main() -> None:
     parser.add_argument("--publish-fast-path", action="store_true", help="Upsert the validated polygon to the stable hosted layer")
     args = parser.parse_args()
     layer_url = required("SURVEY123_FEATURE_LAYER_URL").rstrip("/")
-    dsn = required("LANDCARE_PG_DSN")
+    dsn = database_dsn()
     source_records = records(layer_url, args.object_id)
     with psycopg2.connect(dsn) as connection:
         for feature in source_records:

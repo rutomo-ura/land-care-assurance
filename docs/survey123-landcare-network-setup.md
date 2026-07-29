@@ -62,6 +62,8 @@ SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL=https://services.../FeatureServer/0
 LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL=https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_history/FeatureServer/0
 ```
 
+`LANDCARE_PG_DSN` is optional on the URA VM: the pipeline automatically uses the existing Regrid `PG_HOST`, `PG_PORT`, `PG_DB`, `PG_USER`, and `PG_PWD` values from `C:\srv\secrets\.env`.
+
 The legacy receiver and `/public/evidence-parcels` GeoJSON route are retired.
 Apply `sql/20260728_landcare_survey123_evidence_parcels.sql`, then run the receiver behind the URA HTTPS reverse proxy:
 

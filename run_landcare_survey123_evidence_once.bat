@@ -26,8 +26,8 @@ if not exist "%SECRETS_FILE%" (
 rem Load KEY=VALUE entries without echoing values. Keep the secrets file outside Git.
 for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%SECRETS_FILE%") do set "%%A=%%B"
 
-if "%LANDCARE_PG_DSN%"=="" (
-  echo ERROR: LANDCARE_PG_DSN is missing from %SECRETS_FILE%
+if "%LANDCARE_PG_DSN%"=="" if "%PG_DB%"=="" (
+  echo ERROR: Set LANDCARE_PG_DSN or the existing Regrid PG_DB/PG_USER/PG_PWD values in %SECRETS_FILE%
   exit /b 1
 )
 if "%SURVEY123_FEATURE_LAYER_URL%"=="" (
@@ -53,8 +53,15 @@ if errorlevel 1 (
 )
 
 echo.
+if "%LANDCARE_PG_DSN%"=="" (
+  set "PGPASSWORD=%PG_PWD%"
+  set "PGCONNECT=-h %PG_HOST% -p %PG_PORT% -U %PG_USER% -d %PG_DB%"
+) else (
+  set "PGCONNECT=%LANDCARE_PG_DSN%"
+)
+
 echo [1/4] Applying idempotent PostGIS migration...
-%PSQL% "%LANDCARE_PG_DSN%" -v ON_ERROR_STOP=1 -f "%REPO_ROOT%\sql\20260728_landcare_survey123_evidence_parcels.sql"
+%PSQL% %PGCONNECT% -v ON_ERROR_STOP=1 -f "%REPO_ROOT%\sql\20260728_landcare_survey123_evidence_parcels.sql"
 if errorlevel 1 goto :failed
 
 echo [2/4] Installing Survey123 worker dependencies in ArcGIS Pro Python...
