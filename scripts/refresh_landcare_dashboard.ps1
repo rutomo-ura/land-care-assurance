@@ -2,6 +2,7 @@ param(
   [string]$RepoRoot = "C:\srv\land-care-assurance",
   [string]$Python = "$RepoRoot\.venv\Scripts\python.exe",
   [string]$ArcGisPython = "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe",
+  [string]$SecretsFile = "C:\srv\secrets\.env",
   [string]$LogRoot = "C:\srv\logs\land-care-assurance",
   [string]$Branch = "master",
   [string]$StatusPath = ""
@@ -71,6 +72,16 @@ function Get-GitCommit {
   return ""
 }
 
+function Import-EnvFile {
+  param([Parameter(Mandatory=$true)][string]$Path)
+  if (-not (Test-Path -LiteralPath $Path)) { return }
+  Get-Content -LiteralPath $Path | ForEach-Object {
+    if ($_ -match "^\s*#" -or $_ -notmatch "=") { return }
+    $name, $value = $_ -split "=", 2
+    [Environment]::SetEnvironmentVariable($name.Trim(), $value.Trim(), "Process")
+  }
+}
+
 function Write-RunStatus {
   param(
     [Parameter(Mandatory=$true)]
@@ -134,13 +145,8 @@ try {
   Write-Host "LandCare daily refresh started at $(Get-Date -Format o)"
   $commitBefore = Get-GitCommit
 
-  if (Test-Path ".env") {
-    Get-Content ".env" | ForEach-Object {
-      if ($_ -match "^\s*#" -or $_ -notmatch "=") { return }
-      $name, $value = $_ -split "=", 2
-      [Environment]::SetEnvironmentVariable($name.Trim(), $value.Trim(), "Process")
-    }
-  }
+  Import-EnvFile (Join-Path $RepoRoot ".env")
+  Import-EnvFile $SecretsFile
 
   Invoke-Checked "Pull latest repository changes" {
     git pull --ff-only origin $Branch

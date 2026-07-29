@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import datetime
 import traceback
+import argparse
 
 import arcpy
 from arcgis.gis import GIS
@@ -29,8 +30,12 @@ def log(message: str) -> None:
 
 
 def main() -> None:
-    if not AGOL_ITEM_ID:
-        raise RuntimeError("LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID is required; refusing to create a new item.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--bootstrap", action="store_true", help="Create the stable hosted layer once when no item ID exists")
+    args = parser.parse_args()
+    bootstrap = args.bootstrap
+    if not AGOL_ITEM_ID and not bootstrap:
+        raise RuntimeError("LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID is required; use --bootstrap only for the first publish.")
     arcpy.env.overwriteOutput = True
     os.makedirs(STAGING_DIR, exist_ok=True)
     for path in (SDDRAFT, SD_FILE):
@@ -45,9 +50,14 @@ def main() -> None:
     if count == 0:
         raise RuntimeError("Evidence snapshot is empty; refusing destructive hosted-layer overwrite.")
     gis = GIS("pro")
-    target = gis.content.get(AGOL_ITEM_ID)
-    if target is None:
-        raise RuntimeError(f"Expected AGOL item {AGOL_ITEM_ID} was not found.")
+    if AGOL_ITEM_ID:
+        target = gis.content.get(AGOL_ITEM_ID)
+        if target is None:
+            raise RuntimeError(f"Expected AGOL item {AGOL_ITEM_ID} was not found.")
+    else:
+        existing = [item for item in gis.content.search(f'title:"{LAYER_TITLE}" AND owner:{gis.users.me.username}', max_items=10) if item.type.lower().startswith("feature")]
+        if existing:
+            raise RuntimeError(f"A layer named {LAYER_TITLE!r} already exists ({existing[0].id}); set LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID instead of creating another.")
     aprx = arcpy.mp.ArcGISProject(APRX_PATH)
     maps = aprx.listMaps(MAP_NAME)
     if not maps: raise RuntimeError(f"Publish map {MAP_NAME!r} is missing.")
@@ -72,7 +82,7 @@ def main() -> None:
     layer.showLabels = True
     aprx.save()
     draft = publish_map.getWebLayerSharingDraft("HOSTING_SERVER", "FEATURE", LAYER_TITLE)
-    draft.overwriteExistingService = True
+    draft.overwriteExistingService = bool(AGOL_ITEM_ID)
     draft.portalFolder = PORTAL_FOLDER
     draft.copyDataToServer = True
     draft.summary = "Validated Survey123 photo evidence rendered with authoritative LandCare assignment parcel polygons."
@@ -81,12 +91,16 @@ def main() -> None:
     arcpy.StageService_server(SDDRAFT, SD_FILE)
     arcpy.UploadServiceDefinition_server(SD_FILE, "My Hosted Services", "OVERRIDE_DEFINITION")
     latest = max((item for item in gis.content.search(f'title:"{LAYER_TITLE}" AND owner:{gis.users.me.username}', max_items=10) if item.type.lower().startswith("feature")), key=lambda item: item.modified, default=None)
-    if latest is None or latest.id != AGOL_ITEM_ID:
+    if latest is None:
+        raise RuntimeError("No hosted evidence item was found after publishing.")
+    if AGOL_ITEM_ID and latest.id != AGOL_ITEM_ID:
         raise RuntimeError("Publish drift detected: stable hosted evidence item was not overwritten.")
-    item = gis.content.get(AGOL_ITEM_ID)
+    item = latest
     try: item.sharing.update({"access": "public"})
     except Exception: item.share(everyone=True, org=False)
-    log(f"Published {count:,} canonical evidence polygons to {AGOL_ITEM_ID}.")
+    log(f"Published {count:,} canonical evidence polygons to {item.id}.")
+    print(f"LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID={item.id}")
+    print(f"LANDCARE_SURVEY_EVIDENCE_LAYER_URL={item.url.rstrip('/')}/0")
 
 
 if __name__ == "__main__":

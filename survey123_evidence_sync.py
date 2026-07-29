@@ -15,6 +15,12 @@ from urllib.request import Request, urlopen
 
 import psycopg2
 
+DEFAULT_SURVEY123_EVIDENCE_LAYER_URL = (
+    "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/"
+    "LandCare_Network_Internal_Survey_3_view/FeatureServer/0"
+)
+PORTAL_URL = "https://urap.maps.arcgis.com"
+
 
 def required(name: str) -> str:
     value = os.getenv(name, "").strip()
@@ -76,6 +82,24 @@ def post_json(url: str, values: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def arcgis_edit_token() -> str:
+    configured = os.getenv("LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN", "").strip()
+    if configured:
+        return configured
+    username = os.getenv("AGO_USER", "").strip()
+    password = os.getenv("AGO_PWD", "")
+    if not username or not password:
+        raise RuntimeError("Set LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN or the existing Regrid AGO_USER and AGO_PWD values.")
+    payload = post_json(f"{PORTAL_URL}/sharing/rest/generateToken", {
+        "f": "json", "username": username, "password": password,
+        "client": "referer", "referer": PORTAL_URL, "expiration": "60",
+    })
+    token = str(payload.get("token") or "")
+    if not token:
+        raise RuntimeError("ArcGIS token generation returned no token.")
+    return token
+
+
 def image_attachment(layer_url: str, object_id: int | str) -> tuple[str | None, str | None]:
     payload = request_json(f"{layer_url}/{object_id}/attachments", {"f": "json"})
     item = next((x for x in payload.get("attachmentInfos", []) if str(x.get("contentType", "")).startswith("image/")), None)
@@ -135,7 +159,7 @@ def upsert_raw(connection: Any, attributes: dict[str, Any], image_url: str | Non
 def publish_fast_path(connection: Any, source_object_id: str) -> None:
     """Upsert one validated polygon without waiting for the daily ArcPy snapshot."""
     layer_url = required("LANDCARE_SURVEY_EVIDENCE_LAYER_URL").rstrip("/")
-    token = required("LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN")
+    token = arcgis_edit_token()
     with connection.cursor() as cursor:
         cursor.execute("""
           SELECT source_global_id, assignment_id, parcel_key, parcel_number, organization,
@@ -175,7 +199,7 @@ def main() -> None:
     parser.add_argument("--object-id", help="Reconcile one webhook submission immediately")
     parser.add_argument("--publish-fast-path", action="store_true", help="Upsert the validated polygon to the stable hosted layer")
     args = parser.parse_args()
-    layer_url = required("SURVEY123_FEATURE_LAYER_URL").rstrip("/")
+    layer_url = (os.getenv("SURVEY123_FEATURE_LAYER_URL", "").strip() or DEFAULT_SURVEY123_EVIDENCE_LAYER_URL).rstrip("/")
     dsn = database_dsn()
     source_records = records(layer_url, args.object_id)
     with psycopg2.connect(dsn) as connection:

@@ -30,16 +30,8 @@ if "%LANDCARE_PG_DSN%"=="" if "%PG_DB%"=="" (
   echo ERROR: Set LANDCARE_PG_DSN or the existing Regrid PG_DB/PG_USER/PG_PWD values in %SECRETS_FILE%
   exit /b 1
 )
-if "%SURVEY123_FEATURE_LAYER_URL%"=="" (
-  echo ERROR: SURVEY123_FEATURE_LAYER_URL is missing from %SECRETS_FILE%
-  exit /b 1
-)
-if "%LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID%"=="" (
-  echo ERROR: LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID is missing.
-  echo Create the hosted layer named "LandCare Survey123 Evidence Parcels" once,
-  echo put it in "LandCare - Published Layers", then add its item ID to the secrets file.
-  exit /b 1
-)
+if "%SURVEY123_FEATURE_LAYER_URL%"=="" set "SURVEY123_FEATURE_LAYER_URL=https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/LandCare_Network_Internal_Survey_3_view/FeatureServer/0"
+if "%SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL%"=="" set "SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL=%SURVEY123_FEATURE_LAYER_URL%"
 if not exist "%ARCGIS_PYTHON%" (
   echo ERROR: ArcGIS Pro Python was not found: %ARCGIS_PYTHON%
   exit /b 1
@@ -73,8 +65,32 @@ echo [3/4] Backfilling and validating Survey123 submissions as authoritative par
 if errorlevel 1 goto :failed
 
 echo [4/4] Publishing the stable hosted evidence parcel layer...
-"%ARCGIS_PYTHON%" "%REPO_ROOT%\publish_landcare_survey_evidence_parcels.py"
-if errorlevel 1 goto :failed
+set "PUBLISH_LOG=%TEMP%\landcare-survey-evidence-publish.log"
+if "%LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID%"=="" (
+  "%ARCGIS_PYTHON%" "%REPO_ROOT%\publish_landcare_survey_evidence_parcels.py" --bootstrap > "%PUBLISH_LOG%" 2>&1
+) else (
+  "%ARCGIS_PYTHON%" "%REPO_ROOT%\publish_landcare_survey_evidence_parcels.py" > "%PUBLISH_LOG%" 2>&1
+)
+set "PUBLISH_EXIT=%ERRORLEVEL%"
+type "%PUBLISH_LOG%"
+if not "%PUBLISH_EXIT%"=="0" goto :failed
+
+for /f "tokens=1,* delims==" %%A in ('findstr /b "LANDCARE_SURVEY_EVIDENCE_" "%PUBLISH_LOG%"') do set "%%A=%%B"
+if "%LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID%"=="" (
+  echo ERROR: Publisher did not report a stable hosted layer item ID.
+  goto :failed
+)
+
+if "%LANDCARE_SURVEY_EVIDENCE_BOOTSTRAPPED%"=="" (
+  >> "%SECRETS_FILE%" echo.
+  >> "%SECRETS_FILE%" echo # LandCare Survey123 evidence parcels - managed by bootstrap.
+  >> "%SECRETS_FILE%" echo SURVEY123_FEATURE_LAYER_URL=%SURVEY123_FEATURE_LAYER_URL%
+  >> "%SECRETS_FILE%" echo SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL=%SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL%
+  >> "%SECRETS_FILE%" echo LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID=%LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID%
+  >> "%SECRETS_FILE%" echo LANDCARE_SURVEY_EVIDENCE_LAYER_URL=%LANDCARE_SURVEY_EVIDENCE_LAYER_URL%
+  >> "%SECRETS_FILE%" echo LANDCARE_SURVEY_EVIDENCE_ENABLED=true
+  >> "%SECRETS_FILE%" echo LANDCARE_SURVEY_EVIDENCE_BOOTSTRAPPED=true
+)
 
 echo.
 echo SUCCESS: Canonical Survey123 evidence polygons were reconciled and published.
