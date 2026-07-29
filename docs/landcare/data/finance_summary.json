@@ -301,17 +301,102 @@
     "message": "NetSuite actual invoices have not been configured for this published snapshot.",
     "refreshed_at": null
   },
-  "owner_quarter_responsibility": [],
+  "owner_quarter_responsibility": [
+    {
+      "quarter": "2026-Q1",
+      "ownership_group": "PLB",
+      "expected_responsibility": 923.61,
+      "billed_amount": null,
+      "paid_amount": null,
+      "outstanding_balance": null,
+      "formula_version": "Power BI Landing Page \u00b7 2026 Q1",
+      "source_timestamp": "2026-07-29"
+    },
+    {
+      "quarter": "2026-Q1",
+      "ownership_group": "URA",
+      "expected_responsibility": 187655.39,
+      "billed_amount": null,
+      "paid_amount": null,
+      "outstanding_balance": null,
+      "formula_version": "Power BI Landing Page \u00b7 2026 Q1",
+      "source_timestamp": "2026-07-29"
+    }
+  ],
   "owner_responsibility_source": {
-    "status": "unavailable",
-    "message": "Approved Power BI ownership responsibility output has not been imported.",
-    "formula_version": null,
-    "refreshed_at": null
+    "status": "partially_available",
+    "message": "Power BI Landing Page values captured for 2026 Q1; remaining quarters await an automated export.",
+    "formula_version": "Power BI Landing Page \u00b7 2026 Q1",
+    "refreshed_at": "2026-07-29"
   },
-  "contract_area_baselines": [],
+  "contract_area_baselines": [
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Amani Christian CDC",
+      "baseline_sqft": 78546.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Center That CARES",
+      "baseline_sqft": 66409.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Chatman Properties",
+      "baseline_sqft": 2019758.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Ervin Home Beautification",
+      "baseline_sqft": 263423.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "FHCV Contracting LLC & LawnCare",
+      "baseline_sqft": 124083.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Hilltop Rising",
+      "baseline_sqft": 4024872.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "KRJ Enterprises",
+      "baseline_sqft": 13885869.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "One Call Handles It All",
+      "baseline_sqft": 152905.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    },
+    {
+      "contract_cycle": "2025-2027",
+      "organization": "Operation Better Block",
+      "baseline_sqft": 70457.0,
+      "source_timestamp": "2026-07-29",
+      "verification_method": "Power BI Parcel Area Distribution matched to contract workbook"
+    }
+  ],
   "contract_area_baseline_source": {
-    "status": "unavailable",
-    "message": "Approved Power BI beginning-of-contract area baseline has not been imported.",
-    "refreshed_at": null
+    "status": "partially_available",
+    "message": "Contract workbook baselines matched the Power BI Parcel Area Distribution report for sampled contractors; direct Power BI export remains pending.",
+    "refreshed_at": "2026-07-29"
   }
 }

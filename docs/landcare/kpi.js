@@ -1129,9 +1129,12 @@ function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuar
   document.getElementById("quarterOwnershipNote").textContent = financeSummary.owner_responsibility_source?.status === "available"
     ? `Approved Power BI formula output · ${financeSummary.owner_responsibility_source?.formula_version || "version not supplied"}`
     : "Square footage is awaiting the refreshed assignment export; Power BI responsibility formula output has not been imported.";
+  if (financeSummary.owner_responsibility_source?.status === "partially_available") {
+    document.getElementById("quarterOwnershipNote").textContent = `${financeSummary.owner_responsibility_source.message} · ${financeSummary.owner_responsibility_source.formula_version || "source version not supplied"}`;
+  }
 }
 
-function renderAreaCompliance(areaCompliance, selectedMonth) {
+function renderAreaCompliance(areaCompliance, financeSummary, selectedMonth) {
   const rows = (areaCompliance?.rows || []).filter((row) => row.period_month === selectedMonth);
   renderAreaDistribution(rows, selectedMonth);
   renderTable(document.getElementById("areaComplianceTable"), [
@@ -1145,6 +1148,9 @@ function renderAreaCompliance(areaCompliance, selectedMonth) {
   document.getElementById("areaComplianceSourceNote").textContent = areaCompliance?.metadata?.source_status === "available"
     ? "Approved Power BI beginning-of-contract baselines applied."
     : "Baseline unavailable: Power BI beginning-of-contract square-foot import is required before compliance can be evaluated.";
+  if (financeSummary.contract_area_baseline_source?.status === "partially_available") {
+    document.getElementById("areaComplianceSourceNote").textContent = `${financeSummary.contract_area_baseline_source.message} Current assignment square footage is still required for compliance.`;
+  }
 }
 
 function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
@@ -1662,7 +1668,7 @@ async function main() {
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
-    renderAreaCompliance(areaCompliance, selectedMonth);
+    renderAreaCompliance(areaCompliance, financeSummary, selectedMonth);
     renderQuarterScoped();
 
     document.getElementById("contractorSelect").onchange = (event) => {
