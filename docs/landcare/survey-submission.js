@@ -268,7 +268,7 @@ async function loadParcels(organization) {
   const payload = await fetchJson(`${ASSIGNMENT_HISTORY_LAYER_URL}/query`, {
     f: "json",
     where: periodWhere(`maintained_by = '${escapeSqlText(organization)}'`),
-    outFields: "OBJECTID,id,parcelnumb,alco_pin,address,period_label,service_period_label,maintain_level,maintained_by",
+    outFields: "OBJECTID,parcelnumb,alco_pin,address,period_label,service_period_label,maintain_level,maintained_by",
     returnGeometry: "true",
     outSR: "4326",
     orderByFields: "address ASC, parcelnumb ASC",
@@ -279,7 +279,7 @@ async function loadParcels(organization) {
       const parcelGeometry = normalizeAssignmentGeometry(geometry);
       return {
       objectId: String(attributes.OBJECTID),
-      assignmentId: String(attributes.id ?? attributes.assignment_id ?? attributes.OBJECTID),
+      assignmentId: String(attributes.assignment_id ?? attributes.OBJECTID),
       address: attributes.address || coordinateFallback(parcelGeometry),
       coordinateLabel: coordinateFallback(parcelGeometry),
       organization: attributes.maintained_by || organization,
@@ -310,8 +310,8 @@ function buildSurveyUrl(assignment) {
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.parcelNumber}`, assignment.parcelNumber);
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.address}`, assignment.address);
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.assignmentPeriod}`, assignment.period);
-  // OBJECTID identifies a rendered feature; `id` is the durable PostgreSQL
-  // assignment key used by the canonical Survey123 evidence pipeline.
+  // The public assignment layer exposes OBJECTID as the stable browser-side
+  // feature identifier. Canonical evidence matching validates it separately.
   url.searchParams.set(`field:${SURVEY123_PREFILL_FIELDS.assignmentObjectId}`, assignment.assignmentId);
   const center = polygonCenter(assignment.geometry);
   if (center) {

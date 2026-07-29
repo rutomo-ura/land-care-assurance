@@ -16,7 +16,6 @@ export const ASSIGNMENT_HISTORY_LAYER_NAME = "gisdb_gis_regrid_bundle_assignment
 
 const ASSIGNMENT_OUT_FIELDS = [
   "OBJECTID",
-  "id",
   "address",
   "parcelnumb",
   "alco_pin",
@@ -74,7 +73,9 @@ function normalizeAssignmentFeature(feature, source) {
     geometry: esriPolygonToGeoJson(feature.geometry),
     properties: {
       objectid: attrs.OBJECTID,
-      assignment_id: attrs.id ?? attrs.assignment_id ?? attrs.OBJECTID,
+      // The published assignment history no longer exposes the database `id`.
+      // OBJECTID is the stable identifier available to the browser map.
+      assignment_id: attrs.assignment_id ?? attrs.OBJECTID,
       parcel_key: parcelKey,
       parcel_digits: parcelDigits(parcelKey),
       parcel_number: attrs.parcelnumb,
