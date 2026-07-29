@@ -175,17 +175,15 @@ try {
   }
 
   # This repository owns Survey123 ingestion, canonical PostGIS evidence, and
-  # the stable ArcGIS polygon layer. Keep it gated until the VM migration,
-  # publisher profile, and item ID are configured.
+  # the stable ArcGIS polygon layer. The publisher uses ArcGIS REST directly,
+  # so it intentionally runs with the normal scheduler virtual environment;
+  # a desktop ArcGIS Pro product license is not required on the VM.
   if ($env:LANDCARE_SURVEY_EVIDENCE_ENABLED -eq "true") {
-    if (-not (Test-Path -LiteralPath $ArcGisPython)) {
-      throw "LANDCARE_SURVEY_EVIDENCE_ENABLED=true but ArcGIS Pro Python was not found: $ArcGisPython"
-    }
     Invoke-Checked "Reconcile Survey123 evidence to canonical parcels" {
       & $Python survey123_evidence_sync.py
     }
     Invoke-Checked "Publish Survey123 evidence parcel layer" {
-      & $ArcGisPython publish_landcare_survey_evidence_parcels.py
+      & $Python publish_landcare_survey_evidence_parcels.py
     }
   }
 
