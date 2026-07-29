@@ -68,7 +68,9 @@ echo [3/4] Backfilling and validating Survey123 submissions as authoritative par
 if errorlevel 1 goto :failed
 
 echo [4/4] Publishing the stable hosted evidence parcel layer...
-set "PUBLISH_LOG=%TEMP%\landcare-survey-evidence-publish.log"
+set "PUBLISH_LOG_DIR=%REPO_ROOT%\logs"
+if not exist "%PUBLISH_LOG_DIR%" mkdir "%PUBLISH_LOG_DIR%"
+set "PUBLISH_LOG=%PUBLISH_LOG_DIR%\landcare-survey-evidence-publish.log"
 if "%LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID%"=="" (
   "%ARCGIS_PYTHON%" "%REPO_ROOT%\publish_landcare_survey_evidence_parcels.py" --bootstrap > "%PUBLISH_LOG%" 2>&1
 ) else (
