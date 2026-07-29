@@ -886,7 +886,12 @@ async function enrichWithSurveyEvidence(props) {
     .flatMap((record) => record.evidence_photos || []);
   let evidence = state.evidenceCache.get(cacheKey);
   if (evidence === undefined) {
-    evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod).catch(() => []);
+    try {
+      evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod);
+    } catch (error) {
+      console.warn("Unable to load Regrid evidence for selected parcel", { parcelKey, selectedPeriod, error });
+      evidence = [];
+    }
     state.evidenceCache.set(cacheKey, evidence);
   }
   const periodPhotos = [
