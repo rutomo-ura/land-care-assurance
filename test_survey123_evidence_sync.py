@@ -22,6 +22,7 @@ def test_field_normalization():
     assert MODULE.first(attributes, "globalid") == "evidence-1"
     assert MODULE.first(attributes, "assignment_object_id", "untitled_question_2") == "55"
     assert MODULE.iso_timestamp(0).startswith("1970-01-01T00:00:00")
+    assert MODULE.iso_date(1782835200000) == "2026-06-30"
 
 
 def test_database_dsn_uses_existing_regrid_environment():

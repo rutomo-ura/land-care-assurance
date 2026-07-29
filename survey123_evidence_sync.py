@@ -61,6 +61,15 @@ def iso_timestamp(value: Any) -> str | None:
     return str(value)
 
 
+def iso_date(value: Any) -> str | None:
+    """Normalize Survey123 date-only values, including ArcGIS epoch milliseconds."""
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(value / 1000, tz=timezone.utc).date().isoformat()
+    return str(value).split("T", 1)[0]
+
+
 def request_json(url: str, params: dict[str, Any]) -> dict[str, Any]:
     token = os.getenv("SURVEY123_ARCGIS_TOKEN", "").strip()
     if token and "token" not in params:
@@ -134,7 +143,7 @@ def upsert_raw(connection: Any, attributes: dict[str, Any], image_url: str | Non
         "parcel_number": first(attributes, "parcel_number", "parcelnumb", "parcel_id"),
         "organization": first(attributes, "organization", "maintained_by", "contractor"),
         "assignment_period": first(attributes, "assignment_period", "period_label", "period"),
-        "service_date": first(attributes, "service_date", "date_of_services", "date_services"),
+        "service_date": iso_date(first(attributes, "service_date", "date_of_services", "date_services")),
         "submitted_at": iso_timestamp(first(attributes, "creationdate", "created_at")),
         "image_attachment_url": image_url, "image_attachment_name": image_name,
         "source_payload": json.dumps(attributes),
@@ -209,9 +218,11 @@ def main() -> None:
             try:
                 image_url, image_name = image_attachment(layer_url, object_id)
                 upsert_raw(connection, attributes, image_url, image_name)
+                connection.commit()
             except Exception as error:
                 # Keep a durable record for the next reconciliation instead of
                 # losing a submission whose attachment is not ready yet.
+                connection.rollback()
                 global_id = first(attributes, "globalid", "global_id")
                 if global_id:
                     with connection.cursor() as cursor:
@@ -219,6 +230,7 @@ def main() -> None:
                           VALUES (%s, %s, %s::jsonb, %s)
                           ON CONFLICT (source_global_id) DO UPDATE SET processing_error = EXCLUDED.processing_error, updated_at = now()""",
                           (str(global_id), object_id, json.dumps(attributes), str(error)))
+                    connection.commit()
                 print(f"Submission {object_id} deferred: {error}")
         with connection.cursor() as cursor:
             cursor.execute("SELECT valid_count, invalid_count FROM gis.refresh_landcare_survey_evidence_parcels()")
@@ -231,6 +243,7 @@ def main() -> None:
             cursor.execute("""SELECT count(*) FROM gis.landcare_survey123_evidence_raw
                               WHERE processing_error IS NOT NULL OR processed_at IS NULL""")
             backlog = cursor.fetchone()[0]
+        connection.commit()
         if args.publish_fast_path and args.object_id:
             publish_fast_path(connection, args.object_id)
     print(json.dumps({
