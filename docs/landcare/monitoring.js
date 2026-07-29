@@ -7,6 +7,7 @@ import WebTileLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/WebTile
 import Home from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Home.js";
 import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
+import Zoom from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Zoom.js";
 import {
   SURVEY_LAYER_URL,
   SURVEY_AGOL_ITEM_URL,
@@ -383,11 +384,22 @@ function surveyPhotoMarkup(props, { compact = false } = {}) {
   const label = compact
     ? `View ${isApprovedSurvey123 ? "approved" : "Regrid"} survey photo`
     : `Open full ${isApprovedSurvey123 ? "approved Survey123" : "Regrid"} photo`;
+  const submittedAt = props.created_at || props.submitted_at || props.service_date;
   return `
     <section class="survey-photo-evidence${compact ? " compact" : ""}">
-      <img src="${escapeHtml(imageUrl)}" alt="Approved survey evidence for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
-      <div><span class="eyebrow">${sourceLabel}</span><a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
+      <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${escapeHtml(sourceLabel)} for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
+      <div><span class="eyebrow">${sourceLabel}</span>${submittedAt ? `<small>${escapeHtml(String(submittedAt))}</small>` : ""}<a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
     </section>`;
+}
+
+function bindPhotoFallbacks(container) {
+  for (const image of container.querySelectorAll("img[data-evidence-photo]:not([data-fallback-bound])")) {
+    image.dataset.fallbackBound = "true";
+    image.addEventListener("error", () => {
+      image.closest(".survey-photo-evidence")?.classList.add("image-unavailable");
+      image.remove();
+    }, { once: true });
+  }
 }
 
 function surveyPhotoGalleryMarkup(props) {
@@ -855,7 +867,9 @@ function parcelDetail(props) {
 }
 
 function setParcelDetail(props) {
-  document.getElementById("parcelDetail").innerHTML = parcelDetail(props);
+  const detail = document.getElementById("parcelDetail");
+  detail.innerHTML = parcelDetail(props);
+  bindPhotoFallbacks(detail);
 }
 
 async function enrichWithSurveyEvidence(props) {
@@ -1929,7 +1943,7 @@ function buildHistoryAssignmentLayer({ url, title, mode, visible }) {
     renderer: statusRenderer(mode),
     opacity: 0.88,
     labelingInfo: [{
-      labelExpressionInfo: { expression: "DefaultValue($feature.parcel_number, $feature.parcel_key)" },
+      labelExpressionInfo: { expression: "IIf(!IsEmpty($feature.block_lot), $feature.block_lot, DefaultValue($feature.parcel_number, $feature.parcel_key))" },
       minScale: 5000,
       symbol: {
         type: "text",
@@ -2071,6 +2085,7 @@ async function initMap() {
     map,
     center: [-79.9959, 40.4406],
     zoom: 13,
+    ui: { components: ["attribution"] },
     constraints: { minZoom: 11 },
     popup: {
       dockEnabled: false
@@ -2080,6 +2095,7 @@ async function initMap() {
   state.view = view;
   view.ui.add(new Home({ view }), "top-left");
   view.ui.add(new Search({ view, includeDefaultSources: true }), "top-right");
+  view.ui.add(new Zoom({ view }), "bottom-right");
   view.ui.add(new BasemapToggle({ view, nextBasemap: "satellite" }), "bottom-right");
 
   view.on("click", async (event) => {
@@ -2126,6 +2142,7 @@ async function initMap() {
       }
       lastHoverKey = key;
       hoverCard.innerHTML = surveyPhotoMarkup(evidence, { compact: true });
+      bindPhotoFallbacks(hoverCard);
       hoverCard.hidden = false;
       hoverCard.style.left = `${Math.min(event.x + 14, Math.max(12, view.width - 238))}px`;
       hoverCard.style.top = `${Math.min(event.y + 14, Math.max(12, view.height - 212))}px`;

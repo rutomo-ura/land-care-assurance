@@ -224,7 +224,9 @@ textarea {
 .evidence-hover-card { position: absolute; z-index: 5; width: 222px; pointer-events: none; filter: drop-shadow(0 10px 18px rgba(0, 51, 79, .18)); }
 .survey-photo-evidence { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfd; }
 .survey-photo-evidence img { display: block; width: 116px; height: 82px; border-radius: 8px; object-fit: cover; background: var(--panel); }
+.survey-photo-evidence small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.35; }
 .survey-photo-evidence a { display: block; margin-top: 3px; color: var(--ura-blue-dark); font-size: 12px; font-weight: 800; line-height: 1.35; }
+.survey-photo-evidence.image-unavailable { grid-template-columns: minmax(0, 1fr); }
 .survey-photo-evidence.compact { display: block; margin: 0; padding: 8px; background: var(--paper); }
 .survey-photo-evidence.compact img { width: 204px; height: 138px; }
 .survey-photo-evidence.compact div { display: none; }
@@ -1055,6 +1057,24 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   grid-template-rows: minmax(220px, auto) minmax(0, 1fr);
 }
 
+body[data-page="monitoring"] .parcel-panel {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+body[data-page="monitoring"] .parcel-panel > section {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+body[data-page="monitoring"] .parcel-panel .section-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
 .parcel-detail {
   margin-top: 9px;
   font-size: 13px;
@@ -1069,11 +1089,13 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   display: grid;
   gap: 8px;
   margin-top: 10px;
+  min-width: 0;
 }
 
 .focus-list div {
   display: grid;
   gap: 3px;
+  min-width: 0;
   padding: 8px 0 8px 10px;
   border-left: 4px solid var(--ura-blue);
 }
@@ -1095,7 +1117,11 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
   font-size: 12px;
   font-weight: 750;
   line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
+
+.focus-list span { overflow-wrap: anywhere; }
 
 .focus-list strong {
   color: var(--ink);
@@ -2506,8 +2532,15 @@ select {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    overflow: visible;
     border-left: 0;
     border-top: 1px solid var(--line);
+  }
+
+  body[data-page="monitoring"] .parcel-panel > section {
+    min-height: auto;
+    overflow: visible;
   }
 
   .kpi-grid,
