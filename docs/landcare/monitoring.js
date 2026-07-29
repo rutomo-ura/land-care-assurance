@@ -141,7 +141,9 @@ function slug(value) {
 }
 
 function parcelDigits(value) {
-  return String(value || "").replace(/\D/g, "");
+  // County PINs contain a meaningful block letter. Strip formatting only;
+  // do not turn 0124K00195000000 into a different all-numeric parcel key.
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 function normalizeBlockLot(value) {
