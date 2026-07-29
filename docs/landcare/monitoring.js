@@ -383,14 +383,11 @@ function surveyPhotoMarkup(props, { compact = false } = {}) {
   const isApprovedSurvey123 = props.evidence_source === "approved_internal_survey123" ||
     props.survey_source === "Survey123 approved evidence";
   const sourceLabel = isApprovedSurvey123 ? "Approved Survey123 photo" : "Regrid survey photo";
-  const label = compact
-    ? `View ${isApprovedSurvey123 ? "approved" : "Regrid"} survey photo`
-    : `Open full ${isApprovedSurvey123 ? "approved Survey123" : "Regrid"} photo`;
-  const submittedAt = props.created_at || props.submitted_at || props.service_date;
   return `
     <section class="survey-photo-evidence${compact ? " compact" : ""}">
-      <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${escapeHtml(sourceLabel)} for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
-      <div><span class="eyebrow">${sourceLabel}</span>${submittedAt ? `<small>${escapeHtml(String(submittedAt))}</small>` : ""}<a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer">${label}</a></div>
+      <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full ${escapeHtml(sourceLabel)}">
+        <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${escapeHtml(sourceLabel)} for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
+      </a>
     </section>`;
 }
 
@@ -1948,7 +1945,7 @@ function buildHistoryAssignmentLayer({ url, title, mode, visible }) {
     opacity: 0.88,
     labelingInfo: [{
       labelExpressionInfo: { expression: "IIf(!IsEmpty($feature.block_lot), $feature.block_lot, DefaultValue($feature.parcel_number, $feature.parcel_key))" },
-      minScale: 5000,
+      minScale: 2500,
       symbol: {
         type: "text",
         color: "#17212b",
