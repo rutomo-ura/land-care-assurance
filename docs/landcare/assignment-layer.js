@@ -33,7 +33,7 @@ const ASSIGNMENT_OUT_FIELDS = [
 ].join(",");
 
 function parcelDigits(value) {
-  return String(value || "").replace(/\D/g, "");
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 function esriPolygonToGeoJson(geometry) {

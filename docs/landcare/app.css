@@ -222,15 +222,14 @@ textarea {
 .survey-embed-config { background: linear-gradient(135deg, #f5fbfe, #fff); }
 
 .evidence-hover-card { position: absolute; z-index: 5; width: 222px; pointer-events: none; filter: drop-shadow(0 10px 18px rgba(0, 51, 79, .18)); }
-.survey-photo-evidence { display: block; width: fit-content; margin-top: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfd; }
-.survey-photo-evidence img { display: block; width: 116px; height: 82px; border-radius: 8px; object-fit: cover; background: var(--panel); }
+.survey-photo-evidence { display: block; width: 100%; margin-top: 0; padding: 0; border: 0; background: transparent; }
+.survey-photo-evidence img { display: block; width: min(100%, 340px); height: auto; max-height: 255px; aspect-ratio: 4 / 3; border-radius: 8px; object-fit: cover; background: var(--panel); }
 .survey-photo-evidence a { display: block; border-radius: 8px; }
 .survey-photo-evidence a:focus-visible { outline: 3px solid var(--ura-blue); outline-offset: 3px; }
-.survey-photo-evidence.compact { display: block; margin: 0; padding: 8px; background: var(--paper); }
+.survey-photo-evidence.compact { display: block; width: fit-content; margin: 0; padding: 0; background: transparent; }
 .survey-photo-evidence.compact img { width: 204px; height: 138px; }
 .survey-photo-evidence.compact div { display: none; }
-.survey-photo-gallery { display: grid; gap: 9px; margin-top: 14px; }
-.survey-photo-gallery__heading { color: var(--ura-deep); font-size: 11px; font-weight: 850; text-transform: uppercase; }
+.survey-photo-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 14px; }
 .survey-photo-gallery .survey-photo-evidence { margin-top: 0; }
 .survey-photo-empty { margin-top: 14px; padding: 9px; color: var(--muted); background: #f8fbfd; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; font-weight: 650; }
 
@@ -353,7 +352,7 @@ body[data-page="monitoring"] .monitoring-masthead p {
 
 .mini-kpis {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 8px;
 }
@@ -970,13 +969,13 @@ body[data-page="monitoring"] .parcel-panel { background: #f3f6f7; }
 
 body[data-page="monitoring"] .sidebar-section,
 body[data-page="monitoring"] .parcel-panel section { margin: 10px; padding: 15px; border: 1px solid #dce5e8; border-radius: 8px; box-shadow: 0 3px 13px rgba(0, 47, 76, .025); }
+body[data-page="monitoring"] .parcel-panel .survey-photo-gallery { margin: 14px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 body[data-page="monitoring"] .sidebar-section.compact { margin-top: 12px; }
 body[data-page="monitoring"] .parcel-panel section { margin-bottom: 0; }
 body[data-page="monitoring"] .map-stage { border-right: 1px solid #d1dde2; border-left: 1px solid #d1dde2; }
 body[data-page="monitoring"] .mini-kpis { gap: 0; overflow: hidden; border: 1px solid #dbe4e7; border-radius: 7px; }
-body[data-page="monitoring"] .mini-kpis article { min-height: 76px; padding: 12px; border: 0; border-top: 1px solid #dbe4e7; border-left: 1px solid #dbe4e7; border-radius: 0; box-shadow: none; }
-body[data-page="monitoring"] .mini-kpis article:nth-child(odd) { border-left: 0; }
-body[data-page="monitoring"] .mini-kpis article:nth-child(-n+2) { border-top: 0; }
+body[data-page="monitoring"] .mini-kpis article { min-height: 76px; padding: 12px; border: 0; border-left: 1px solid #dbe4e7; border-radius: 0; box-shadow: none; }
+body[data-page="monitoring"] .mini-kpis article:first-child { border-left: 0; }
 body[data-page="monitoring"] .mini-kpis article:first-child { background: linear-gradient(135deg, #00334f, #005b7f); }
 body[data-page="monitoring"] .map-badge { top: 16px; left: 16px; padding: 9px 12px; border-left: 4px solid var(--ura-blue); border-radius: 5px; box-shadow: 0 8px 24px rgba(0, 47, 76, .10); }
 body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; box-shadow: 0 8px 24px rgba(0, 47, 76, .10); }

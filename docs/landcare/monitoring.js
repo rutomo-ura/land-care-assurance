@@ -17,6 +17,7 @@ import {
   fetchSurveyEvidenceForParcel,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
+  fetchSurveyRecordsForPeriod,
   enrichSummaryWithSurveyLayer,
   loadCombinedEvidenceByPeriod,
   loadSurvey123EvidenceByPeriod,
@@ -37,7 +38,7 @@ import {
   fetchAssignmentHistoryGeojson,
   fetchAssignmentLayerMetadata,
   fetchAssignmentPeriodStats
-} from "./assignment-layer.js?v=20260729-assignment-bundle";
+} from "./assignment-layer.js?v=20260729-submitted-metrics";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -105,7 +106,8 @@ const state = {
   assignmentPeriodStats: [],
   surveyLayerMode: "all",
   evidenceCache: new globalThis.Map(),
-  survey123EvidenceByPeriod: {}
+  survey123EvidenceByPeriod: {},
+  surveyRecordsByPeriod: {}
 };
 
 const DEFAULT_EXPORT_METRICS = ["completionRate", "open", "returned", "active", "annualRunRate"];
@@ -408,7 +410,6 @@ function surveyPhotoGalleryMarkup(props) {
   }
   return `
     <section class="survey-photo-gallery" aria-label="Returned survey photos">
-      <span class="survey-photo-gallery__heading">Returned photos (${photos.length})</span>
       ${photos.map((photo) => surveyPhotoMarkup(photo)).join("")}
     </section>`;
 }
@@ -461,6 +462,27 @@ function assignmentRecordCountForSelectedPeriod() {
 
 function matchedReturnedCount(features = currentMonthFeatures()) {
   return uniqueCount(features, (feature) => feature.properties.returned_flag);
+}
+
+function selectedSurveyPeriod() {
+  return state.selectedMonth === "Current" ? state.summary?.latest_month : state.selectedMonth;
+}
+
+function submittedSurveyCount(features) {
+  const period = selectedSurveyPeriod();
+  const surveyRecords = state.surveyRecordsByPeriod[period] || [];
+  const assignmentPins = new Set(
+    features
+      .map((feature) => parcelDigits(feature.properties?.parcel_key || feature.properties?.parcel_number))
+      .filter(Boolean)
+  );
+  return surveyRecords.filter((record) => assignmentPins.has(parcelDigits(record.parcelnumb))).length;
+}
+
+async function ensureSurveyRecords(period = selectedSurveyPeriod()) {
+  if (!period || state.surveyRecordsByPeriod[period]) return;
+  const records = await fetchSurveyRecordsForPeriod(period).catch(() => []);
+  state.surveyRecordsByPeriod[period] = records;
 }
 
 function surveyOnlyCount(features = currentMonthFeatures()) {
@@ -566,35 +588,18 @@ function renderDistrictOptions() {
 
 function renderKpis() {
   const features = filteredFeatures();
-  const active = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Active");
-  const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
-  const open = uniqueCount(features, (feature) => feature.properties.completion_status === "missing");
   const assigned = uniqueCount(features);
-  if (state.dataView === "current") {
-    const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
-    const contractors = new Set(features.map((feature) => feature.properties.organization).filter(Boolean)).size;
-    document.getElementById("latestMonthLabel").textContent = "Current portfolio";
-    document.getElementById("assignedKpiLabel").textContent = "Parcels";
-    document.getElementById("returnedKpiLabel").textContent = "Active";
-    document.getElementById("completionKpiLabel").textContent = "Request Only";
-    document.getElementById("completionKpiLabel").removeAttribute("title");
-    document.getElementById("openKpiLabel").textContent = "Contractors";
-    document.getElementById("assignedKpi").textContent = formatNumber(assigned);
-    document.getElementById("returnedKpi").textContent = formatNumber(active);
-    document.getElementById("completionKpi").textContent = formatNumber(requestOnly);
-    document.getElementById("openKpi").textContent = formatNumber(contractors);
-    return;
-  }
-  document.getElementById("latestMonthLabel").textContent = `${state.selectedMonth} monthly LandCare status`;
+  const submitted = submittedSurveyCount(features);
+  const open = Math.max(assigned - submitted, 0);
+  document.getElementById("latestMonthLabel").textContent = state.dataView === "current"
+    ? "Current portfolio"
+    : `${state.selectedMonth} monthly LandCare status`;
   document.getElementById("assignedKpiLabel").textContent = "Assigned";
-  document.getElementById("returnedKpiLabel").textContent = "All survey records";
-  const returnedAssignmentsLabel = document.getElementById("completionKpiLabel");
-  returnedAssignmentsLabel.textContent = "Returned assignments";
-  returnedAssignmentsLabel.title = "Unique active assignments with a survey return matched by normalized parcel number in the selected service month.";
-  document.getElementById("openKpiLabel").textContent = "Open assigned";
+  document.getElementById("submittedKpiLabel").textContent = "Submitted";
+  document.getElementById("submittedKpiLabel").title = "Survey submissions joined to the current assignment and filter scope.";
+  document.getElementById("openKpiLabel").textContent = "Open";
   document.getElementById("assignedKpi").textContent = formatNumber(assigned);
-  document.getElementById("returnedKpi").textContent = formatNumber(surveyRecordCountForSelectedPeriod());
-  document.getElementById("completionKpi").textContent = formatNumber(returned);
+  document.getElementById("submittedKpi").textContent = formatNumber(submitted);
   document.getElementById("openKpi").textContent = formatNumber(open);
 }
 
@@ -746,7 +751,7 @@ function renderActionFocus() {
       feature.properties.maintenance_level === "Active" &&
       feature.properties.completion_status === "missing"
   );
-  const returned = uniqueCount(features, (feature) => feature.properties.returned_flag);
+  const submitted = submittedSurveyCount(features);
   const requestOnly = uniqueCount(features, (feature) => feature.properties.maintenance_level === "Request Only");
   const rawSurveys = surveyRecordCountForSelectedPeriod();
   const surveyOnly = surveyOnlyCount(monthFeatures);
@@ -758,7 +763,7 @@ function renderActionFocus() {
   document.getElementById("actionFocus").innerHTML = `
     <div class="action-directive"><strong>Action</strong><span>${escapeHtml(directive)}</span></div>
     <div><strong>${formatNumber(activeOpen)}</strong><span>Open active parcels in current filter</span></div>
-    <div><strong>${formatNumber(returned)}</strong><span>Matched returned assigned parcels</span></div>
+    <div><strong>${formatNumber(submitted)}</strong><span>Submitted survey records joined to assignments</span></div>
     <div><strong>${formatNumber(rawSurveys)}</strong><span>All live survey records for ${escapeHtml(state.selectedMonth)}</span></div>
     <div><strong>${formatNumber(surveyOnly)}</strong><span>Survey-only records outside the matched assignment count</span></div>
     <div><strong>${formatNumber(requestOnly)}</strong><span>Request-only assignments excluded from active compliance</span></div>
@@ -1103,6 +1108,7 @@ async function setDistrictFilter(district, { zoom = true } = {}) {
     state.layers.current.definitionExpression = whereForFilter("current");
   }
   updateDistrictHighlight();
+  await ensureSurveyRecords();
   renderAll();
   if (zoom) await zoomToDistrict(state.districtFilter);
 }
@@ -1237,6 +1243,7 @@ async function setMonthFilter(month) {
   if (state.layers.current) state.layers.current.visible = false;
   syncHistoryLayerFilters();
   updateDistrictHighlight();
+  await ensureSurveyRecords();
   renderAll();
   document.getElementById("parcelDetail").textContent =
     "Select a parcel to review contractor, status, ownership, and survey period.";
@@ -1821,6 +1828,7 @@ async function loadData() {
   state.finance = financeSummary;
   state.selectedMonth = enrichedSummary.latest_month;
   setActiveDataset();
+  await ensureSurveyRecords();
 }
 
 
