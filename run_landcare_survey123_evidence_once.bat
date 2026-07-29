@@ -8,7 +8,7 @@ set "REPO_ROOT=%~dp0"
 if "%REPO_ROOT:~-1%"=="\" set "REPO_ROOT=%REPO_ROOT:~0,-1%"
 set "SECRETS_FILE=C:\srv\secrets\.env"
 set "ARCGIS_PYTHON=C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"
-set "PSQL=psql.exe"
+set "PSQL_PATH="
 
 if not "%~1"=="" set "SECRETS_FILE=%~1"
 if not "%~2"=="" set "ARCGIS_PYTHON=%~2"
@@ -37,10 +37,10 @@ if not exist "%ARCGIS_PYTHON%" (
   exit /b 1
 )
 
-where %PSQL% >nul 2>nul
-if errorlevel 1 (
-  echo ERROR: psql.exe was not found on PATH.
-  echo Install PostgreSQL client tools or run this file from an environment with psql on PATH.
+for %%V in (18 17 16 15 14) do if not defined PSQL_PATH if exist "C:\Program Files\PostgreSQL\%%V\bin\psql.exe" set "PSQL_PATH=C:\Program Files\PostgreSQL\%%V\bin\psql.exe"
+if not defined PSQL_PATH for /f "delims=" %%P in ('where psql.exe 2^>nul') do if not defined PSQL_PATH set "PSQL_PATH=%%P"
+if not defined PSQL_PATH (
+  echo ERROR: psql.exe was not found in PostgreSQL 14-18 or on PATH.
   exit /b 1
 )
 
@@ -53,7 +53,7 @@ if "%LANDCARE_PG_DSN%"=="" (
 )
 
 echo [1/4] Applying idempotent PostGIS migration...
-%PSQL% %PGCONNECT% -v ON_ERROR_STOP=1 -f "%REPO_ROOT%\sql\20260728_landcare_survey123_evidence_parcels.sql"
+"%PSQL_PATH%" %PGCONNECT% -v ON_ERROR_STOP=1 -f "%REPO_ROOT%\sql\20260728_landcare_survey123_evidence_parcels.sql"
 if errorlevel 1 goto :failed
 
 echo [2/4] Installing Survey123 worker dependencies in ArcGIS Pro Python...
