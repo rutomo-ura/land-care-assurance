@@ -36,7 +36,7 @@ import {
   fetchAssignmentHistoryGeojson,
   fetchAssignmentLayerMetadata,
   fetchAssignmentPeriodStats
-} from "./assignment-layer.js";
+} from "./assignment-layer.js?v=20260729-assignment-bundle";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -87,7 +87,10 @@ const state = {
   layers: {},
   boundaryLayers: {},
   contractorFilter: "all",
-  ownershipFilter: "URA",
+  // The assignment-bundle map starts with every assigned parcel. The separate
+  // Current Portfolio view retains URA as its own initial ownership scope.
+  ownershipFilter: "all",
+  ownershipFilterByView: { history: "all", current: "URA" },
   districtFilter: "all",
   landcareStatusFilter: "all",
   colorMode: "status",
@@ -1116,6 +1119,7 @@ async function setContractorFilter(name, { zoom = false } = {}) {
 
 async function setOwnershipFilter(group, { zoom = true } = {}) {
   state.ownershipFilter = ["all", "URA", "PLB"].includes(group) ? group : "URA";
+  state.ownershipFilterByView[state.dataView] = state.ownershipFilter;
   document.querySelectorAll("[data-ownership-filter]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.ownershipFilter === state.ownershipFilter);
   });
@@ -1181,6 +1185,10 @@ function renderAll() {
 
 async function setDataView(mode) {
   state.dataView = mode === "history" ? "history" : "current";
+  state.ownershipFilter = state.ownershipFilterByView[state.dataView];
+  document.querySelectorAll("[data-ownership-filter]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.ownershipFilter === state.ownershipFilter);
+  });
   state.mapFocusLabel = "";
   setActiveDataset();
   const dataViewSelect = document.getElementById("dataViewSelect");
@@ -1205,6 +1213,10 @@ async function setDataView(mode) {
 
 async function setMonthFilter(month) {
   state.dataView = "history";
+  state.ownershipFilter = state.ownershipFilterByView.history;
+  document.querySelectorAll("[data-ownership-filter]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.ownershipFilter === state.ownershipFilter);
+  });
   setActiveDataset();
   state.selectedMonth = month || state.summary.latest_month;
   state.mapFocusLabel = "";
