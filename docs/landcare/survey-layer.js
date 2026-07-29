@@ -8,7 +8,40 @@ export const SURVEY_AGOL_ITEM_URL =
 export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys";
 
 export function parcelDigits(value) {
-  return String(value || "").replace(/\D/g, "");
+  // Allegheny County parcel PINs can include a block letter (for example
+  // 0124N00195000000). Keep that significant character while removing
+  // formatting punctuation so evidence queries use the exact Regrid key.
+  return String(value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+}
+
+export function linkedPhotoUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const candidates = [
+    raw.match(/href\s*=\s*["']([^"']+)["']/i)?.[1],
+    raw.match(/=HYPERLINK\(\s*["']([^"']+)["']/i)?.[1],
+    raw.match(/\]\((https?:\/\/[^)\s]+)\)/i)?.[1],
+    raw.match(/(https?:\/\/[^\s"'<>]+)/i)?.[1]
+  ];
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate || "");
+      if (url.protocol === "https:" || url.protocol === "http:") return url.href;
+    } catch {
+      // Continue to the next representation of the hyperlink target.
+    }
+  }
+  return "";
+}
+
+function normalizeRegridEvidence(attributes) {
+  return {
+    ...attributes,
+    // `original_url` is the source-table hyperlink field. Regrid exports can
+    // represent it as a raw URL, HTML anchor, or Excel HYPERLINK formula.
+    // Prefer it when present, then retain the legacy published image_url.
+    image_url: linkedPhotoUrl(attributes.original_url) || linkedPhotoUrl(attributes.image_url)
+  };
 }
 
 export function cleanOrganization(value) {
@@ -71,13 +104,13 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
     const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
       f: "json",
       where: `period_label = '${safePeriod}'`,
-      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url",
+      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url,original_url",
       returnGeometry: "false",
       resultRecordCount: String(pageSize),
       resultOffset: String(offset),
       orderByFields: "parcelnumb ASC, created_at ASC"
     });
-    const batch = (payload.features || []).map((feature) => feature.attributes || {});
+    const batch = (payload.features || []).map((feature) => normalizeRegridEvidence(feature.attributes || {}));
     records.push(...batch);
     if (batch.length < pageSize) break;
     offset += pageSize;
@@ -95,12 +128,12 @@ export async function fetchSurveyEvidenceForParcel(parcelNumber, periodLabel = n
   const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
     f: "json",
     where: clauses.join(" AND "),
-    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,owner",
+    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,original_url,owner",
     returnGeometry: "false",
     orderByFields: "created_at DESC",
     resultRecordCount: "50"
   });
-  return (payload.features || []).map((feature) => feature.attributes || {});
+  return (payload.features || []).map((feature) => normalizeRegridEvidence(feature.attributes || {}));
 }
 
 export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLabel = null) {
