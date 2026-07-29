@@ -1020,6 +1020,73 @@ function renderFinance(financeSummary, selectedQuarter) {
   document.getElementById("expenseSourceNote").textContent = scopedNote;
 }
 
+function aggregateLiveQuarterlyMetrics(geojson, monthlyMetrics) {
+  const byQuarter = new Map();
+  const featuresByQuarter = new Map();
+  for (const metric of monthlyMetrics || []) {
+    const quarter = quarterKey(metric.period_month);
+    const row = byQuarter.get(quarter) || { quarter, months: [] };
+    row.months.push({
+      period_month: metric.period_month,
+      active_assignments: Number(metric.assigned_active || 0),
+      returned_assignments: Number(metric.returned_assigned || 0),
+      open_assignments: Number(metric.open_active ?? Math.max(Number(metric.assigned_active || 0) - Number(metric.returned_assigned || 0), 0)),
+      request_only_assignments: Number(metric.request_only || 0),
+      assigned_parcels: Number(metric.assigned_total || 0),
+      completion_rate_pct: Number(metric.active_completion_rate_pct || 0)
+    });
+    byQuarter.set(quarter, row);
+  }
+  for (const feature of geojson.features || []) {
+    const props = feature.properties || {};
+    if (!props.period_month || !props.parcel_key) continue;
+    const quarter = quarterKey(props.period_month);
+    const row = featuresByQuarter.get(quarter) || { parcels: new Set(), contractors: new Set(), ownersByMonth: new Map() };
+    row.parcels.add(props.parcel_key);
+    row.contractors.add(normalizeContractorName(props.organization));
+    const owner = String(props.ownership_group || props.ownership_type || "").toUpperCase();
+    const ownershipGroup = owner === "URA" || owner === "URA OWNED" ? "URA"
+      : owner === "PLB" || owner === "PLB OWNED" || owner === "PITTSBURGH LAND BANK" ? "PLB" : null;
+    if (ownershipGroup) {
+      const monthOwners = row.ownersByMonth.get(props.period_month) || new Map();
+      const ownerParcels = monthOwners.get(ownershipGroup) || new Set();
+      ownerParcels.add(props.parcel_key);
+      monthOwners.set(ownershipGroup, ownerParcels);
+      row.ownersByMonth.set(props.period_month, monthOwners);
+    }
+    featuresByQuarter.set(quarter, row);
+  }
+  return {
+    metadata: { source_status: "live_arcgis_assignment_history", baseline_source_status: "unavailable" },
+    quarters: [...byQuarter.values()].sort((a, b) => a.quarter.localeCompare(b.quarter)).map((row) => {
+      const months = row.months.sort((a, b) => a.period_month.localeCompare(b.period_month));
+      const active = months.reduce((sum, month) => sum + month.active_assignments, 0);
+      const returned = months.reduce((sum, month) => sum + month.returned_assignments, 0);
+      const requestOnly = months.reduce((sum, month) => sum + month.request_only_assignments, 0);
+      const featureSummary = featuresByQuarter.get(row.quarter) || { parcels: new Set(), contractors: new Set(), ownersByMonth: new Map() };
+      const throughMonth = months.at(-1)?.period_month || null;
+      const ownerBreakdown = [...(featureSummary.ownersByMonth.get(throughMonth) || new Map()).entries()]
+        .map(([ownership_group, parcels]) => ({ ownership_group, parcels: parcels.size, sq_footage: null }))
+        .sort((a, b) => a.ownership_group.localeCompare(b.ownership_group));
+      return {
+        quarter: row.quarter,
+        through_month: throughMonth,
+        is_complete: months.length === 3,
+        active_assignments: active,
+        returned_assignments: returned,
+        open_assignments: Math.max(active - returned, 0),
+        request_only_assignments: requestOnly,
+        distinct_parcels: featureSummary.parcels.size,
+        contractors: featureSummary.contractors.size,
+        completion_rate_pct: active ? Math.round((1000 * returned) / active) / 10 : 0,
+        months,
+        owner_breakdown: ownerBreakdown,
+        owner_responsibility_status: "unavailable"
+      };
+    })
+  };
+}
+
 function renderBudget(financeSummary, selectedYear) {
   const yearFinance = buildYearFinance(financeSummary, selectedYear);
   const actualAvailable = financeSummary.actual_invoice_source?.status === "available";
@@ -1570,7 +1637,7 @@ async function loadData() {
   const liveMonthlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats)
     : null;
-  const latestMonth = enrichedSummary.latest_month || liveMonthlyMetrics?.at(-1)?.period_month || monthlyMetrics.at(-1)?.period_month;
+  const latestMonth = liveMonthlyMetrics?.at(-1)?.period_month || enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
   const liveLatestSurveyRecordCount = Number(
     surveyPeriodStats.find((row) => row.period_label === latestMonth)?.record_count || 0
   );
@@ -1583,12 +1650,15 @@ async function loadData() {
   const liveContractorMonthly = assignmentHistoryResult.geojson
     ? aggregateLiveContractorMonthly(mergedGeojson)
     : null;
+  const liveQuarterlyMetrics = assignmentHistoryResult.geojson
+    ? aggregateLiveQuarterlyMetrics(mergedGeojson, liveMonthlyMetrics)
+    : null;
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
-    quarterlyMetrics,
+    quarterlyMetrics: liveQuarterlyMetrics || quarterlyMetrics,
     areaCompliance,
     summary: enrichedSummary,
     currentMetrics,
