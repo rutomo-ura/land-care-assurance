@@ -6,13 +6,13 @@ This is the canonical handoff for the contractor submission path and its relatio
 
 ## Outcome
 
-A contractor can anonymously choose an assigned parcel from a list or map, submit service evidence in Survey123, and receive a clear record of what parcel and period were used. A submission with a matching parcel, period, contractor, assignment ID, and image attachment immediately marks the authoritative assignment polygon complete. The submitted point is evidence storage only and is never shown on the public map.
+A contractor can anonymously choose an assigned parcel from a list or map, submit service evidence in Survey123, and receive a clear record of what parcel and period were used. A submission with a matching parcel, period, contractor, and assignment ID immediately marks the authoritative assignment polygon complete. A photo is optional evidence and is shown when available. The submitted point is evidence storage only and is never shown on the public map.
 
 ```mermaid
 flowchart LR
     Bundle["Monthly Regrid assignment bundle"] --> Assign["AGOL assignment history/current layers"]
     Assign --> Intake["Survey Submission page\norganization + map/list parcel selection"]
-    Intake --> Form["Public Survey123 form\nassignment ID + required photo"]
+    Intake --> Form["Public Survey123 form\nassignment ID + optional photo"]
     Form --> EvidenceView["Public query-only evidence view"]
     EvidenceView --> Match["Canonical assignment match"]
     Match --> Monitor["Authoritative parcel polygon\nDone + Survey123 photo"]
@@ -52,7 +52,7 @@ The page filters the selected `period_label` and `maintained_by`, excludes Reque
 
 ### 2. Public submission and review
 
-Public Survey123 submissions are evidence candidates, not official metrics. Required contractor/service fields mirror Regrid and include a required photo attachment. The public form must write `review_status = pending`; review fields stay hidden from contractors.
+Public Survey123 submissions are evidence candidates, not official metrics. Required contractor/service fields mirror Regrid; a photo attachment is optional. The public form must write `review_status = pending`; review fields stay hidden from contractors.
 
 URA reviewers use the restricted Inbox to set `approved` or `rejected`, including reviewer, time, and reason. Rejected or pending records are never published through the evidence feed.
 

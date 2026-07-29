@@ -21,9 +21,9 @@ Public application:
 
 ## Core operating rules
 
-- **Completion evidence is canonicalized at the assignment polygon.** Regrid and valid Survey123 photo submissions are deduplicated by parcel, period, contractor, and assignment ID; the Survey123 point is never displayed on the public map.
+- **Completion evidence is canonicalized at the assignment polygon.** Regrid and valid Survey123 submissions are deduplicated by parcel, period, contractor, and assignment ID; the Survey123 point is never displayed on the public map.
 - **Contractors can choose a parcel from the list or directly on the map.** Both controls use the same assignment ID and prefill the same Survey123 fields.
-- **Public intake is anonymous; evidence is validated.** A Survey123 record affects the dashboard only when its parcel, period, contractor, assignment ID, and image attachment match an authoritative assignment.
+- **Public intake is anonymous; evidence is validated.** A Survey123 record affects the dashboard only when its parcel, period, contractor, and assignment ID match an authoritative assignment. A photo is optional and shown when available.
 - **Images are lazy-loaded.** Map Monitor exposes a safe full-image link for existing Regrid photos and, once the VM endpoint is enabled, approved Survey123 photos.
 
 ---

@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS gis.landcare_survey_evidence_parcels (
   service_period text NOT NULL,
   submitted_at timestamptz,
   evidence_source text NOT NULL DEFAULT 'survey123',
-  image_attachment_url text NOT NULL,
+  -- A submitted service can be valid without a photo. Keep optional
+  -- attachment metadata when it exists so the dashboard can show it.
+  image_attachment_url text,
   image_attachment_name text,
   validated_at timestamptz NOT NULL DEFAULT now(),
   geometry geometry(MultiPolygon, 4326) NOT NULL
@@ -48,6 +50,11 @@ CREATE INDEX IF NOT EXISTS landcare_survey_evidence_assignment_idx
   ON gis.landcare_survey_evidence_parcels (assignment_id, service_period);
 CREATE INDEX IF NOT EXISTS landcare_survey_evidence_geometry_idx
   ON gis.landcare_survey_evidence_parcels USING gist (geometry);
+
+-- Existing VM databases may have been bootstrapped when the field was
+-- required. Make the migration idempotently relax that original constraint.
+ALTER TABLE gis.landcare_survey_evidence_parcels
+  ALTER COLUMN image_attachment_url DROP NOT NULL;
 
 -- Restricted operational view: invalid submissions are intentionally never
 -- included in the public hosted polygon layer.
@@ -67,7 +74,6 @@ SELECT
   r.image_attachment_url,
   CASE
     WHEN r.processing_error IS NOT NULL THEN 'processing_error'
-    WHEN r.image_attachment_url IS NULL THEN 'missing_attachment'
     WHEN r.assignment_object_id IS NULL THEN 'missing_assignment_id'
     WHEN a.id IS NULL THEN 'unmatched_assignment'
     WHEN regexp_replace(coalesce(r.parcel_number, ''), '[^0-9]', '', 'g')
@@ -101,8 +107,7 @@ BEGIN
     SELECT r.*, a.id AS assignment_id, a.period, a.parcelnumb, a.assigned_to
     FROM gis.landcare_survey123_evidence_raw r
     JOIN gis.regrid_bundle_assignments a ON a.id = r.assignment_object_id
-    WHERE r.image_attachment_url IS NOT NULL
-      AND regexp_replace(coalesce(r.parcel_number, ''), '[^0-9]', '', 'g')
+    WHERE regexp_replace(coalesce(r.parcel_number, ''), '[^0-9]', '', 'g')
           = regexp_replace(coalesce(a.parcelnumb, ''), '[^0-9]', '', 'g')
       AND coalesce(r.assignment_period, '') = to_char(a.period, 'YYYY-MM')
       AND regexp_replace(lower(coalesce(r.organization, '')), '[^a-z0-9]+', '', 'g')
