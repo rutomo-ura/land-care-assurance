@@ -10,6 +10,7 @@ This is the canonical architecture reference for the LandCare monitoring platfor
 - [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) - pipeline diagrams and data contract
 - [`docs/landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) - contractor intake, approval, and evidence publication contract
 - [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) - metric definitions and denominator rules
+- [`docs/landcare-data-engineering-and-visualization-logic.md`](landcare-data-engineering-and-visualization-logic.md) - canonical pipeline, runtime reconciliation, KPI, map, QA, and visualization implementation reference
 - [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) - source inventory and QA checklist
 
 ## System Overview
@@ -84,7 +85,7 @@ Current July 9 snapshot: `docs/landcare/data` was generated on 2026-07-07 as the
 
 | Layer | Item / service | Cadence | Web app use |
 |---|---|---|---|
-| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html-id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
+| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
 | Current-period bundle assignments | [gisdb_gis_regrid_bundle_assignments_current_period](https://urap.maps.arcgis.com/home/item.html?id=0b4733cb5d204da6ab936c9f6d49e401) | Daily/current snapshot publish from `publish_regrid_bundle_assignments_current_period_snapshot.py` | Live current assignment denominator and source QA context |
 | Historical bundle assignments | [gisdb_gis_regrid_bundle_assignments_history](https://urap.maps.arcgis.com/home/item.html?id=df7d77eb57f14c68b717c2cf3cdaada4) | Daily/history snapshot publish from `publish_regrid_bundle_assignments_history_snapshot.py` | **Primary live source** for monthly assignment denominator in monitoring |
 | EPP parcels | `gisdb_gis_epp_parcels_full` | Live | Current URA-owned LandCare universe, geometry alignment, council district filters |
