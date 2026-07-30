@@ -213,7 +213,13 @@ textarea {
 .contractor-map-key i.all { background: #eef3f5; }
 .contractor-map-key i.submitted { border-color: #1c5a29; background: var(--green); }
 .contractor-map-key i.selected { border: 3px solid #007eae; }
-.contractor-map-card > p { min-height: 55px; margin: 0; padding: 13px 18px; color: #425965; border-top: 1px solid var(--line); font-size: 13px; font-weight: 650; line-height: 1.5; }
+.contractor-parcel-detail { min-height: 55px; margin: 0; padding: 13px 18px; color: #425965; border-top: 1px solid var(--line); font-size: 13px; font-weight: 650; line-height: 1.5; }
+.contractor-parcel-detail__summary { display: grid; gap: 3px; }
+.contractor-parcel-detail__summary > strong { color: var(--ura-deep); font-size: 15px; }
+.contractor-parcel-detail__summary b { color: #314957; }
+.contractor-parcel-detail .survey-photo-gallery { max-width: 710px; margin: 14px 0 0; }
+.contractor-parcel-detail .survey-photo-evidence img { width: min(100%, 320px); }
+.contractor-parcel-detail .survey-photo-empty { margin-top: 12px; }
 .contractor-submit-parcel { margin-top: 8px; padding: 7px 11px; border: 0; border-radius: 7px; background: var(--ura-blue-dark); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
 .contractor-list-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow); }
 .contractor-list-card[hidden] { display: none; }

@@ -8,6 +8,7 @@ import { fetchAssignmentGeojsonForPeriod } from "./assignment-layer.js?v=2026073
 import {
   cleanOrganization,
   fetchArcgisJson,
+  fetchSurveyEvidenceForParcel,
   fetchSurveyRecordsForPeriod,
   loadSurvey123EvidenceByPeriod,
   parcelDigits,
@@ -35,6 +36,8 @@ const listTitleNode = document.getElementById("contractorListTitle");
 
 const EPP_PARCEL_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
+const COUNCIL_DISTRICT_LAYER_URL =
+  "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const state = {
   month: "",
   organization: "",
@@ -46,7 +49,10 @@ const state = {
   statusFilter: "all",
   overviewView: "map",
   listSort: { key: "block_lot", direction: "asc" },
-  parcelReference: new Map()
+  parcelReference: new Map(),
+  evidenceCache: new Map(),
+  survey123Evidence: [],
+  councilDistricts: null
 };
 const labelScale = 5000;
 
@@ -92,6 +98,74 @@ function dateLabel(value) {
   if (!value) return "";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function safeImageUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function relativeDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const midnight = (input) => new Date(input.getFullYear(), input.getMonth(), input.getDate());
+  const difference = Math.round((midnight(new Date()) - midnight(date)) / 86400000);
+  if (difference === 0) return "Today";
+  if (difference === 1) return "Yesterday";
+  if (difference > 1) return `${difference} days ago`;
+  return "";
+}
+
+function surveyPhotoMarkup(photo) {
+  const imageUrl = safeImageUrl(photo.image_url);
+  if (!imageUrl) return "";
+  const serviceDate = photo.service_date || photo.created_at || photo.submitted_at;
+  const source = photo.evidence_source === "Survey123" ? "Survey123" : "Regrid";
+  const notes = String(photo.additional_notes || photo.additional_note || photo.notes || "").trim();
+  return `<section class="survey-photo-evidence">
+    <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full ${source} photo">
+      <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${source} survey photo" loading="lazy" referrerpolicy="no-referrer" />
+    </a>
+    ${serviceDate ? `<div class="survey-photo-context"><span>${escapeHtml(source)} service: ${escapeHtml(dateLabel(serviceDate))}${relativeDate(serviceDate) ? ` · ${escapeHtml(relativeDate(serviceDate))}` : ""}</span>${notes ? `<p>${escapeHtml(notes)}</p>` : ""}</div>` : notes ? `<div class="survey-photo-context"><p>${escapeHtml(notes)}</p></div>` : ""}
+  </section>`;
+}
+
+function bindPhotoFallbacks() {
+  for (const image of detailNode.querySelectorAll("img[data-evidence-photo]:not([data-fallback-bound])")) {
+    image.dataset.fallbackBound = "true";
+    image.addEventListener("error", () => {
+      image.closest(".survey-photo-evidence")?.remove();
+      if (!detailNode.querySelector(".survey-photo-evidence")) {
+        const gallery = detailNode.querySelector(".survey-photo-gallery");
+        if (gallery) gallery.outerHTML = '<div class="survey-photo-empty">Returned photo could not be loaded. Please try the original service record later.</div>';
+      }
+    }, { once: true });
+  }
+}
+
+function parcelDetailMarkup(props, { loadingEvidence = false } = {}) {
+  const submitted = Boolean(props.returned_flag);
+  const photos = Array.isArray(props.evidence_photos) ? props.evidence_photos : [];
+  const gallery = !submitted
+    ? ""
+    : loadingEvidence
+      ? '<div class="survey-photo-empty">Loading returned survey detail…</div>'
+      : photos.length
+        ? `<section class="survey-photo-gallery" aria-label="Returned survey photos">${photos.map(surveyPhotoMarkup).join("")}</section>`
+        : '<div class="survey-photo-empty">No returned photo available for this parcel and period.</div>';
+  return `<div class="contractor-parcel-detail__summary">
+      <strong>${escapeHtml(blockLot(props.block_lot || props.parcel_number || props.parcel_key))}</strong>
+      <span>${escapeHtml(props.address || "Address unavailable")}</span>
+      <span><b>Status:</b> ${submitted ? "Submitted" : "Open"}${props.submitted_at ? ` · ${escapeHtml(dateLabel(props.submitted_at))}` : ""}</span>
+      <span><b>Council district:</b> ${escapeHtml(props.council_district || "Unavailable")}</span>
+      <span><b>Assignment month:</b> ${escapeHtml(props.period_month || state.month)}</span>
+    </div>
+    ${gallery}
+    ${submitted ? "" : '<button type="button" class="contractor-submit-parcel">Submit service for this parcel</button>'}`;
 }
 
 function setEmptyState(message) {
@@ -218,15 +292,25 @@ function updateLabelVisibility() {
   });
 }
 
-function selectFeature(feature, { openSubmit = false } = {}) {
+async function selectFeature(feature, { openSubmit = false } = {}) {
   if (!feature) return;
   state.selectedObjectId = String(feature.properties.objectid);
   renderOverview();
   const props = feature.properties;
-  const status = props.returned_flag ? "Submitted" : "Open";
-  detailNode.innerHTML = `<strong>${featureBlockLot(feature)}</strong> &middot; ${props.address || "Address unavailable"}<br><span>${status}${props.submitted_at ? ` &middot; submitted ${dateLabel(props.submitted_at)}` : ""}</span>${props.returned_flag ? "" : "<br><button type=\"button\" class=\"contractor-submit-parcel\">Submit service for this parcel</button>"}`;
+  detailNode.innerHTML = parcelDetailMarkup(props, { loadingEvidence: Boolean(props.returned_flag) });
   const button = detailNode.querySelector(".contractor-submit-parcel");
   if (button) button.addEventListener("click", () => selectForSubmission(feature));
+  if (state.overviewView === "map") {
+    const geometry = featureGeometry(feature);
+    if (geometry) state.view?.goTo({ target: geometry, zoom: 18 }, { duration: 350 }).catch(() => {});
+  }
+  if (props.returned_flag) {
+    const enriched = await enrichWithSurveyEvidence(feature);
+    if (state.selectedObjectId === String(feature.properties.objectid)) {
+      detailNode.innerHTML = parcelDetailMarkup(enriched.properties);
+      bindPhotoFallbacks();
+    }
+  }
   if (openSubmit && !props.returned_flag) selectForSubmission(feature);
 }
 
@@ -324,11 +408,89 @@ async function enrichWithParcelReference(features) {
       });
     });
   }
-  return features.map((feature) => {
+  const withParcelReference = features.map((feature) => {
     const props = feature.properties || {};
     const reference = state.parcelReference.get(String(props.parcel_number || props.parcel_key || "")) || {};
     return { ...feature, properties: { ...props, ...reference, block_lot: reference.block_lot || props.block_lot || "" } };
   });
+  return enrichWithCouncilDistrict(withParcelReference);
+}
+
+function featureCenter(feature) {
+  const points = (feature?.geometry?.coordinates || []).flat(Infinity)
+    .filter((value) => Number.isFinite(Number(value)));
+  if (points.length < 4) return null;
+  const xs = points.filter((_, index) => index % 2 === 0).map(Number);
+  const ys = points.filter((_, index) => index % 2 === 1).map(Number);
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}
+
+function pointInRing([x, y], ring) {
+  let inside = false;
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index++) {
+    const [xi, yi] = ring[index];
+    const [xj, yj] = ring[previous];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+async function loadCouncilDistricts() {
+  if (state.councilDistricts) return state.councilDistricts;
+  const payload = await fetchArcgisJson(`${COUNCIL_DISTRICT_LAYER_URL}/query`, {
+    f: "json",
+    where: "1=1",
+    outFields: "DIST_ID",
+    returnGeometry: "true",
+    outSR: "4326"
+  });
+  state.councilDistricts = (payload.features || []).map((record) => ({
+    district: String(record.attributes?.DIST_ID || ""),
+    rings: record.geometry?.rings || []
+  }));
+  return state.councilDistricts;
+}
+
+async function enrichWithCouncilDistrict(features) {
+  const districts = await loadCouncilDistricts().catch(() => []);
+  if (!districts.length) return features;
+  return features.map((feature) => {
+    const props = feature.properties || {};
+    if (props.council_district) return feature;
+    const center = featureCenter(feature);
+    const district = center && districts.find((candidate) => candidate.rings.some((ring) => pointInRing(center, ring)))?.district;
+    return district ? { ...feature, properties: { ...props, council_district: district } } : feature;
+  });
+}
+
+async function enrichWithSurveyEvidence(feature) {
+  const props = feature.properties || {};
+  const cacheKey = `${parcelDigits(props.parcel_key || props.parcel_number)}:${state.month}:${props.objectid}`;
+  let regridEvidence = state.evidenceCache.get(cacheKey);
+  if (!regridEvidence) {
+    regridEvidence = await fetchSurveyEvidenceForParcel(props.parcel_key || props.parcel_number, state.month).catch(() => []);
+    state.evidenceCache.set(cacheKey, regridEvidence);
+  }
+  const survey123Evidence = state.survey123Evidence
+    .filter((record) => survey123EvidenceMatchesAssignment(record, props))
+    .flatMap((record) => record.evidence_photos || []);
+  const photos = [
+    ...survey123Evidence,
+    ...regridEvidence.map((record) => ({ ...record, evidence_source: "Regrid" }))
+  ].filter((photo, index, all) => {
+    const imageUrl = safeImageUrl(photo.image_url);
+    return imageUrl && all.findIndex((candidate) => safeImageUrl(candidate.image_url) === imageUrl) === index;
+  }).sort((left, right) => String(right.created_at || right.submitted_at || right.service_date || "").localeCompare(
+    String(left.created_at || left.submitted_at || left.service_date || "")
+  ));
+  return {
+    ...feature,
+    properties: {
+      ...props,
+      submitted_at: photos[0]?.created_at || photos[0]?.submitted_at || props.submitted_at,
+      evidence_photos: photos
+    }
+  };
 }
 
 async function refreshOverview() {
@@ -349,6 +511,7 @@ async function refreshOverview() {
     const metrics = applyEvidence(contractorFeatures, surveyRows, survey123ByPeriod[state.month] || []);
     metrics.features = await enrichWithParcelReference(metrics.features).catch(() => metrics.features);
     state.features = metrics.features;
+    state.survey123Evidence = survey123ByPeriod[state.month] || [];
     state.selectedObjectId = "";
     assignedNode.textContent = formatNumber(metrics.assigned);
     submittedNode.textContent = formatNumber(metrics.submitted);
