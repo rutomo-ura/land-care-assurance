@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LandCare Contractor Portal</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260730-contractor-portal" />
+  </head>
+  <body data-page="contractor">
+    <header class="app-header">
+      <a class="brand-lockup" href="https://www.ura.org/" aria-label="Urban Redevelopment Authority of Pittsburgh">
+        <img src="../landcare/assets/ura-logo.png" alt="URA" />
+      </a>
+      <div class="title-block">
+        <span>LandCare</span>
+        <strong>Contractor Portal</strong>
+      </div>
+      <nav class="page-tabs" aria-label="Contractor portal sections">
+        <a class="is-active" href="#overview" data-contractor-tab="overview">Completion Overview</a>
+        <a href="#submit" data-contractor-tab="submit">Submit Service</a>
+      </nav>
+      <div class="freshness" id="contractorFreshness">Choose your organization to begin</div>
+    </header>
+
+    <main class="contractor-shell">
+      <section class="contractor-masthead" aria-labelledby="contractorTitle">
+        <div>
+          <span class="section-kicker">LandCare field workspace</span>
+          <h1 id="contractorTitle">Track progress and submit completed service</h1>
+          <p>Select your assignment month and organization once. The completion overview and service form stay in sync.</p>
+        </div>
+      </section>
+
+      <section class="contractor-context" aria-label="Assignment context">
+        <label>
+          <span>Assignment month</span>
+          <select id="assignmentMonth" required disabled>
+            <option value="">Loading recent months...</option>
+          </select>
+        </label>
+        <label>
+          <span>Organization</span>
+          <select id="assignmentOrganization" required disabled>
+            <option value="">Loading current assignments...</option>
+          </select>
+        </label>
+        <p id="assignmentLookupStatus" class="contractor-context__status" aria-live="polite">Loading the current assignment bundle...</p>
+      </section>
+
+      <section class="contractor-panel is-active" data-contractor-panel="overview" aria-label="Completion Overview">
+        <header class="contractor-panel__head">
+          <div>
+            <span class="section-kicker">Completion overview</span>
+            <h2 id="contractorOverviewTitle">Choose an organization to view progress</h2>
+          </div>
+          <p id="contractorCompletionNote">Assigned, submitted, and open values use the same LandCare assignment and evidence sources as the URA map.</p>
+        </header>
+        <div class="contractor-progress-cards" aria-live="polite">
+          <article class="contractor-progress-card assigned"><span>Assigned</span><strong id="contractorAssignedKpi">--</strong><small>Active parcels</small></article>
+          <article class="contractor-progress-card submitted"><span>Submitted</span><strong id="contractorSubmittedKpi">--</strong><small>Matched service submissions</small></article>
+          <article class="contractor-progress-card open"><span>Open</span><strong id="contractorOpenKpi">--</strong><small>Still needing a submission</small></article>
+        </div>
+        <div class="contractor-rate" id="contractorRate" hidden>
+          <div><span>Completion rate</span><strong id="contractorRateValue">0%</strong></div>
+          <div class="contractor-rate__track"><i id="contractorRateBar"></i></div>
+        </div>
+        <section class="contractor-map-card" aria-label="Contractor assignment progress map">
+          <div id="contractorProgressMap" class="contractor-progress-map"></div>
+          <div class="contractor-map-key"><span><i class="submitted"></i>Submitted</span><span><i class="open"></i>Open</span><span><i class="selected"></i>Selected parcel</span></div>
+          <p id="contractorParcelDetail">Choose an organization, then select an open parcel to begin its service submission.</p>
+        </section>
+      </section>
+
+      <section class="contractor-panel" data-contractor-panel="submit" aria-label="Submit Service" hidden>
+        <section class="assignment-check" aria-labelledby="assignmentCheckTitle">
+          <div class="assignment-check__intro">
+            <span class="section-kicker">Current assignment</span>
+            <h2 id="assignmentCheckTitle">Choose an assigned parcel</h2>
+            <p>Select an open parcel from your assigned bundle. The address and assignment period carry into the service form.</p>
+          </div>
+          <form id="assignmentLookupForm" class="assignment-check__form contractor-assignment-form">
+            <label>
+              <span>Assigned parcel</span>
+              <select id="assignmentParcel" required disabled>
+                <option value="">Choose an organization first</option>
+              </select>
+            </label>
+            <button id="continueToSurvey" type="submit" disabled>Continue to service form</button>
+          </form>
+          <aside class="assignment-map-card" aria-label="Selected assigned parcel map">
+            <div class="assignment-map-card__head">
+              <span class="eyebrow">Parcel confirmation</span>
+              <strong id="selectedParcelLabel">Choose a parcel to inspect its official boundary</strong>
+              <span id="selectedParcelBadge" class="selected-parcel-badge" hidden>Selected parcel</span>
+            </div>
+            <div id="assignmentParcelMap" class="assignment-parcel-map" aria-label="Map of selected LandCare parcel"></div>
+            <p id="selectedParcelMeta">The bright blue boundary marks the parcel selected for this service record.</p>
+          </aside>
+        </section>
+
+        <section class="survey-frame-card" aria-label="LandCare Network survey form">
+          <div class="survey-frame-head">
+            <div><span class="eyebrow">LandCare Network</span><h2>Service submission form</h2></div>
+            <a id="openSurveyLink" class="survey-open-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Open form in a new tab</a>
+          </div>
+          <div class="survey-embed" id="surveyEmbed" aria-live="polite">
+            <div class="survey-embed-message"><strong>Choose a parcel to load the service form.</strong><p>The form is prefilled from the selected assignment.</p></div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="../landcare/survey-submission.js?v=20260730-contractor-portal"></script>
+    <script type="module" src="../landcare/contractor-overview.js?v=20260730-contractor-portal"></script>
+  </body>
+</html>

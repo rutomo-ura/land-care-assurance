@@ -27,6 +27,35 @@ let selectedParcelLabelGraphic;
 let availableParcelGraphics = [];
 let selectedAssignment;
 const PARCEL_LABEL_SCALE = 5000;
+const isContractorPortal = document.body?.dataset?.page === "contractor";
+const portalParams = new URLSearchParams(window.location.search);
+const requestedMonth = portalParams.get("month") || "";
+const requestedOrganization = portalParams.get("organization") || "";
+
+function emitContractorContext() {
+  if (!isContractorPortal) return;
+  document.dispatchEvent(new CustomEvent("landcare:contractor-context", {
+    detail: {
+      month: monthSelect.value || "",
+      organization: cleanOrganization(organizationSelect.value),
+      rawOrganization: organizationSelect.value || "",
+      parcel: parcelSelect.value || "",
+      assignment: selectedAssignment || null
+    }
+  }));
+}
+
+function syncContractorUrl() {
+  if (!isContractorPortal) return;
+  const url = new URL(window.location.href);
+  if (monthSelect.value) url.searchParams.set("month", monthSelect.value);
+  else url.searchParams.delete("month");
+  if (organizationSelect.value) url.searchParams.set("organization", cleanOrganization(organizationSelect.value));
+  else url.searchParams.delete("organization");
+  if (parcelSelect.value) url.searchParams.set("parcel", parcelSelect.value);
+  else url.searchParams.delete("parcel");
+  history.replaceState({}, "", url);
+}
 
 function isSurvey123Url(value) {
   try {
@@ -221,6 +250,8 @@ function selectAssignment(objectId, { fromMap = false } = {}) {
   continueButton.disabled = false;
   status.textContent = `${assignment.parcelNumber} - ${assignment.address} - ${assignment.period}${fromMap ? " (selected on map)" : ""}`;
   showSelectedParcel(assignment);
+  syncContractorUrl();
+  emitContractorContext();
 }
 
 async function loadRecentMonths() {
@@ -238,7 +269,7 @@ async function loadRecentMonths() {
     value: month,
     label: index === 0 ? `${month} - current period` : `${month} - prior period`
   })), "Choose assignment month");
-  monthSelect.value = months[0];
+  monthSelect.value = months.includes(requestedMonth) ? requestedMonth : months[0];
   monthSelect.disabled = false;
 }
 
@@ -258,6 +289,7 @@ async function loadOrganizations() {
   setOptions(organizationSelect, organizations, "Choose your organization");
   organizationSelect.disabled = false;
   status.textContent = `${organizations.length} organizations in the ${monthSelect.value} assignment bundle.`;
+  emitContractorContext();
 }
 
 async function loadParcels(organization) {
@@ -299,6 +331,8 @@ async function loadParcels(organization) {
   status.textContent = assignments.length
     ? `${assignments.length} active parcel${assignments.length === 1 ? "" : "s"} assigned for ${monthSelect.value}. Choose from the map or the list.`
     : "No active parcels were found for this organization in the selected assignment month.";
+  syncContractorUrl();
+  emitContractorContext();
 }
 
 function buildSurveyUrl(assignment) {
@@ -333,6 +367,7 @@ monthSelect.addEventListener("change", async () => {
   status.textContent = `Loading organizations for ${monthSelect.value}...`;
   try {
     await loadOrganizations();
+    syncContractorUrl();
   } catch (error) {
     status.textContent = `Unable to load organizations: ${error.message}`;
   }
@@ -345,6 +380,8 @@ organizationSelect.addEventListener("change", async () => {
     setOptions(parcelSelect, [], "Choose an organization first");
     parcelSelect.disabled = true;
     continueButton.disabled = true;
+    syncContractorUrl();
+    emitContractorContext();
     return;
   }
   try {
@@ -382,7 +419,25 @@ lookupForm.addEventListener("submit", (event) => {
 });
 
 loadRecentMonths()
-  .then(loadOrganizations)
+  .then(async () => {
+    await loadOrganizations();
+    if (isContractorPortal && requestedOrganization) {
+      const requested = cleanOrganization(requestedOrganization).toLowerCase();
+      const matchingOption = [...organizationSelect.options].find((option) => (
+        cleanOrganization(option.value).toLowerCase() === requested
+      ));
+      if (matchingOption) {
+        organizationSelect.value = matchingOption.value;
+        await loadParcels(organizationSelect.value);
+        const requestedParcel = portalParams.get("parcel");
+        if (requestedParcel && assignments.some((assignment) => assignment.objectId === requestedParcel)) {
+          selectAssignment(requestedParcel);
+        }
+      }
+    }
+    syncContractorUrl();
+    emitContractorContext();
+  })
   .catch((error) => {
     organizationSelect.disabled = true;
     monthSelect.disabled = true;

@@ -37,6 +37,9 @@ jobs:
         run: |
           test -f docs/monitoring/index.html
           test -f docs/kpi/index.html
+          test -f docs/contractor/index.html
+          test -f docs/survey-submission/index.html
+          test -f docs/landcare/contractor-overview.js
           test -f docs/landcare/data/latest_month_summary.json
           test -f docs/landcare/data/latest_month.geojson
           test -f docs/landcare/data/all_months.geojson
@@ -104,6 +107,13 @@ jobs:
           ]
           if non_ura:
               raise SystemExit(f"all_months.geojson includes non-URA ownership values: {sorted(set(non_ura))}")
+
+          contractor = Path("docs/contractor/index.html").read_text()
+          redirect = Path("docs/survey-submission/index.html").read_text()
+          if "Completion Overview" not in contractor or "Submit Service" not in contractor:
+              raise SystemExit("contractor portal is missing its required workspaces")
+          if "../contractor/" not in redirect:
+              raise SystemExit("survey-submission compatibility redirect is missing")
 
           PY
 

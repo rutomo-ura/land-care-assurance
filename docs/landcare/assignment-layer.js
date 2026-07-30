@@ -127,6 +127,32 @@ async function fetchAssignmentLayerFeatures(layerUrl, where = "1=1") {
   return records;
 }
 
+// Contractor-facing views load one service period at a time. Keeping this
+// adapter here ensures their polygons and normalized contractor identity use
+// the exact same source contract as Monitoring.
+export async function fetchAssignmentGeojsonForPeriod(periodLabel) {
+  const safePeriod = String(periodLabel || "").replace(/'/g, "''");
+  if (!safePeriod) return { type: "FeatureCollection", features: [] };
+  const features = await fetchAssignmentLayerFeatures(
+    ASSIGNMENT_HISTORY_LAYER_URL,
+    `period_label = '${safePeriod}'`
+  );
+  return {
+    type: "FeatureCollection",
+    metadata: {
+      source_layer: ASSIGNMENT_HISTORY_LAYER_NAME,
+      source_layer_url: ASSIGNMENT_HISTORY_LAYER_URL.replace(/\/0$/, ""),
+      source_layer_item_url: ASSIGNMENT_HISTORY_AGOL_ITEM_URL,
+      period_label: periodLabel
+    },
+    features: features.map((feature) => normalizeAssignmentFeature(feature, {
+      layerName: ASSIGNMENT_HISTORY_LAYER_NAME,
+      layerUrl: ASSIGNMENT_HISTORY_LAYER_URL.replace(/\/0$/, ""),
+      itemUrl: ASSIGNMENT_HISTORY_AGOL_ITEM_URL
+    }))
+  };
+}
+
 export async function fetchAssignmentLayerMetadata(layerUrl, fallback) {
   const payload = await fetchArcgisJson(layerUrl, { f: "json" });
   return {

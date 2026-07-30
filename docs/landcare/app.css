@@ -166,6 +166,46 @@ textarea {
   padding: 28px 22px 48px;
 }
 
+.contractor-shell { max-width: 1240px; margin: 0 auto; padding: 24px 22px 48px; }
+.contractor-masthead { padding: 26px 28px; color: #fff; background: linear-gradient(120deg, var(--ura-deep), #045f91); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.contractor-masthead .section-kicker { color: #9fdcf4; }
+.contractor-masthead h1 { max-width: 760px; margin: 5px 0 8px; font-size: clamp(28px, 4vw, 40px); line-height: 1.08; letter-spacing: -.04em; }
+.contractor-masthead p { max-width: 670px; margin: 0; color: #d9edf7; font-size: 14px; line-height: 1.6; }
+.contractor-context { display: grid; grid-template-columns: minmax(220px, .7fr) minmax(260px, 1fr); gap: 14px 18px; align-items: end; margin: 18px 0; padding: 18px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow); }
+.contractor-context label { display: grid; gap: 6px; color: var(--ura-deep); font-size: 12px; font-weight: 800; }
+.contractor-context select { min-height: 42px; padding: 0 10px; border: 1px solid #c9dbe3; border-radius: 8px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 700; }
+.contractor-context__status { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+.contractor-panel { display: grid; gap: 16px; }
+.contractor-panel[hidden] { display: none; }
+.contractor-panel__head { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 6px 2px 0; }
+.contractor-panel__head h2 { margin: 4px 0 0; color: var(--ura-deep); font-size: 24px; letter-spacing: -.025em; }
+.contractor-panel__head p { max-width: 470px; margin: 0; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.55; }
+.contractor-progress-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.contractor-progress-card { min-height: 128px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper); box-shadow: var(--shadow); }
+.contractor-progress-card span, .contractor-progress-card small { display: block; font-size: 12px; font-weight: 800; }
+.contractor-progress-card span { color: var(--muted); }
+.contractor-progress-card strong { display: block; margin: 4px 0 2px; color: var(--ura-deep); font-size: 34px; line-height: 1.05; letter-spacing: -.04em; }
+.contractor-progress-card small { color: #647680; font-weight: 650; }
+.contractor-progress-card.assigned { border-top: 5px solid var(--ura-blue-dark); }
+.contractor-progress-card.submitted { border-top: 5px solid var(--green); }
+.contractor-progress-card.open { border-top: 5px solid #8a959e; }
+.contractor-rate { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: 16px; align-items: center; padding: 13px 18px; border: 1px solid #cbe8f4; border-radius: var(--radius-md); background: var(--soft-blue); }
+.contractor-rate span { display: block; color: #42606e; font-size: 11px; font-weight: 800; }
+.contractor-rate strong { color: var(--ura-deep); font-size: 20px; }
+.contractor-rate__track { height: 10px; overflow: hidden; border-radius: 999px; background: #c1e4f3; }
+.contractor-rate__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--green); transition: width .2s ease; }
+.contractor-map-card { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow); }
+.contractor-progress-map { height: min(62vh, 620px); min-height: 420px; background: #e9f2f6; }
+.contractor-map-key { position: absolute; z-index: 2; top: 14px; left: 14px; display: flex; flex-wrap: wrap; gap: 9px 14px; padding: 9px 11px; border: 1px solid #ccdbe2; border-radius: 9px; background: rgba(255,255,255,.95); color: #304553; font-size: 11px; font-weight: 800; box-shadow: var(--shadow); }
+.contractor-map-key span { display: inline-flex; align-items: center; gap: 5px; }
+.contractor-map-key i { width: 12px; height: 12px; border: 1px solid #5b6870; border-radius: 2px; background: #fff; }
+.contractor-map-key i.submitted { border-color: #1c5a29; background: var(--green); }
+.contractor-map-key i.selected { border: 3px solid #007eae; }
+.contractor-map-card > p { min-height: 55px; margin: 0; padding: 13px 18px; color: #425965; border-top: 1px solid var(--line); font-size: 13px; font-weight: 650; line-height: 1.5; }
+.contractor-submit-parcel { margin-top: 8px; padding: 7px 11px; border: 0; border-radius: 7px; background: var(--ura-blue-dark); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
+.contractor-assignment-form { grid-template-columns: minmax(0, 1fr) auto; }
+body[data-page="contractor"] .assignment-check { margin: 0; }
+
 .submission-masthead,
 .survey-frame-card {
   background: var(--paper);
@@ -2625,6 +2665,8 @@ select {
   .submission-status { flex-wrap: wrap; white-space: normal; }
   .submission-guidance { grid-template-columns: 1fr; }
   .assignment-check { grid-template-columns: 1fr; }
+  .contractor-context { grid-template-columns: 1fr 1fr; }
+  .contractor-panel__head { display: grid; align-items: start; }
 }
 
 @media (max-width: 620px) {
@@ -2636,7 +2678,7 @@ select {
     white-space: normal;
   }
 
-  .page-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .page-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 4px; }
   .page-tabs a { min-height: 34px; padding: 0 8px; font-size: 10px; }
 
   .mini-kpis,
@@ -2687,6 +2729,14 @@ select {
   }
 
   .submission-shell { padding: 16px 12px 32px; }
+  .contractor-shell { padding: 16px 12px 32px; }
+  .contractor-masthead { padding: 22px 20px; }
+  .contractor-progress-cards { grid-template-columns: 1fr; }
+  .contractor-context { grid-template-columns: 1fr; }
+  .contractor-rate { grid-template-columns: 1fr; gap: 8px; }
+  .contractor-progress-map { min-height: 390px; }
+  .contractor-map-key { top: 12px; left: 12px; max-width: calc(100% - 24px); }
+  .contractor-assignment-form { grid-template-columns: 1fr; }
   .submission-masthead { padding: 20px; }
   .submission-masthead h1 { font-size: 28px; }
   .assignment-check { padding: 20px; }
