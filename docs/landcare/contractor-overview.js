@@ -301,8 +301,8 @@ async function selectFeature(feature, { openSubmit = false } = {}) {
   const button = detailNode.querySelector(".contractor-submit-parcel");
   if (button) button.addEventListener("click", () => selectForSubmission(feature));
   if (state.overviewView === "map") {
-    const geometry = featureGeometry(feature);
-    if (geometry) state.view?.goTo({ target: geometry, zoom: 18 }, { duration: 350 }).catch(() => {});
+    const center = featureCenter(feature);
+    if (center) state.view?.goTo({ center, zoom: 19 }, { duration: 350 }).catch(() => {});
   }
   if (props.returned_flag) {
     const enriched = await enrichWithSurveyEvidence(feature);
@@ -456,9 +456,10 @@ async function enrichWithCouncilDistrict(features) {
   if (!districts.length) return features;
   return features.map((feature) => {
     const props = feature.properties || {};
-    if (props.council_district) return feature;
     const center = featureCenter(feature);
     const district = center && districts.find((candidate) => candidate.rings.some((ring) => pointInRing(center, ring)))?.district;
+    // The Monitoring map treats the Council District boundary layer as
+    // authoritative. Prefer that spatial result over a stale EPP attribute.
     return district ? { ...feature, properties: { ...props, council_district: district } } : feature;
   });
 }
