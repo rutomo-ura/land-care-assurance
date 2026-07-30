@@ -74,6 +74,20 @@ def admin_service_url(service_url: str) -> str:
     return service_url.replace("/rest/services/", "/rest/admin/services/")
 
 
+def ensure_layer_fields(layer_url: str, token: str) -> None:
+    """Add contract fields to an existing stable hosted layer without changing its item ID."""
+    existing = get_json(layer_url, {"f": "json", "token": token})
+    existing_names = {str(field.get("name")) for field in existing.get("fields", [])}
+    required_fields = [field for field in layer_definition()["fields"] if field["name"] != "OBJECTID"]
+    missing = [field for field in required_fields if field["name"] not in existing_names]
+    if not missing:
+        return
+    post_json(f"{admin_service_url(layer_url)}/addToDefinition", {
+        "f": "json", "token": token, "addToDefinition": json.dumps({"fields": missing}),
+    })
+    log("Added evidence fields: " + ", ".join(field["name"] for field in missing))
+
+
 def layer_definition() -> dict[str, Any]:
     fields = [
         {"name": "OBJECTID", "type": "esriFieldTypeOID", "alias": "OBJECTID", "nullable": False},
@@ -83,6 +97,8 @@ def layer_definition() -> dict[str, Any]:
         {"name": "parcel_number", "type": "esriFieldTypeString", "alias": "Parcel number", "length": 80, "nullable": False},
         {"name": "organization", "type": "esriFieldTypeString", "alias": "Contractor", "length": 255, "nullable": False},
         {"name": "service_period", "type": "esriFieldTypeString", "alias": "Service period", "length": 16, "nullable": False},
+        {"name": "service_date", "type": "esriFieldTypeDate", "alias": "Service date", "nullable": True},
+        {"name": "additional_notes", "type": "esriFieldTypeString", "alias": "Additional Notes", "length": 4000, "nullable": True},
         {"name": "submitted_at", "type": "esriFieldTypeDate", "alias": "Submitted at", "nullable": True},
         {"name": "evidence_source", "type": "esriFieldTypeString", "alias": "Evidence source", "length": 32, "nullable": False},
         {"name": "image_attachment_url", "type": "esriFieldTypeString", "alias": "Photo URL", "length": 2048, "nullable": True},
@@ -145,7 +161,7 @@ def snapshot_rows() -> list[dict[str, Any]]:
     with psycopg2.connect(database_dsn()) as connection, connection.cursor() as cursor:
         cursor.execute("""
           SELECT source_global_id, assignment_id, parcel_key, parcel_number, organization,
-                 service_period, submitted_at, evidence_source, image_attachment_url,
+                 service_period, service_date, additional_notes, submitted_at, evidence_source, image_attachment_url,
                  image_attachment_name, validated_at, ST_AsGeoJSON(geometry) AS geometry
           FROM gis.landcare_survey_evidence_parcels
           ORDER BY source_global_id
@@ -167,8 +183,9 @@ def esri_feature(row: dict[str, Any], object_id: int | None = None) -> dict[str,
     coordinates = geojson["coordinates"]
     rings = [ring for polygon in coordinates for ring in polygon] if geojson["type"] == "MultiPolygon" else coordinates
     attributes = {key: value for key, value in row.items() if key != "geometry"}
-    attributes["submitted_at"] = epoch_millis(attributes["submitted_at"])
-    attributes["validated_at"] = epoch_millis(attributes["validated_at"])
+    attributes["submitted_at"] = epoch_millis(attributes.get("submitted_at"))
+    attributes["service_date"] = epoch_millis(attributes.get("service_date"))
+    attributes["validated_at"] = epoch_millis(attributes.get("validated_at"))
     if object_id is not None:
         attributes["OBJECTID"] = object_id
     return {"attributes": attributes, "geometry": {"rings": rings, "spatialReference": {"wkid": 4326}}}
@@ -240,6 +257,7 @@ def main() -> None:
             raise RuntimeError("Unable to identify the ArcGIS publisher account.")
         item_id, service_url = bootstrap_service(str(user), token)
     layer_url = f"{service_url.rstrip('/')}/0"
+    ensure_layer_fields(layer_url, token)
     reconcile_service(layer_url, token, rows)
     count = len(remote_rows(layer_url, token))
     if count != len(rows):

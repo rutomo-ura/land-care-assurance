@@ -40,7 +40,11 @@ function normalizeRegridEvidence(attributes) {
     // `original_url` is the source-table hyperlink field. Regrid exports can
     // represent it as a raw URL, HTML anchor, or Excel HYPERLINK formula.
     // Prefer it when present, then retain the legacy published image_url.
-    image_url: linkedPhotoUrl(attributes.original_url) || linkedPhotoUrl(attributes.image_url)
+    image_url: linkedPhotoUrl(attributes.original_url) || linkedPhotoUrl(attributes.image_url),
+    // The Regrid export has used more than one field spelling across
+    // deliveries. Normalize those source names once at the adapter boundary.
+    service_date: attributes.service_date || attributes.date_of_services || attributes.date_services || null,
+    additional_notes: attributes.additional_notes || attributes.additional_note || attributes.notes || null
   };
 }
 
@@ -104,10 +108,12 @@ export async function fetchSurveyRecordsForPeriod(periodLabel) {
     const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
       f: "json",
       where: `period_label = '${safePeriod}'`,
-      // The published Regrid feature layer exposes the resolved target as
-      // image_url. `original_url` belongs to the raw export and is not a
-      // public layer field; asking ArcGIS for it rejects the entire query.
-      outFields: "parcelnumb,period_label,maintained_by,created_at,status,address,image_url",
+      // Read the published Regrid contract rather than hard-coding its
+      // narrow historical shape. That keeps optional source fields such as
+      // Additional Notes and service date available as soon as the daily
+      // Regrid publisher exposes them, while `original_url` is normalized
+      // when a publisher provides the original hyperlink target.
+      outFields: "*",
       returnGeometry: "false",
       resultRecordCount: String(pageSize),
       resultOffset: String(offset),
@@ -131,7 +137,9 @@ export async function fetchSurveyEvidenceForParcel(parcelNumber, periodLabel = n
   const payload = await fetchArcgisJson(`${SURVEY_LAYER_URL}/query`, {
     f: "json",
     where: clauses.join(" AND "),
-    outFields: "OBJECTID,parcelnumb,period_label,maintained_by,created_at,status,address,image_url,owner",
+    // Use the complete public Regrid feature contract so the selected-parcel
+    // evidence panel can show service metadata and Additional Notes.
+    outFields: "*",
     returnGeometry: "false",
     orderByFields: "created_at DESC",
     resultRecordCount: "50"
@@ -169,7 +177,10 @@ export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
   const payload = await fetchArcgisJson(`${SURVEY123_EVIDENCE_LAYER_URL}/query`, {
     f: "json",
     where: `service_period = '${safePeriod}'`,
-    outFields: "OBJECTID,source_global_id,assignment_id,organization,parcel_number,service_period,submitted_at,image_attachment_url,image_attachment_name",
+    // The canonical evidence layer is explicitly public-safe. Read its full
+    // contract so optional Notes and Service Date fields can be added without
+    // breaking older hosted layers.
+    outFields: "*",
     returnGeometry: "false",
     orderByFields: "CreationDate DESC",
     resultRecordCount: "2000"
@@ -182,6 +193,8 @@ export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
     const images = [{
       image_url: attrs.image_attachment_url,
       submitted_at: attrs.submitted_at,
+      service_date: attrs.service_date,
+      additional_notes: attrs.additional_notes,
       evidence_source: "Survey123",
       survey_source: "Survey123",
       attachment_name: attrs.image_attachment_name

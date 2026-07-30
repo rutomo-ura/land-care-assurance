@@ -226,6 +226,9 @@ textarea {
 .survey-photo-evidence img { display: block; width: min(100%, 340px); height: auto; max-height: 255px; aspect-ratio: 4 / 3; border-radius: 8px; object-fit: cover; background: var(--panel); }
 .survey-photo-evidence a { display: block; border-radius: 8px; }
 .survey-photo-evidence a:focus-visible { outline: 3px solid var(--ura-blue); outline-offset: 3px; }
+.survey-photo-context { max-width: 340px; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.45; }
+.survey-photo-context span { display: block; }
+.survey-photo-context p { margin: 6px 0 0; color: var(--ink); font-weight: 600; white-space: pre-wrap; }
 .survey-photo-evidence.compact { display: block; width: fit-content; margin: 0; padding: 0; background: transparent; }
 .survey-photo-evidence.compact img { width: 204px; height: 138px; }
 .survey-photo-evidence.compact div { display: none; }

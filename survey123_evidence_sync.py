@@ -144,6 +144,7 @@ def upsert_raw(connection: Any, attributes: dict[str, Any], image_url: str | Non
         "organization": first(attributes, "organization", "maintained_by", "contractor"),
         "assignment_period": first(attributes, "assignment_period", "period_label", "period"),
         "service_date": iso_date(first(attributes, "service_date", "date_of_services", "date_services")),
+        "additional_notes": first(attributes, "additional_notes", "additional_note", "notes", "note"),
         "submitted_at": iso_timestamp(first(attributes, "creationdate", "created_at")),
         "image_attachment_url": image_url, "image_attachment_name": image_name,
         "source_payload": json.dumps(attributes),
@@ -151,12 +152,12 @@ def upsert_raw(connection: Any, attributes: dict[str, Any], image_url: str | Non
     }
     sql = """
       INSERT INTO gis.landcare_survey123_evidence_raw
-      (source_global_id, source_object_id, assignment_object_id, parcel_number, organization, assignment_period, service_date, submitted_at, image_attachment_url, image_attachment_name, source_payload, source_updated_at, processing_error)
-      VALUES (%(source_global_id)s, %(source_object_id)s, %(assignment_object_id)s, %(parcel_number)s, %(organization)s, %(assignment_period)s, %(service_date)s, %(submitted_at)s, %(image_attachment_url)s, %(image_attachment_name)s, %(source_payload)s::jsonb, %(source_updated_at)s, NULL)
+      (source_global_id, source_object_id, assignment_object_id, parcel_number, organization, assignment_period, service_date, additional_notes, submitted_at, image_attachment_url, image_attachment_name, source_payload, source_updated_at, processing_error)
+      VALUES (%(source_global_id)s, %(source_object_id)s, %(assignment_object_id)s, %(parcel_number)s, %(organization)s, %(assignment_period)s, %(service_date)s, %(additional_notes)s, %(submitted_at)s, %(image_attachment_url)s, %(image_attachment_name)s, %(source_payload)s::jsonb, %(source_updated_at)s, NULL)
       ON CONFLICT (source_global_id) DO UPDATE SET
         source_object_id = EXCLUDED.source_object_id, assignment_object_id = EXCLUDED.assignment_object_id,
         parcel_number = EXCLUDED.parcel_number, organization = EXCLUDED.organization,
-        assignment_period = EXCLUDED.assignment_period, service_date = EXCLUDED.service_date,
+        assignment_period = EXCLUDED.assignment_period, service_date = EXCLUDED.service_date, additional_notes = EXCLUDED.additional_notes,
         submitted_at = EXCLUDED.submitted_at, image_attachment_url = EXCLUDED.image_attachment_url,
         image_attachment_name = EXCLUDED.image_attachment_name, source_payload = EXCLUDED.source_payload,
         source_updated_at = EXCLUDED.source_updated_at, processing_error = NULL, updated_at = now()
@@ -172,7 +173,7 @@ def publish_fast_path(connection: Any, source_object_id: str) -> None:
     with connection.cursor() as cursor:
         cursor.execute("""
           SELECT source_global_id, assignment_id, parcel_key, parcel_number, organization,
-                 service_period, submitted_at, evidence_source, image_attachment_url,
+                 service_period, service_date, additional_notes, submitted_at, evidence_source, image_attachment_url,
                  image_attachment_name, validated_at, ST_AsGeoJSON(geometry)
           FROM gis.landcare_survey_evidence_parcels p
           JOIN gis.landcare_survey123_evidence_raw r USING (source_global_id)

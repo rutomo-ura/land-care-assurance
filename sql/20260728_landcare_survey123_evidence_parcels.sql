@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS gis.landcare_survey123_evidence_raw (
   organization text,
   assignment_period text,
   service_date date,
+  additional_notes text,
   submitted_at timestamptz,
   image_attachment_url text,
   image_attachment_name text,
@@ -22,6 +23,9 @@ CREATE TABLE IF NOT EXISTS gis.landcare_survey123_evidence_raw (
   processing_error text,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE gis.landcare_survey123_evidence_raw
+  ADD COLUMN IF NOT EXISTS additional_notes text;
 
 CREATE INDEX IF NOT EXISTS landcare_survey123_raw_assignment_idx
   ON gis.landcare_survey123_evidence_raw (assignment_object_id, assignment_period);
@@ -36,6 +40,8 @@ CREATE TABLE IF NOT EXISTS gis.landcare_survey_evidence_parcels (
   parcel_number text NOT NULL,
   organization text NOT NULL,
   service_period text NOT NULL,
+  service_date date,
+  additional_notes text,
   submitted_at timestamptz,
   evidence_source text NOT NULL DEFAULT 'survey123',
   -- A submitted service can be valid without a photo. Keep optional
@@ -55,6 +61,10 @@ CREATE INDEX IF NOT EXISTS landcare_survey_evidence_geometry_idx
 -- required. Make the migration idempotently relax that original constraint.
 ALTER TABLE gis.landcare_survey_evidence_parcels
   ALTER COLUMN image_attachment_url DROP NOT NULL;
+
+ALTER TABLE gis.landcare_survey_evidence_parcels
+  ADD COLUMN IF NOT EXISTS service_date date,
+  ADD COLUMN IF NOT EXISTS additional_notes text;
 
 -- Restricted operational view: invalid submissions are intentionally never
 -- included in the public hosted polygon layer.
@@ -126,11 +136,11 @@ BEGIN
   ), inserted AS (
     INSERT INTO gis.landcare_survey_evidence_parcels (
       source_global_id, assignment_id, parcel_key, parcel_number, organization,
-      service_period, submitted_at, image_attachment_url, image_attachment_name, geometry
+      service_period, service_date, additional_notes, submitted_at, image_attachment_url, image_attachment_name, geometry
     )
     SELECT v.source_global_id, v.assignment_id,
       regexp_replace(v.parcelnumb::text, '[^0-9]', '', 'g'), v.parcelnumb,
-      v.assigned_to, to_char(v.period, 'YYYY-MM'), v.submitted_at,
+      v.assigned_to, to_char(v.period, 'YYYY-MM'), v.service_date, v.additional_notes, v.submitted_at,
       v.image_attachment_url, v.image_attachment_name,
       ST_Multi(ST_CollectionExtract(ST_Force2D(g.geom), 3))::geometry(MultiPolygon, 4326)
     FROM valid_raw v

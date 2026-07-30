@@ -24,7 +24,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260729-evidence-photo-final";
+} from "./survey-layer.js?v=20260730-evidence-details";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -379,6 +379,41 @@ function safeImageUrl(value) {
   }
 }
 
+function evidenceDate(value) {
+  if (value == null || value === "") return null;
+  const date = typeof value === "number"
+    ? new Date(value)
+    : new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? `${value}T12:00:00` : value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function relativeEvidenceDate(value) {
+  const date = evidenceDate(value);
+  if (!date) return "";
+  const startOfDay = (input) => new Date(input.getFullYear(), input.getMonth(), input.getDate());
+  const dayDifference = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86400000);
+  if (dayDifference === 0) return "Today";
+  if (dayDifference === 1) return "Yesterday";
+  if (dayDifference > 1) return `${dayDifference} days ago`;
+  return dayDifference === -1 ? "Tomorrow" : `${Math.abs(dayDifference)} days from now`;
+}
+
+function evidenceContextMarkup(props) {
+  const serviceDate = props.service_date || props.date_of_services || props.date_services;
+  const dateValue = serviceDate || props.created_at || props.submitted_at;
+  const date = evidenceDate(dateValue);
+  const notes = String(props.additional_notes || props.additional_note || props.notes || "").trim();
+  if (!date && !notes) return "";
+  const dateLabel = serviceDate ? "Service date" : "Submitted";
+  const dateText = date
+    ? `${date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${relativeEvidenceDate(date)}`
+    : "";
+  return `<div class="survey-photo-context">
+    ${dateText ? `<span>${escapeHtml(dateLabel)}: ${escapeHtml(dateText)}</span>` : ""}
+    ${notes ? `<p>${escapeHtml(notes)}</p>` : ""}
+  </div>`;
+}
+
 function surveyPhotoMarkup(props, { compact = false } = {}) {
   const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
   if (!imageUrl) return "";
@@ -390,6 +425,7 @@ function surveyPhotoMarkup(props, { compact = false } = {}) {
       <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full ${escapeHtml(sourceLabel)}">
         <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${escapeHtml(sourceLabel)} for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
       </a>
+      ${compact ? "" : evidenceContextMarkup(props)}
     </section>`;
 }
 
