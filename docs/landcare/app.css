@@ -198,15 +198,43 @@ textarea {
 .contractor-rate strong { color: var(--ura-deep); font-size: 20px; }
 .contractor-rate__track { height: 10px; overflow: hidden; border-radius: 999px; background: #c1e4f3; }
 .contractor-rate__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--green); transition: width .2s ease; }
+.contractor-view-switch { display: inline-flex; width: fit-content; gap: 3px; padding: 4px; border: 1px solid #cbdbe2; border-radius: 9px; background: #fff; box-shadow: var(--shadow); }
+.contractor-view-switch button { min-height: 32px; padding: 0 13px; border: 0; border-radius: 6px; color: #516671; background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.contractor-view-switch button.is-active { color: #fff; background: var(--ura-blue-dark); }
 .contractor-map-card { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow); }
 .contractor-progress-map { height: min(62vh, 620px); min-height: 420px; background: #e9f2f6; }
 .contractor-map-key { position: absolute; z-index: 2; top: 14px; left: 14px; display: flex; flex-wrap: wrap; gap: 9px 14px; padding: 9px 11px; border: 1px solid #ccdbe2; border-radius: 9px; background: rgba(255,255,255,.95); color: #304553; font-size: 11px; font-weight: 800; box-shadow: var(--shadow); }
-.contractor-map-key span { display: inline-flex; align-items: center; gap: 5px; }
+.contractor-map-key span,
+.contractor-map-key button { display: inline-flex; align-items: center; gap: 5px; padding: 0; color: inherit; background: transparent; border: 0; font: inherit; cursor: default; }
+.contractor-map-key button { border-radius: 4px; cursor: pointer; }
+.contractor-map-key button:hover,
+.contractor-map-key button.is-active { color: var(--ura-deep); text-decoration: underline; text-underline-offset: 3px; }
 .contractor-map-key i { width: 12px; height: 12px; border: 1px solid #5b6870; border-radius: 2px; background: #fff; }
+.contractor-map-key i.all { background: #eef3f5; }
 .contractor-map-key i.submitted { border-color: #1c5a29; background: var(--green); }
 .contractor-map-key i.selected { border: 3px solid #007eae; }
 .contractor-map-card > p { min-height: 55px; margin: 0; padding: 13px 18px; color: #425965; border-top: 1px solid var(--line); font-size: 13px; font-weight: 650; line-height: 1.5; }
 .contractor-submit-parcel { margin-top: 8px; padding: 7px 11px; border: 0; border-radius: 7px; background: var(--ura-blue-dark); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
+.contractor-list-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow); }
+.contractor-list-card[hidden] { display: none; }
+.contractor-list-card__head { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+.contractor-list-card__head h3 { margin: 4px 0 0; color: var(--ura-deep); font-size: 20px; letter-spacing: -.02em; }
+.contractor-list-card__head p { margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+.contractor-list-table-wrap { overflow: auto; max-height: min(62vh, 620px); }
+.contractor-list-table { width: 100%; min-width: 690px; border-collapse: collapse; text-align: left; }
+.contractor-list-table th { position: sticky; top: 0; z-index: 1; padding: 0; background: #f4f8fa; border-bottom: 1px solid var(--line); }
+.contractor-list-table th button { width: 100%; padding: 12px 16px; color: #42606e; background: transparent; border: 0; text-align: left; font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; }
+.contractor-list-table th button:hover { color: var(--ura-blue-dark); }
+.contractor-list-table td { padding: 13px 16px; border-bottom: 1px solid #e2eaee; color: #314957; font-size: 13px; font-weight: 650; vertical-align: middle; }
+.contractor-list-table tr.is-selected td { background: #e4f5fb; }
+.contractor-list-table td strong { color: var(--ura-deep); }
+.contractor-list-table td small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.contractor-list-empty { padding: 30px 16px !important; color: var(--muted) !important; text-align: center; }
+.contractor-status-pill { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 850; }
+.contractor-status-pill.submitted { color: #135e27; background: #ddf2e2; }
+.contractor-status-pill.open { color: #47545b; background: #ebeff1; }
+.contractor-list-select { padding: 7px 10px; border: 1px solid #aac7d5; border-radius: 6px; color: var(--ura-blue-dark); background: #fff; font-size: 11px; font-weight: 850; cursor: pointer; }
+.contractor-list-select:hover { color: #fff; background: var(--ura-blue-dark); }
 .contractor-assignment-form { grid-template-columns: minmax(0, 1fr) auto; }
 body[data-page="contractor"] .assignment-check { margin: 0; }
 
@@ -2671,6 +2699,7 @@ select {
   .assignment-check { grid-template-columns: 1fr; }
   .contractor-context { grid-template-columns: 1fr 1fr; }
   .contractor-panel__head { display: grid; align-items: start; }
+  .contractor-list-card__head { display: grid; align-items: start; }
 }
 
 @media (max-width: 620px) {
@@ -2699,6 +2728,13 @@ select {
   .report-context.compact {
     grid-template-columns: 1fr;
   }
+
+  .contractor-context,
+  .contractor-progress-cards { grid-template-columns: 1fr; }
+
+  .contractor-map-key { right: 10px; left: 10px; gap: 7px 10px; }
+  .contractor-progress-map { min-height: 390px; }
+  .contractor-list-card__head { padding: 15px; }
 
   .grouped-row {
     grid-template-columns: 1fr;

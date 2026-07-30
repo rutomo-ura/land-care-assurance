@@ -7,6 +7,7 @@ import Zoom from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Zoom.js";
 import { fetchAssignmentGeojsonForPeriod } from "./assignment-layer.js?v=20260730-contractor-portal";
 import {
   cleanOrganization,
+  fetchArcgisJson,
   fetchSurveyRecordsForPeriod,
   loadSurvey123EvidenceByPeriod,
   parcelDigits,
@@ -26,8 +27,27 @@ const openNode = document.getElementById("contractorOpenKpi");
 const rateNode = document.getElementById("contractorRate");
 const rateValueNode = document.getElementById("contractorRateValue");
 const rateBarNode = document.getElementById("contractorRateBar");
+const mapCardNode = document.getElementById("contractorMapCard");
+const listCardNode = document.getElementById("contractorListCard");
+const listNode = document.getElementById("contractorParcelList");
+const listSummaryNode = document.getElementById("contractorListSummary");
+const listTitleNode = document.getElementById("contractorListTitle");
 
-const state = { month: "", organization: "", selectedObjectId: "", map: null, view: null, layer: null, features: [] };
+const EPP_PARCEL_LAYER_URL =
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_epp_parcels_full/FeatureServer/0";
+const state = {
+  month: "",
+  organization: "",
+  selectedObjectId: "",
+  map: null,
+  view: null,
+  layer: null,
+  features: [],
+  statusFilter: "all",
+  overviewView: "map",
+  listSort: { key: "block_lot", direction: "asc" },
+  parcelReference: new Map()
+};
 const labelScale = 5000;
 
 function formatNumber(value) {
@@ -35,9 +55,37 @@ function formatNumber(value) {
 }
 
 function blockLot(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  const blockLotMatch = raw.match(/^0*(\d+)\s*-?\s*([A-Z])\s*-?\s*0*(\d+)$/);
+  if (blockLotMatch) return `${Number(blockLotMatch[1])}-${blockLotMatch[2]}-${Number(blockLotMatch[3])}`;
   const pin = parcelDigits(value);
   if (!/^[0-9]{4}[A-Z][0-9]{5}/.test(pin)) return pin || "Parcel";
   return `${Number(pin.slice(0, 4))}-${pin[4]}-${Number(pin.slice(5, 10))}`;
+}
+
+function featureBlockLot(feature) {
+  const props = feature.properties || {};
+  return blockLot(props.block_lot || props.parcel_number || props.parcel_key);
+}
+
+function statusFor(feature) {
+  return feature.properties?.returned_flag ? "submitted" : "open";
+}
+
+function visibleFeatures() {
+  return state.statusFilter === "all"
+    ? state.features
+    : state.features.filter((feature) => statusFor(feature) === state.statusFilter);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[character]));
 }
 
 function dateLabel(value) {
@@ -54,6 +102,7 @@ function setEmptyState(message) {
   rateNode.hidden = true;
   detailNode.textContent = "Choose an organization, then select an open parcel to begin its service submission.";
   state.layer?.removeAll();
+  renderList();
 }
 
 function featureGeometry(feature) {
@@ -92,7 +141,7 @@ function labelGraphic(feature) {
     attributes: { label: true, assignmentObjectId: String(feature.properties.objectid) },
     symbol: {
       type: "text",
-      text: blockLot(feature.properties.parcel_number || feature.properties.parcel_key),
+      text: featureBlockLot(feature),
       color: "#102433",
       haloColor: "#ffffff",
       haloSize: selected ? 2 : 1.3,
@@ -108,7 +157,7 @@ function renderMap() {
   if (!state.layer) return;
   state.layer.removeAll();
   const graphics = [];
-  for (const feature of state.features) {
+  for (const feature of visibleFeatures()) {
     const geometry = featureGeometry(feature);
     if (!geometry) continue;
     graphics.push(new Graphic({
@@ -122,6 +171,47 @@ function renderMap() {
   state.layer.addMany(graphics);
 }
 
+function renderList() {
+  if (!listNode) return;
+  const features = [...visibleFeatures()].sort((left, right) => {
+    const leftProps = left.properties || {};
+    const rightProps = right.properties || {};
+    const key = state.listSort.key;
+    const leftValue = key === "block_lot" ? featureBlockLot(left) : key === "status" ? statusFor(left) : leftProps[key] || "";
+    const rightValue = key === "block_lot" ? featureBlockLot(right) : key === "status" ? statusFor(right) : rightProps[key] || "";
+    return String(leftValue).localeCompare(String(rightValue), undefined, { numeric: true, sensitivity: "base" }) *
+      (state.listSort.direction === "asc" ? 1 : -1);
+  });
+  listTitleNode.textContent = state.statusFilter === "all" ? "All assigned parcels" : `${state.statusFilter === "submitted" ? "Submitted" : "Open"} parcels`;
+  listSummaryNode.textContent = state.organization
+    ? `${formatNumber(features.length)} shown · sorted by ${state.listSort.key === "block_lot" ? "block & lot" : state.listSort.key.replace("_", " ")}`
+    : "Choose an organization to view assigned parcels.";
+  listNode.innerHTML = features.length
+    ? features.map((feature) => {
+      const props = feature.properties || {};
+      const submitted = statusFor(feature) === "submitted";
+      const selected = String(props.objectid) === state.selectedObjectId;
+      return `<tr class="${selected ? "is-selected" : ""}">
+        <td><strong>${escapeHtml(featureBlockLot(feature))}</strong></td>
+        <td>${escapeHtml(props.address || "Address unavailable")}</td>
+        <td>${escapeHtml(props.council_district || "—")}</td>
+        <td><span class="contractor-status-pill ${submitted ? "submitted" : "open"}">${submitted ? "Submitted" : "Open"}</span>${submitted && props.submitted_at ? `<small>${escapeHtml(dateLabel(props.submitted_at))}</small>` : ""}</td>
+        <td><button type="button" class="contractor-list-select" data-contractor-list-id="${escapeHtml(props.objectid)}">${submitted ? "View map" : "Submit service"}</button></td>
+      </tr>`;
+    }).join("")
+    : `<tr><td colspan="5" class="contractor-list-empty">No ${state.statusFilter === "all" ? "assigned" : state.statusFilter} parcels match this view.</td></tr>`;
+}
+
+function renderOverview() {
+  renderMap();
+  renderList();
+  document.querySelectorAll("[data-contractor-status]").forEach((button) => {
+    const active = button.dataset.contractorStatus === state.statusFilter;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
 function updateLabelVisibility() {
   state.layer?.graphics.filter((graphic) => graphic.attributes?.label).forEach((graphic) => {
     graphic.visible = graphic.attributes.assignmentObjectId === state.selectedObjectId || state.view.scale <= labelScale;
@@ -131,10 +221,10 @@ function updateLabelVisibility() {
 function selectFeature(feature, { openSubmit = false } = {}) {
   if (!feature) return;
   state.selectedObjectId = String(feature.properties.objectid);
-  renderMap();
+  renderOverview();
   const props = feature.properties;
   const status = props.returned_flag ? "Submitted" : "Open";
-  detailNode.innerHTML = `<strong>${blockLot(props.parcel_number || props.parcel_key)}</strong> &middot; ${props.address || "Address unavailable"}<br><span>${status}${props.submitted_at ? ` &middot; submitted ${dateLabel(props.submitted_at)}` : ""}</span>${props.returned_flag ? "" : "<br><button type=\"button\" class=\"contractor-submit-parcel\">Submit service for this parcel</button>"}`;
+  detailNode.innerHTML = `<strong>${featureBlockLot(feature)}</strong> &middot; ${props.address || "Address unavailable"}<br><span>${status}${props.submitted_at ? ` &middot; submitted ${dateLabel(props.submitted_at)}` : ""}</span>${props.returned_flag ? "" : "<br><button type=\"button\" class=\"contractor-submit-parcel\">Submit service for this parcel</button>"}`;
   const button = detailNode.querySelector(".contractor-submit-parcel");
   if (button) button.addEventListener("click", () => selectForSubmission(feature));
   if (openSubmit && !props.returned_flag) selectForSubmission(feature);
@@ -163,6 +253,19 @@ function setTab(tab) {
   url.searchParams.set("tab", selected);
   history.replaceState({}, "", url);
   if (selected === "overview") state.view?.resize();
+}
+
+function setOverviewView(view) {
+  state.overviewView = view === "list" ? "list" : "map";
+  const showList = state.overviewView === "list";
+  mapCardNode.hidden = showList;
+  listCardNode.hidden = !showList;
+  document.querySelectorAll("[data-contractor-view]").forEach((button) => {
+    const active = button.dataset.contractorView === state.overviewView;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  if (!showList) requestAnimationFrame(() => state.view?.resize());
 }
 
 function syncUrlContext() {
@@ -200,6 +303,34 @@ function applyEvidence(features, surveyRows, survey123Rows) {
   return { features: enriched, submitted, assigned: activeFeatures.length, open: Math.max(activeFeatures.length - submitted, 0) };
 }
 
+async function enrichWithParcelReference(features) {
+  const missing = [...new Set(features
+    .map((feature) => String(feature.properties?.parcel_number || feature.properties?.parcel_key || "").trim())
+    .filter((parcel) => parcel && !state.parcelReference.has(parcel)))];
+  for (let start = 0; start < missing.length; start += 80) {
+    const batch = missing.slice(start, start + 80);
+    const where = `parcel_number IN (${batch.map((parcel) => `'${parcel.replace(/'/g, "''")}'`).join(",")})`;
+    const payload = await fetchArcgisJson(`${EPP_PARCEL_LAYER_URL}/query`, {
+      f: "json",
+      where,
+      outFields: "parcel_number,par_mapblocklo,council_district",
+      returnGeometry: "false"
+    });
+    (payload.features || []).forEach((record) => {
+      const attrs = record.attributes || {};
+      if (attrs.parcel_number) state.parcelReference.set(String(attrs.parcel_number), {
+        block_lot: attrs.par_mapblocklo || "",
+        council_district: attrs.council_district || ""
+      });
+    });
+  }
+  return features.map((feature) => {
+    const props = feature.properties || {};
+    const reference = state.parcelReference.get(String(props.parcel_number || props.parcel_key || "")) || {};
+    return { ...feature, properties: { ...props, ...reference, block_lot: reference.block_lot || props.block_lot || "" } };
+  });
+}
+
 async function refreshOverview() {
   if (!state.month || !state.organization) return setEmptyState("Choose an organization to view progress");
   titleNode.textContent = `${state.organization} completion progress`;
@@ -216,6 +347,7 @@ async function refreshOverview() {
       loadSurvey123EvidenceByPeriod([state.month], contractorFeatures).catch(() => ({}))
     ]);
     const metrics = applyEvidence(contractorFeatures, surveyRows, survey123ByPeriod[state.month] || []);
+    metrics.features = await enrichWithParcelReference(metrics.features).catch(() => metrics.features);
     state.features = metrics.features;
     state.selectedObjectId = "";
     assignedNode.textContent = formatNumber(metrics.assigned);
@@ -229,7 +361,7 @@ async function refreshOverview() {
     detailNode.textContent = metrics.features.length
       ? "Select an open parcel to switch directly to service submission."
       : "No active parcels are assigned to this organization for the selected month.";
-    renderMap();
+    renderOverview();
     const geometries = state.layer.graphics.filter((graphic) => !graphic.attributes?.label).map((graphic) => graphic.geometry);
     if (geometries.length) state.view.goTo(geometries, { duration: 450 }).catch(() => {});
   } catch (error) {
@@ -263,6 +395,40 @@ async function initializeMap() {
   refreshOverview();
 }
 
+document.querySelectorAll("[data-contractor-status]").forEach((button) => button.addEventListener("click", () => {
+  state.statusFilter = button.dataset.contractorStatus || "all";
+  if (state.selectedObjectId && !visibleFeatures().some((feature) => String(feature.properties.objectid) === state.selectedObjectId)) {
+    state.selectedObjectId = "";
+  }
+  renderOverview();
+}));
+
+document.querySelectorAll("[data-contractor-view]").forEach((button) => button.addEventListener("click", () => {
+  setOverviewView(button.dataset.contractorView);
+}));
+
+document.querySelectorAll("[data-contractor-sort]").forEach((button) => button.addEventListener("click", () => {
+  const key = button.dataset.contractorSort;
+  state.listSort = {
+    key,
+    direction: state.listSort.key === key && state.listSort.direction === "asc" ? "desc" : "asc"
+  };
+  renderList();
+}));
+
+listNode?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-contractor-list-id]");
+  if (!button) return;
+  const feature = state.features.find((item) => String(item.properties.objectid) === button.dataset.contractorListId);
+  if (!feature) return;
+  if (feature.properties.returned_flag) {
+    setOverviewView("map");
+    selectFeature(feature);
+  } else {
+    selectFeature(feature, { openSubmit: true });
+  }
+});
+
 document.querySelectorAll("[data-contractor-tab]").forEach((link) => link.addEventListener("click", (event) => {
   event.preventDefault();
   setTab(link.dataset.contractorTab);
@@ -288,4 +454,5 @@ window.addEventListener("popstate", () => {
 });
 
 setTab(new URLSearchParams(window.location.search).get("tab") || "overview");
+setOverviewView("map");
 initializeMap().catch(() => { detailNode.textContent = "The progress map could not load. Use the submission tab to select an assigned parcel."; });

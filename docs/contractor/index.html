@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Contractor Portal</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css?v=20260730-contractor-portal" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260730-contractor-list" />
   </head>
   <body data-page="contractor">
     <header class="app-header">
@@ -65,10 +65,42 @@
           <div><span>Completion rate</span><strong id="contractorRateValue">0%</strong></div>
           <div class="contractor-rate__track"><i id="contractorRateBar"></i></div>
         </div>
-        <section class="contractor-map-card" aria-label="Contractor assignment progress map">
+        <div class="contractor-view-switch" role="tablist" aria-label="Completion overview display">
+          <button type="button" class="is-active" role="tab" aria-selected="true" data-contractor-view="map">Map view</button>
+          <button type="button" role="tab" aria-selected="false" data-contractor-view="list">List view</button>
+        </div>
+        <section class="contractor-map-card" id="contractorMapCard" aria-label="Contractor assignment progress map">
           <div id="contractorProgressMap" class="contractor-progress-map"></div>
-          <div class="contractor-map-key"><span><i class="submitted"></i>Submitted</span><span><i class="open"></i>Open</span><span><i class="selected"></i>Selected parcel</span></div>
+          <div class="contractor-map-key" aria-label="Parcel status filters">
+            <button type="button" class="is-active" aria-pressed="true" data-contractor-status="all"><i class="all"></i>All</button>
+            <button type="button" aria-pressed="false" data-contractor-status="submitted"><i class="submitted"></i>Submitted</button>
+            <button type="button" aria-pressed="false" data-contractor-status="open"><i class="open"></i>Open</button>
+            <span><i class="selected"></i>Selected parcel</span>
+          </div>
           <p id="contractorParcelDetail">Choose an organization, then select an open parcel to begin its service submission.</p>
+        </section>
+        <section class="contractor-list-card" id="contractorListCard" aria-label="Contractor assignment list" hidden>
+          <div class="contractor-list-card__head">
+            <div>
+              <span class="section-kicker">Assigned parcels</span>
+              <h3 id="contractorListTitle">Parcel list</h3>
+            </div>
+            <p id="contractorListSummary">Choose an organization to view assigned parcels.</p>
+          </div>
+          <div class="contractor-list-table-wrap">
+            <table class="contractor-list-table">
+              <thead>
+                <tr>
+                  <th><button type="button" data-contractor-sort="block_lot">Block &amp; lot</button></th>
+                  <th><button type="button" data-contractor-sort="address">Address</button></th>
+                  <th><button type="button" data-contractor-sort="council_district">District</button></th>
+                  <th><button type="button" data-contractor-sort="status">Status</button></th>
+                  <th><span class="sr-only">Action</span></th>
+                </tr>
+              </thead>
+              <tbody id="contractorParcelList"></tbody>
+            </table>
+          </div>
         </section>
       </section>
 
@@ -110,7 +142,7 @@
         </section>
       </section>
     </main>
-    <script type="module" src="../landcare/survey-submission.js?v=20260730-contractor-portal"></script>
-    <script type="module" src="../landcare/contractor-overview.js?v=20260730-contractor-portal"></script>
+    <script type="module" src="../landcare/survey-submission.js?v=20260730-contractor-list"></script>
+    <script type="module" src="../landcare/contractor-overview.js?v=20260730-contractor-list"></script>
   </body>
 </html>
