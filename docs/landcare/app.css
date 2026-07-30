@@ -181,14 +181,18 @@ textarea {
 .contractor-panel__head h2 { margin: 4px 0 0; color: var(--ura-deep); font-size: 24px; letter-spacing: -.025em; }
 .contractor-panel__head p { max-width: 470px; margin: 0; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.55; }
 .contractor-progress-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.contractor-progress-card { min-height: 128px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper); box-shadow: var(--shadow); }
+.contractor-progress-card { position: relative; min-height: 128px; overflow: hidden; padding: 18px 20px; border: 0; border-radius: 10px; box-shadow: var(--shadow); }
+.contractor-progress-card::after { position: absolute; inset: auto -28px -35px auto; width: 126px; height: 126px; border-radius: 50%; content: ''; opacity: .18; pointer-events: none; }
 .contractor-progress-card span, .contractor-progress-card small { display: block; font-size: 12px; font-weight: 800; }
-.contractor-progress-card span { color: var(--muted); }
-.contractor-progress-card strong { display: block; margin: 4px 0 2px; color: var(--ura-deep); font-size: 34px; line-height: 1.05; letter-spacing: -.04em; }
-.contractor-progress-card small { color: #647680; font-weight: 650; }
-.contractor-progress-card.assigned { border-top: 5px solid var(--ura-blue-dark); }
-.contractor-progress-card.submitted { border-top: 5px solid var(--green); }
-.contractor-progress-card.open { border-top: 5px solid #8a959e; }
+.contractor-progress-card span { color: rgba(255,255,255,.83); }
+.contractor-progress-card strong { position: relative; z-index: 1; display: block; margin: 4px 0 2px; color: #fff; font-size: 34px; line-height: 1.05; letter-spacing: -.04em; }
+.contractor-progress-card small { position: relative; z-index: 1; color: rgba(255,255,255,.9); font-weight: 650; }
+.contractor-progress-card.assigned { background: linear-gradient(135deg, #0584ba 0%, #005477 100%); }
+.contractor-progress-card.assigned::after { background: #75d0ef; }
+.contractor-progress-card.submitted { background: linear-gradient(135deg, #3a9952 0%, #1d652f 100%); }
+.contractor-progress-card.submitted::after { background: #97dd9d; }
+.contractor-progress-card.open { background: linear-gradient(135deg, #75838d 0%, #42515a 100%); }
+.contractor-progress-card.open::after { background: #d7e0e4; }
 .contractor-rate { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: 16px; align-items: center; padding: 13px 18px; border: 1px solid #cbe8f4; border-radius: var(--radius-md); background: var(--soft-blue); }
 .contractor-rate span { display: block; color: #42606e; font-size: 11px; font-weight: 800; }
 .contractor-rate strong { color: var(--ura-deep); font-size: 20px; }
