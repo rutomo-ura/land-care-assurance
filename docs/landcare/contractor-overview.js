@@ -13,7 +13,7 @@ import {
   loadSurvey123EvidenceByPeriod,
   parcelDigits,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260730-evidence-details";
+} from "./survey-layer.js?v=20260731-regrid-comments";
 
 const monthSelect = document.getElementById("assignmentMonth");
 const organizationSelect = document.getElementById("assignmentOrganization");
@@ -122,10 +122,14 @@ function relativeDate(value) {
 
 function surveyPhotoMarkup(photo) {
   const imageUrl = safeImageUrl(photo.image_url);
-  if (!imageUrl) return "";
   const serviceDate = photo.service_date || photo.created_at || photo.submitted_at;
   const source = photo.evidence_source === "Survey123" ? "Survey123" : "Regrid";
-  const notes = String(photo.additional_notes || photo.additional_note || photo.notes || "").trim();
+  const notes = String(photo.additional_notes || photo.additional_comments || photo.additional_note || photo.notes || "").trim();
+  if (!imageUrl) {
+    if (!notes) return "";
+    const date = serviceDate ? `<span>${escapeHtml(source)} service: ${escapeHtml(dateLabel(serviceDate))}</span>` : "";
+    return `<section class="survey-photo-evidence survey-evidence-context-only"><div class="survey-photo-context">${date}<p>${escapeHtml(notes)}</p></div></section>`;
+  }
   return `<section class="survey-photo-evidence">
     <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full ${source} photo">
       <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${source} survey photo" loading="lazy" referrerpolicy="no-referrer" />
@@ -138,7 +142,14 @@ function bindPhotoFallbacks() {
   for (const image of detailNode.querySelectorAll("img[data-evidence-photo]:not([data-fallback-bound])")) {
     image.dataset.fallbackBound = "true";
     image.addEventListener("error", () => {
-      image.closest(".survey-photo-evidence")?.remove();
+      const card = image.closest(".survey-photo-evidence");
+      const context = card?.querySelector(".survey-photo-context");
+      if (context) {
+        card.classList.add("survey-evidence-context-only");
+        image.closest("a")?.remove();
+      } else {
+        card?.remove();
+      }
       if (!detailNode.querySelector(".survey-photo-evidence")) {
         const gallery = detailNode.querySelector(".survey-photo-gallery");
         if (gallery) gallery.outerHTML = '<div class="survey-photo-empty">Returned photo could not be loaded. Please try the original service record later.</div>';
@@ -149,13 +160,15 @@ function bindPhotoFallbacks() {
 
 function parcelDetailMarkup(props, { loadingEvidence = false } = {}) {
   const submitted = Boolean(props.returned_flag);
-  const photos = Array.isArray(props.evidence_photos) ? props.evidence_photos : [];
+  const evidence = (Array.isArray(props.evidence_photos) ? props.evidence_photos : [])
+    .map((record) => surveyPhotoMarkup(record))
+    .filter(Boolean);
   const gallery = !submitted
     ? ""
     : loadingEvidence
       ? '<div class="survey-photo-empty">Loading returned survey detail…</div>'
-      : photos.length
-        ? `<section class="survey-photo-gallery" aria-label="Returned survey photos">${photos.map(surveyPhotoMarkup).join("")}</section>`
+      : evidence.length
+        ? `<section class="survey-photo-gallery" aria-label="Returned survey photos">${evidence.join("")}</section>`
         : '<div class="survey-photo-empty">No returned photo available for this parcel and period.</div>';
   return `<div class="contractor-parcel-detail__summary">
       <strong>${escapeHtml(blockLot(props.block_lot || props.parcel_number || props.parcel_key))}</strong>
@@ -475,12 +488,19 @@ async function enrichWithSurveyEvidence(feature) {
   const survey123Evidence = state.survey123Evidence
     .filter((record) => survey123EvidenceMatchesAssignment(record, props))
     .flatMap((record) => record.evidence_photos || []);
-  const photos = [
+  const evidence = [
     ...survey123Evidence,
     ...regridEvidence.map((record) => ({ ...record, evidence_source: "Regrid" }))
-  ].filter((photo, index, all) => {
-    const imageUrl = safeImageUrl(photo.image_url);
-    return imageUrl && all.findIndex((candidate) => safeImageUrl(candidate.image_url) === imageUrl) === index;
+  ].filter((record, index, all) => {
+    const imageUrl = safeImageUrl(record.image_url);
+    const notes = String(record.additional_notes || record.additional_comments || record.additional_note || record.notes || "").trim();
+    if (!imageUrl && !notes) return false;
+    const key = imageUrl || `${record.OBJECTID || record.objectid || ""}:${record.created_at || record.submitted_at || record.service_date || ""}:${notes}`;
+    return all.findIndex((candidate) => {
+      const candidateImageUrl = safeImageUrl(candidate.image_url);
+      const candidateNotes = String(candidate.additional_notes || candidate.additional_comments || candidate.additional_note || candidate.notes || "").trim();
+      return (candidateImageUrl || `${candidate.OBJECTID || candidate.objectid || ""}:${candidate.created_at || candidate.submitted_at || candidate.service_date || ""}:${candidateNotes}`) === key;
+    }) === index;
   }).sort((left, right) => String(right.created_at || right.submitted_at || right.service_date || "").localeCompare(
     String(left.created_at || left.submitted_at || left.service_date || "")
   ));
@@ -488,8 +508,8 @@ async function enrichWithSurveyEvidence(feature) {
     ...feature,
     properties: {
       ...props,
-      submitted_at: photos[0]?.created_at || photos[0]?.submitted_at || props.submitted_at,
-      evidence_photos: photos
+      submitted_at: evidence[0]?.created_at || evidence[0]?.submitted_at || props.submitted_at,
+      evidence_photos: evidence
     }
   };
 }

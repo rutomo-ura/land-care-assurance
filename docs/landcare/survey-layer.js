@@ -1,10 +1,10 @@
 import { SURVEY123_EVIDENCE_LAYER_URL } from "./survey-submission-config.js";
 
 export const SURVEY_LAYER_URL =
-  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0";
-export const SURVEY_AGOL_ITEM_ID = "a4012693d5d74dd8998610c4d235068d";
+  "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/regrid_surveys/FeatureServer/0";
+export const SURVEY_AGOL_ITEM_ID = "7a2e1d9bacba461296c54a63f104cf51";
 export const SURVEY_AGOL_ITEM_URL =
-  "https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d";
+  "https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51";
 export const SURVEY_LAYER_NAME = "gisdb_gis_regrid_surveys";
 
 export function parcelDigits(value) {
@@ -44,7 +44,10 @@ function normalizeRegridEvidence(attributes) {
     // The Regrid export has used more than one field spelling across
     // deliveries. Normalize those source names once at the adapter boundary.
     service_date: attributes.service_date || attributes.date_of_services || attributes.date_services || null,
-    additional_notes: attributes.additional_notes || attributes.additional_note || attributes.notes || null
+    // The replacement published layer calls this field `additional_comments`.
+    // Retain prior aliases so archived or temporarily rolled-back layers still
+    // produce the canonical app-level property.
+    additional_notes: attributes.additional_comments || attributes.additional_notes || attributes.additional_note || attributes.notes || null
   };
 }
 
