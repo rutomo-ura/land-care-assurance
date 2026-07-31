@@ -24,7 +24,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260731-regrid-comments";
+} from "./survey-layer.js?v=20260731-comment-pane";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -453,6 +453,27 @@ function surveyPhotoGalleryMarkup(props) {
     <section class="survey-photo-gallery" aria-label="Returned survey photos">
       ${evidence.join("")}
     </section>`;
+}
+
+function evidenceCommentPaneMarkup(props) {
+  const record = (props.evidence_photos || []).find((candidate) => (
+    String(candidate.additional_notes || candidate.additional_comments || candidate.additional_note || candidate.notes || "").trim()
+  ));
+  if (!record) return "";
+  const notes = String(record.additional_notes || record.additional_comments || record.additional_note || record.notes || "").trim();
+  const serviceDate = record.service_date || record.date_of_services || record.date_services;
+  const dateValue = serviceDate || record.created_at || record.submitted_at;
+  const date = evidenceDate(dateValue);
+  const dateLabel = serviceDate ? "Service date" : "Submitted";
+  const dateText = date
+    ? `${dateLabel}: ${date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+    : "";
+  return `
+    <div class="evidence-comment-pane" aria-label="Field comment">
+      <span class="evidence-comment-pane__label">Field comment</span>
+      <p>${escapeHtml(notes)}</p>
+      ${dateText ? `<span class="evidence-comment-pane__date">${escapeHtml(dateText)}</span>` : ""}
+    </div>`;
 }
 
 function uniqueCount(features, predicate = () => true) {
@@ -903,6 +924,7 @@ function parcelDetail(props) {
     ${props.created_at ? `Evidence submitted: ${escapeHtml(props.created_at)}<br>` : ""}
     ${props.survey_status ? `Survey status: ${escapeHtml(props.survey_status)}<br>` : ""}
     ${props.history_note ? `<strong>${escapeHtml(props.history_note)}</strong><br>` : ""}
+    ${evidenceCommentPaneMarkup(props)}
     ${surveyPhotoGalleryMarkup(props)}
   `;
 }
