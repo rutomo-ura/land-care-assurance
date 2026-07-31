@@ -829,7 +829,7 @@ function renderActionFocus() {
 }
 
 function fieldNotesForCurrentFilters() {
-  const featuresByParcel = new Map();
+  const featuresByParcel = new globalThis.Map();
   for (const feature of filteredFeatures()) {
     const parcelKey = parcelDigits(feature.properties?.parcel_key || feature.properties?.parcel_number);
     if (parcelKey && !featuresByParcel.has(parcelKey)) featuresByParcel.set(parcelKey, feature);
