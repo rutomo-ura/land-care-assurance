@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Monitoring</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css?v=20260731-comment-pane" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260731-field-notes" />
   </head>
   <body data-page="monitoring">
     <header class="app-header">
@@ -125,6 +125,15 @@
       </section>
 
       <aside class="parcel-panel" aria-label="Selected parcel">
+        <section class="field-notes-panel" aria-labelledby="fieldNotesHeading">
+          <div class="section-heading">
+            <span class="eyebrow" id="fieldNotesHeading">Field Notes</span>
+            <span class="field-notes-count" id="fieldNotesCount"></span>
+          </div>
+          <div class="field-notes-list" id="fieldNotes" aria-live="polite">
+            Loading notes for the current map filters…
+          </div>
+        </section>
         <section>
           <span class="eyebrow">Selected Parcel</span>
           <div class="parcel-detail" id="parcelDetail">
@@ -171,6 +180,6 @@
       </form>
     </dialog>
 
-    <script type="module" src="../landcare/monitoring.js?v=20260731-comment-pane"></script>
+    <script type="module" src="../landcare/monitoring.js?v=20260731-field-notes"></script>
   </body>
 </html>

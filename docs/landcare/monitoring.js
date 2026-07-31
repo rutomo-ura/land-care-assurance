@@ -24,7 +24,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260731-comment-pane";
+} from "./survey-layer.js?v=20260731-field-notes";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -828,6 +828,47 @@ function renderActionFocus() {
   `;
 }
 
+function fieldNotesForCurrentFilters() {
+  const featuresByParcel = new Map();
+  for (const feature of filteredFeatures()) {
+    const parcelKey = parcelDigits(feature.properties?.parcel_key || feature.properties?.parcel_number);
+    if (parcelKey && !featuresByParcel.has(parcelKey)) featuresByParcel.set(parcelKey, feature);
+  }
+  const period = selectedSurveyPeriod();
+  return (state.surveyRecordsByPeriod[period] || [])
+    .map((record) => {
+      const note = String(record.additional_notes || record.additional_comments || record.additional_note || record.notes || "").trim();
+      const feature = featuresByParcel.get(parcelDigits(record.parcelnumb));
+      return note && feature ? { record, feature, note } : null;
+    })
+    .filter(Boolean)
+    .sort((left, right) => String(right.record.created_at || "").localeCompare(String(left.record.created_at || "")));
+}
+
+function renderFieldNotes() {
+  const list = document.getElementById("fieldNotes");
+  const count = document.getElementById("fieldNotesCount");
+  if (!list || !count) return;
+  const notes = fieldNotesForCurrentFilters();
+  count.textContent = notes.length ? `${formatNumber(notes.length)} note${notes.length === 1 ? "" : "s"}` : "No notes";
+  if (!notes.length) {
+    list.innerHTML = '<p class="field-notes-empty">No field notes match the current map filters.</p>';
+    list._notes = [];
+    return;
+  }
+  list._notes = notes;
+  list.innerHTML = notes.map(({ record, feature, note }, index) => {
+    const props = feature.properties || {};
+    const date = evidenceDate(record.service_date || record.date_of_services || record.date_services || record.created_at);
+    const dateText = date ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Date unavailable";
+    return `<button class="field-note-row" type="button" data-field-note-index="${index}" aria-label="Open parcel ${escapeHtml(props.block_lot || props.parcel_key || record.parcelnumb)}">
+      <span class="field-note-row__parcel">${escapeHtml(props.block_lot || props.parcel_key || record.parcelnumb)}</span>
+      <span class="field-note-row__date">${escapeHtml(dateText)}</span>
+      <span class="field-note-row__text">${escapeHtml(note)}</span>
+    </button>`;
+  }).join("");
+}
+
 function contractorPerformanceRows(features) {
   const rows = {};
   for (const feature of features) {
@@ -1268,6 +1309,7 @@ function renderAll() {
   renderContractors();
   renderLegend();
   renderActionFocus();
+  renderFieldNotes();
   renderFreshness();
 }
 
@@ -1407,6 +1449,13 @@ function wireControls() {
     if (searchButton) {
       const results = document.getElementById("parcelSearchResults")._results || [];
       selectParcelSearchResult(results[Number(searchButton.dataset.parcelSearchResult)]);
+    }
+
+    const fieldNoteButton = event.target.closest("[data-field-note-index]");
+    if (fieldNoteButton) {
+      const notes = document.getElementById("fieldNotes")._notes || [];
+      const note = notes[Number(fieldNoteButton.dataset.fieldNoteIndex)];
+      if (note?.feature) selectParcelSearchResult(note.feature);
     }
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));

@@ -313,6 +313,16 @@ body[data-page="contractor"] .assignment-check { margin: 0; }
 .evidence-comment-pane__label { display: block; color: #6c4a00; font-size: 11px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .evidence-comment-pane p { margin: 5px 0; color: #241900; font-size: 14px; font-weight: 800; line-height: 1.4; white-space: pre-wrap; }
 .evidence-comment-pane__date { display: block; color: #6c4a00; font-size: 11px; font-weight: 700; }
+.field-notes-panel { display: flex; flex-direction: column; gap: 10px; }
+.field-notes-count { color: var(--muted); font-size: 11px; font-weight: 750; white-space: nowrap; }
+.field-notes-list { display: grid; gap: 7px; max-height: 305px; overflow: auto; overscroll-behavior: contain; padding-right: 2px; }
+.field-notes-empty { margin: 0; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.45; }
+.field-note-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 9px; width: 100%; padding: 9px 10px; border: 1px solid #d7e2e6; border-radius: 7px; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+.field-note-row:hover { border-color: #5c9dc0; background: #f2f9fc; }
+.field-note-row:focus-visible { outline: 3px solid var(--ura-blue); outline-offset: 2px; }
+.field-note-row__parcel { color: var(--ura-deep); font-size: 12px; font-weight: 850; }
+.field-note-row__date { color: var(--muted); font-size: 11px; font-weight: 700; }
+.field-note-row__text { grid-column: 1 / -1; color: #2f414c; font-size: 12px; font-weight: 700; line-height: 1.4; white-space: pre-wrap; }
 .survey-photo-evidence.compact { display: block; width: fit-content; margin: 0; padding: 0; background: transparent; }
 .survey-photo-evidence.compact img { width: 204px; height: 138px; }
 .survey-photo-evidence.compact div { display: none; }
@@ -1149,7 +1159,7 @@ body[data-page="monitoring"] .map-callout { bottom: 18px; border-radius: 5px; bo
 }
 
 body[data-page="monitoring"] .parcel-panel {
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(155px, .8fr) minmax(220px, 1.1fr) minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
 }
