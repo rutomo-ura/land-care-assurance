@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare Monitoring</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/@arcgis/core/assets/esri/themes/light/main.css" />
-    <link rel="stylesheet" href="../landcare/app.css?v=20260731-field-notes" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260731-clear-filters" />
   </head>
   <body data-page="monitoring">
     <header class="app-header">
@@ -30,9 +30,12 @@
           <h1 id="monitoringTitle">LandCare portfolio map</h1>
           <p>Find open maintenance exposure, verify survey evidence, and focus contractor action by place.</p>
         </div>
-        <div class="monitoring-reading-guide" aria-label="Map reading guide">
-          <span><i class="key-dot risk"></i>Open work needs follow-up</span>
-          <span><i class="key-dot stable"></i>Filters define the exported brief</span>
+        <div class="monitoring-guide-actions">
+          <button class="clear-all-filters" type="button" id="clearAllFiltersButton">Clear all filters</button>
+          <div class="monitoring-reading-guide" aria-label="Map reading guide">
+            <span><i class="key-dot risk"></i>Open work needs follow-up</span>
+            <span><i class="key-dot stable"></i>Filters define the exported brief</span>
+          </div>
         </div>
       </section>
 
@@ -180,6 +183,6 @@
       </form>
     </dialog>
 
-    <script type="module" src="../landcare/monitoring.js?v=20260731-field-notes-fix"></script>
+    <script type="module" src="../landcare/monitoring.js?v=20260731-clear-filters"></script>
   </body>
 </html>

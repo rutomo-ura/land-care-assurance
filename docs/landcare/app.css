@@ -361,6 +361,10 @@ body[data-page="monitoring"] .monitoring-masthead p {
 
 .monitoring-reading-guide { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 13px; color: #52646d; font-size: 11px; font-weight: 750; }
 .monitoring-reading-guide span { display: inline-flex; align-items: center; gap: 6px; }
+.monitoring-guide-actions { display: grid; justify-items: end; gap: 10px; }
+.clear-all-filters { min-height: 34px; padding: 8px 14px; border: 1px solid #004a6d; border-radius: 7px; background: #005b7f; color: #fff; font-size: 12px; font-weight: 850; letter-spacing: .01em; cursor: pointer; box-shadow: 0 2px 5px rgba(0, 51, 79, .18); }
+.clear-all-filters:hover { background: #003f5d; }
+.clear-all-filters:focus-visible { outline: 3px solid #58b6e5; outline-offset: 3px; }
 
 .monitor-sidebar,
 .parcel-panel {

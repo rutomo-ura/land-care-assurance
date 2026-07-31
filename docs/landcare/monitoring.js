@@ -1270,6 +1270,23 @@ async function setLandcareStatusFilter(status, { zoom = false } = {}) {
   if (zoom) await zoomToSelectedExtent({ duration: 450 });
 }
 
+async function clearAllFilters() {
+  state.contractorFilter = "all";
+  state.districtFilter = "all";
+  state.landcareStatusFilter = "all";
+  state.ownershipFilter = state.ownershipFilterByView[state.dataView];
+  state.mapFocusLabel = "";
+  document.getElementById("districtSelect").value = "all";
+  document.querySelectorAll("[data-ownership-filter]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.ownershipFilter === state.ownershipFilter);
+  });
+  if (state.dataView === "history") syncHistoryLayerFilters();
+  else if (state.layers.current) state.layers.current.definitionExpression = whereForFilter("current");
+  await ensureSurveyRecords();
+  renderAll();
+  await zoomToSelectedExtent({ duration: 450 });
+}
+
 function setActiveDataset() {
   const dataset = state.datasets[state.dataView];
   state.summary = dataset.summary;
@@ -1460,6 +1477,7 @@ function wireControls() {
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
   document.getElementById("clearDistrictButton").addEventListener("click", () => setDistrictFilter("all", { zoom: true }));
+  document.getElementById("clearAllFiltersButton").addEventListener("click", clearAllFilters);
   document.getElementById("districtSelect").addEventListener("change", (event) => setDistrictFilter(event.target.value, { zoom: true }));
   document.getElementById("monthSelect").addEventListener("change", (event) => setMonthFilter(event.target.value));
   document.getElementById("parcelSearchInput").addEventListener("input", (event) => renderParcelSearchResults(event.target.value));
