@@ -84,7 +84,7 @@ Current July 9 snapshot: `docs/landcare/data` was generated on 2026-07-07 as the
 
 | Layer | Item / service | Cadence | Web app use |
 |---|---|---|---|
-| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html-id=a4012693d5d74dd8998610c4d235068d) | Daily all-period Regrid layer | **Primary live source** for all-period returned survey evidence and survey polygons |
+| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51) | Daily all-period Regrid layer with additional comments | **Primary live source** for all-period returned survey evidence, comments, and survey polygons |
 | Current-period bundle assignments | [gisdb_gis_regrid_bundle_assignments_current_period](https://urap.maps.arcgis.com/home/item.html?id=0b4733cb5d204da6ab936c9f6d49e401) | Daily/current snapshot publish from `publish_regrid_bundle_assignments_current_period_snapshot.py` | Live current assignment denominator and source QA context |
 | Historical bundle assignments | [gisdb_gis_regrid_bundle_assignments_history](https://urap.maps.arcgis.com/home/item.html?id=df7d77eb57f14c68b717c2cf3cdaada4) | Daily/history snapshot publish from `publish_regrid_bundle_assignments_history_snapshot.py` | **Primary live source** for monthly assignment denominator in monitoring |
 | EPP parcels | `gisdb_gis_epp_parcels_full` | Live | Current URA-owned LandCare universe, geometry alignment, council district filters |
@@ -93,7 +93,7 @@ Current July 9 snapshot: `docs/landcare/data` was generated on 2026-07-07 as the
 Survey layer REST endpoint:
 
 ```text
-https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0
+https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/regrid_surveys/FeatureServer/0
 ```
 
 ## Web App Runtime Model

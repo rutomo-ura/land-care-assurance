@@ -12,7 +12,7 @@ import {
   loadCombinedEvidenceByPeriod,
   mergeSurveyEvidenceIntoGeojson,
   parcelDigits
-} from "./survey-layer.js";
+} from "./survey-layer.js?v=20260731-regrid-comments";
 import {
   enrichSummaryWithAssignmentLayers,
   fetchAssignmentHistoryGeojson,

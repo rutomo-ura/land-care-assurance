@@ -61,7 +61,7 @@ Optional raw AGOL period count check:
 ```powershell
 $period = "2026-06"
 $where = [uri]::EscapeDataString("period_label = '$period'")
-$uri = "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_surveys/FeatureServer/0/query?f=json&where=$where&returnCountOnly=true"
+$uri = "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/regrid_surveys/FeatureServer/0/query?f=json&where=$where&returnCountOnly=true"
 Invoke-RestMethod $uri | Select-Object count
 ```
 
@@ -121,7 +121,7 @@ Open the monitoring and KPI pages after deploy and confirm:
 - Month selector includes the latest survey period from ArcGIS (for example `2026-06` when upstream has loaded that period).
 - KPI latest-month returned count reflects live survey evidence, not only the last checked-in Postgres export.
 
-ArcGIS item: https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d
+ArcGIS item: https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51
 
 ## Failure Escalation
 

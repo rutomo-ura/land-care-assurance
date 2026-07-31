@@ -307,6 +307,8 @@ body[data-page="contractor"] .assignment-check { margin: 0; }
 .survey-photo-context { max-width: 340px; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.45; }
 .survey-photo-context span { display: block; }
 .survey-photo-context p { margin: 6px 0 0; color: var(--ink); font-weight: 600; white-space: pre-wrap; }
+.survey-evidence-context-only { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #f8fbfd; }
+.survey-evidence-context-only .survey-photo-context { margin-top: 0; }
 .survey-photo-evidence.compact { display: block; width: fit-content; margin: 0; padding: 0; background: transparent; }
 .survey-photo-evidence.compact img { width: 204px; height: 138px; }
 .survey-photo-evidence.compact div { display: none; }

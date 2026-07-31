@@ -134,7 +134,7 @@ The upstream `URA-GIS-User/URA-Data-Repository` repo now treats Regrid survey su
 |---|---|---|
 | Daily survey ingestion | `regrid_survey_daily_pipeline.py` runs `regrid_survey_download.py`, `SurveysDriveToSQL.py`, and `publish_regrid_snapshot.py` | The 7:00 AM LandCare refresh should run after this, and should treat GISDB/AGOL as the survey source, not the G-drive archive |
 | Source table | Raw submissions are upserted into `gis.regrid_survey_submissions` | Monthly completion metrics should reconcile against this table when the dashboard rebuilds static data |
-| AGOL all-period survey layer | AGOL item `a4012693d5d74dd8998610c4d235068d` exposes `gisdb_gis_regrid_surveys` from Regrid/PostGIS survey data | Monitoring/KPI runtime defaults to all survey coverage from `gisdb_gis_regrid_surveys` |
+| AGOL all-period survey layer | AGOL item `7a2e1d9bacba461296c54a63f104cf51` exposes `gisdb_gis_regrid_surveys` from Regrid/PostGIS survey data, including additional comments | Monitoring/KPI runtime defaults to all survey coverage from `gisdb_gis_regrid_surveys` |
 | AGOL current assignment layer | AGOL item `0b4733cb5d204da6ab936c9f6d49e401` exposes `gisdb_gis_regrid_bundle_assignments_current_period` | Current-period assignment source and QA context |
 | AGOL history assignment layer | AGOL item `df7d77eb57f14c68b717c2cf3cdaada4` exposes `gisdb_gis_regrid_bundle_assignments_history` | Primary runtime assignment denominator for monthly monitoring; checked-in GeoJSON is fallback/cache |
 | QA view | `gis.regrid_survey_unmatched_parcels` identifies submissions without parcel geometry | This should be part of upstream QA and should also be watched if dashboard returned counts drift |

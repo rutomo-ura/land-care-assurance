@@ -24,7 +24,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260730-evidence-details";
+} from "./survey-layer.js?v=20260731-regrid-comments";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -402,7 +402,7 @@ function evidenceContextMarkup(props) {
   const serviceDate = props.service_date || props.date_of_services || props.date_services;
   const dateValue = serviceDate || props.created_at || props.submitted_at;
   const date = evidenceDate(dateValue);
-  const notes = String(props.additional_notes || props.additional_note || props.notes || "").trim();
+  const notes = String(props.additional_notes || props.additional_comments || props.additional_note || props.notes || "").trim();
   if (!date && !notes) return "";
   const dateLabel = serviceDate ? "Service date" : "Submitted";
   const dateText = date
@@ -416,7 +416,10 @@ function evidenceContextMarkup(props) {
 
 function surveyPhotoMarkup(props, { compact = false } = {}) {
   const imageUrl = safeImageUrl(props.image_url || props.image_original || props.photo_url);
-  if (!imageUrl) return "";
+  const context = compact ? "" : evidenceContextMarkup(props);
+  if (!imageUrl) {
+    return context ? `<section class="survey-photo-evidence survey-evidence-context-only">${context}</section>` : "";
+  }
   const isApprovedSurvey123 = props.evidence_source === "approved_internal_survey123" ||
     props.survey_source === "Survey123 approved evidence";
   const sourceLabel = isApprovedSurvey123 ? "Approved Survey123 photo" : "Regrid survey photo";
@@ -425,7 +428,7 @@ function surveyPhotoMarkup(props, { compact = false } = {}) {
       <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full ${escapeHtml(sourceLabel)}">
         <img data-evidence-photo src="${escapeHtml(imageUrl)}" alt="${escapeHtml(sourceLabel)} for parcel ${escapeHtml(props.parcelnumb || props.parcel_key || "")}" loading="lazy" referrerpolicy="no-referrer" />
       </a>
-      ${compact ? "" : evidenceContextMarkup(props)}
+      ${context}
     </section>`;
 }
 
@@ -440,13 +443,15 @@ function bindPhotoFallbacks(container) {
 }
 
 function surveyPhotoGalleryMarkup(props) {
-  const photos = Array.isArray(props.evidence_photos) ? props.evidence_photos : [];
-  if (!photos.length) {
+  const evidence = (Array.isArray(props.evidence_photos) ? props.evidence_photos : [])
+    .map((record) => surveyPhotoMarkup(record))
+    .filter(Boolean);
+  if (!evidence.length) {
     return '<div class="survey-photo-empty">No returned photo available for this parcel and period.</div>';
   }
   return `
     <section class="survey-photo-gallery" aria-label="Returned survey photos">
-      ${photos.map((photo) => surveyPhotoMarkup(photo)).join("")}
+      ${evidence.join("")}
     </section>`;
 }
 
@@ -923,13 +928,23 @@ async function enrichWithSurveyEvidence(props) {
     evidence = await fetchSurveyEvidenceForParcel(parcelKey, selectedPeriod).catch(() => []);
     state.evidenceCache.set(cacheKey, evidence);
   }
-  const periodPhotos = [
+  const periodEvidence = [
     ...survey123Evidence,
     ...evidence.map((photo) => ({ ...photo, survey_source: SURVEY_LAYER_NAME }))
-  ].filter((photo, index, all) => safeImageUrl(photo.image_url) && all.findIndex((candidate) => candidate.image_url === photo.image_url) === index)
+  ].filter((record, index, all) => {
+    const imageUrl = safeImageUrl(record.image_url);
+    const notes = String(record.additional_notes || record.additional_comments || record.additional_note || record.notes || "").trim();
+    if (!imageUrl && !notes) return false;
+    const key = imageUrl || `${record.OBJECTID || record.objectid || ""}:${record.created_at || record.submitted_at || record.service_date || ""}:${notes}`;
+    return all.findIndex((candidate) => {
+      const candidateImageUrl = safeImageUrl(candidate.image_url);
+      const candidateNotes = String(candidate.additional_notes || candidate.additional_comments || candidate.additional_note || candidate.notes || "").trim();
+      return (candidateImageUrl || `${candidate.OBJECTID || candidate.objectid || ""}:${candidate.created_at || candidate.submitted_at || candidate.service_date || ""}:${candidateNotes}`) === key;
+    }) === index;
+  })
     .sort((a, b) => String(b.created_at || b.submitted_at || b.service_date || "").localeCompare(String(a.created_at || a.submitted_at || a.service_date || "")));
-  if (!periodPhotos.length) return { ...props, evidence_photos: [] };
-  const latest = periodPhotos[0];
+  if (!periodEvidence.length) return { ...props, evidence_photos: [] };
+  const latest = periodEvidence[0];
   return {
     ...props,
     image_url: latest.image_url,
@@ -937,7 +952,7 @@ async function enrichWithSurveyEvidence(props) {
     address: latest.address || props.address,
     survey_status: latest.status || (latest.evidence_source ? "Complete evidence received" : props.survey_status),
     survey_source: latest.survey_source,
-    evidence_photos: periodPhotos
+    evidence_photos: periodEvidence
   };
 }
 

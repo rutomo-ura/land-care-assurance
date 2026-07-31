@@ -11,7 +11,7 @@ The LandCare monitoring site has two production-facing views:
 
 **Runtime data model (2026-07):**
 
-- **Returned surveys:** live ArcGIS Online [`gisdb_gis_regrid_surveys`](https://urap.maps.arcgis.com/home/item.html?id=a4012693d5d74dd8998610c4d235068d), queried at page load via `docs/landcare/survey-layer.js`.
+- **Returned surveys:** live ArcGIS Online [`gisdb_gis_regrid_surveys`](https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51), queried at page load via `docs/landcare/survey-layer.js`.
 - **Current parcel universe:** live AGOL `gisdb_gis_epp_parcels_full`.
 - **Assignment denominators and finance:** published JSON/GeoJSON under `docs/landcare/data`, rebuilt daily at 7:00 AM from PostgreSQL and the budgeting workbook.
 
@@ -114,7 +114,7 @@ Expected upstream outputs:
 | `gis.regrid_survey_submissions` | Raw survey rows loaded daily; duplicate prevention is `period + parcelnumb + created_at + image_original` |
 | `gis.regrid_surveys` | AGOL-facing polygon view joined to `gis.pgh_parcels` geometry |
 | `gis.regrid_survey_unmatched_parcels` | QA view for submissions without parcel geometry |
-| AGOL `gisdb_gis_regrid_surveys` | AGOL all-period item `a4012693d5d74dd8998610c4d235068d` available for runtime survey evidence and survey polygons |
+| AGOL `gisdb_gis_regrid_surveys` | AGOL all-period item `7a2e1d9bacba461296c54a63f104cf51` available for runtime survey evidence, additional comments, and survey polygons |
 
 Task Scheduler should show:
 
