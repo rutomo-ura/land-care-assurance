@@ -1426,10 +1426,12 @@ function featureCenter(feature) {
   return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
 }
 
-async function selectParcelSearchResult(feature) {
+async function selectParcelSearchResult(feature, { preserveFilters = false } = {}) {
   const props = feature.properties || {};
   const group = ownershipGroup(props.ownership_group || props.ownership_type || props.inventory_type);
-  await setOwnershipFilter(group === "Other" ? "all" : group, { zoom: false });
+  if (!preserveFilters) {
+    await setOwnershipFilter(group === "Other" ? "all" : group, { zoom: false });
+  }
   const selectedMonthRow = state.dataView === "history"
     ? (state.geojson?.features || []).find((row) => row.properties?.period_month === state.selectedMonth && parcelDigits(row.properties?.parcel_key) === parcelDigits(props.parcel_key))
     : null;
@@ -1475,7 +1477,7 @@ function wireControls() {
     if (fieldNoteButton) {
       const notes = document.getElementById("fieldNotes")._notes || [];
       const note = notes[Number(fieldNoteButton.dataset.fieldNoteIndex)];
-      if (note?.feature) selectParcelSearchResult(note.feature);
+      if (note?.feature) selectParcelSearchResult(note.feature, { preserveFilters: true });
     }
   });
   document.getElementById("clearContractorButton").addEventListener("click", () => setContractorFilter("all", { zoom: true }));
