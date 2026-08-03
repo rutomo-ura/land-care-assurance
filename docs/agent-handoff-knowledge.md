@@ -13,7 +13,7 @@ The v1.0 operating package is complete and is the current reference for delivery
 - [`docs/v1.0-release-notes.md`](v1.0-release-notes.md) - user-facing scope and known release checks
 - [`docs/landcare-architecture.md`](landcare-architecture.md) - system architecture and data contract
 
-Current production surfaces are the [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/) and [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/). The current Map Monitor uses the ArcGIS Maps SDK with live ArcGIS survey and assignment evidence; older prototype notes that mention Leaflet apply only to the historical `prototype/` implementation.
+Current production surfaces are the [Map Monitor](https://ura-gis.github.io/land-care-assurance/monitoring/) and [KPI Dashboard](https://ura-gis.github.io/land-care-assurance/kpi/). The current Map Monitor uses the ArcGIS Maps SDK with live ArcGIS survey and assignment evidence; older prototype notes that mention Leaflet apply only to the historical `prototype/` implementation.
 
 ## Safety Rule
 
@@ -26,7 +26,7 @@ Improve URA LandCare assurance by making parcel assignment, survey completion, o
 ## Current Repo
 
 - Local repo: `C:\rutomo-codefolder\land-care-assurance`
-- GitHub repo: `https://github.com/rutomo-ura/land-care-assurance`
+- GitHub repo: `https://github.com/ura-gis/land-care-assurance`
 - Main branch: `master`
 - Prototype folder: `prototype/`
 - Current local dev URL: `http://localhost:8010/`
@@ -43,8 +43,8 @@ The Week 1 prototype is a working static web dashboard. As of June 23, 2026, the
 
 Current published monitoring deliverables:
 
-- Public monitoring app: `https://rutomo-ura.github.io/land-care-assurance/monitoring/`
-- Public KPI app: `https://rutomo-ura.github.io/land-care-assurance/kpi/`
+- Public monitoring app: `https://ura-gis.github.io/land-care-assurance/monitoring/`
+- Public KPI app: `https://ura-gis.github.io/land-care-assurance/kpi/`
 - Main ArcGIS Online dashboard shell: `https://urap.maps.arcgis.com/apps/dashboards/341377524e02486ba71684ad67d9b273`
 - ArcGIS Online hosted feature layer: `https://urap.maps.arcgis.com/home/item.html?id=47eb06a43565442d813189b78d318006`
 - ArcGIS Online web map: `https://urap.maps.arcgis.com/home/item.html?id=82218aabb92d4903b247093b7a7be312`
@@ -187,7 +187,9 @@ Ownership classification:
 
 Survey completion:
 
-- Completion uses survey submissions matched to assignment parcel keys.
+- Completion uses raw survey records matched to assignment parcel keys; repeated
+  matched records remain in the Map/KPI numerator by design.
+- Unique completed parcels are a diagnostic, not the current completion count.
 - Active completion should be shown separately from blended completion.
 - Request Only parcels should not be treated the same as Active recurring survey expectations.
 

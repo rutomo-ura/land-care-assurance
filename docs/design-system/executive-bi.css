@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
-
 .bi-dashboard {
   --bi-primary: #006c9f;
   --bi-deep: #00334f;
@@ -21,7 +19,7 @@
   padding: 18px;
   color: var(--bi-ink);
   background: var(--bi-canvas);
-  font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+  font-family: var(--bi-font-sans, "Manrope", "Segoe UI", Arial, sans-serif);
 }
 
 .bi-dashboard *, .bi-dashboard *::before, .bi-dashboard *::after { box-sizing: border-box; }

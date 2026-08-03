@@ -4,15 +4,16 @@ LandCare Assurance is a map-first operational product for URA LandCare: a contra
 
 Public application:
 
-- [Map Monitor](https://rutomo-ura.github.io/land-care-assurance/monitoring/)
-- [KPI Dashboard](https://rutomo-ura.github.io/land-care-assurance/kpi/)
-- [Survey Submission](https://rutomo-ura.github.io/land-care-assurance/survey-submission/)
+- [Map Monitor](https://ura-gis.github.io/land-care-assurance/monitoring/)
+- [KPI Dashboard](https://ura-gis.github.io/land-care-assurance/kpi/)
+- [Survey Submission](https://ura-gis.github.io/land-care-assurance/survey-submission/)
 - [Public Survey123 form](https://survey123.arcgis.com/share/02a003254ba546c28b4997b42e0f220b)
 
 ## Start here
 
 | Need | Read this |
 |---|---|
+| Start the resignation handover | [`HANDOVER.md`](HANDOVER.md) and [`AGENTS.md`](AGENTS.md) |
 | Understand the full data and submission lifecycle | [`docs/landcare-submission-and-evidence-flow.md`](docs/landcare-submission-and-evidence-flow.md) |
 | Understand sources, metric rules, runtime layers, and daily refresh | [`docs/landcare-architecture.md`](docs/landcare-architecture.md) |
 | Operate the VM daily refresh | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |
@@ -21,7 +22,7 @@ Public application:
 
 ## Core operating rules
 
-- **Completion evidence is canonicalized at the assignment polygon.** Regrid and valid Survey123 submissions are deduplicated by parcel, period, contractor, and assignment ID; the Survey123 point is never displayed on the public map.
+- **Completion evidence is displayed at the assignment polygon.** The Map and KPI completion numerator uses raw survey records whose parcel key matches an assignment; unique completed parcels remain diagnostic only. The Survey123 point is never displayed on the public map.
 - **Contractors can choose a parcel from the list or directly on the map.** Both controls use the same assignment ID and prefill the same Survey123 fields.
 - **Public intake is anonymous; evidence is validated.** A Survey123 record affects the dashboard only when its parcel, period, contractor, and assignment ID match an authoritative assignment. A photo is optional and shown when available.
 - **Images are lazy-loaded.** Map Monitor exposes a safe full-image link for existing Regrid photos and, once the VM endpoint is enabled, approved Survey123 photos.
@@ -98,7 +99,7 @@ To install, create `.env`, register the task, and immediately run one checked re
 ## Safety Behavior
 
 - Existing target files are backed up beside the originals with a `.bak-YYYYMMDD-HHMMSS` suffix before replacement.
-- If the target folder is empty, the installer clones `https://github.com/rutomo-ura/land-care-assurance.git`.
+- If the target folder is empty, the installer clones `https://github.com/ura-gis/land-care-assurance.git`.
 - If the target folder is already a git repo, the installer fetches, checks out `master`, and runs `git pull --ff-only`.
 - If the target folder is non-empty and not a git repo, the installer stops without changing it.
 - The installer only creates or modifies `.env` when a PostgreSQL password is supplied or prompted.

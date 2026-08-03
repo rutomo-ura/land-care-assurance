@@ -1,6 +1,6 @@
 param(
   [string]$TargetRepoRoot = "C:\srv\GISWebApp\land-care-assurance",
-  [string]$RepositoryUrl = "https://github.com/rutomo-ura/land-care-assurance.git",
+  [string]$RepositoryUrl = "https://github.com/ura-gis/land-care-assurance.git",
   [string]$Branch = "master",
   [string]$PgHost,
   [int]$PgPort = 5432,

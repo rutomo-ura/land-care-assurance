@@ -19,17 +19,17 @@ This preserves the working model we just validated: ArcGIS Online embeds the ful
 
 GitHub Pages is currently configured in GitHub as legacy Pages:
 
-- Repository: `rutomo-ura/land-care-assurance`
+- Repository: `ura-gis/land-care-assurance`
 - Default branch: `master`
 - Pages source: `master` branch, `/docs` folder
-- Public site: `https://rutomo-ura.github.io/land-care-assurance/`
+- Public site: `https://ura-gis.github.io/land-care-assurance/`
 
 The repo also has `.github/workflows/pages.yml`. It previously uploaded `prototype/`, which is no longer the correct public app root. It has been updated to upload `docs/` so the workflow matches the current live app structure.
 
 Current public app paths:
 
-- Monitoring: `https://rutomo-ura.github.io/land-care-assurance/monitoring/`
-- KPI: `https://rutomo-ura.github.io/land-care-assurance/kpi/`
+- Monitoring: `https://ura-gis.github.io/land-care-assurance/monitoring/`
+- KPI: `https://ura-gis.github.io/land-care-assurance/kpi/`
 - ArcGIS shell: `https://urap.maps.arcgis.com/apps/dashboards/341377524e02486ba71684ad67d9b273`
 
 ## What Can Be CI/CD
@@ -159,4 +159,3 @@ For now, retain GitHub Pages as the mirror and main source-controlled app. Use A
 - ArcGIS Online supports overwriting hosted feature layers while preserving the layer URL and item properties when schema and source requirements are met.
 - Experience Builder Developer Edition apps can be downloaded and hosted on a web server; private content still needs ArcGIS registration/authentication.
 - Experience Builder Developer Edition requires a Client ID and local server/client Node services.
-

@@ -2,7 +2,7 @@
 
 **Live public form:** https://survey123.arcgis.com/share/02a003254ba546c28b4997b42e0f220b
 
-The public form is shared anonymously. The branded intake page is https://rutomo-ura.github.io/land-care-assurance/survey-submission/ and supplies the selected assignment context before opening the form.
+The public form is shared anonymously. The branded intake page is https://ura-gis.github.io/land-care-assurance/survey-submission/ and supplies the selected assignment context before opening the form.
 
 The existing **LandCare Network** survey is a Regrid survey. Its current contractor, service, comment, and required-photo questions are the source template for a new Survey123 contractor intake; do not alter the live Regrid survey or its production responses.
 

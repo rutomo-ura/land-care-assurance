@@ -4,8 +4,8 @@ This note preserves the current state after moving the LandCare work from propos
 
 ## Current Deliverables
 
-- Public GitHub Pages monitoring app: https://rutomo-ura.github.io/land-care-assurance/monitoring/
-- Public GitHub Pages KPI app: https://rutomo-ura.github.io/land-care-assurance/kpi/
+- Public GitHub Pages monitoring app: https://ura-gis.github.io/land-care-assurance/monitoring/
+- Public GitHub Pages KPI app: https://ura-gis.github.io/land-care-assurance/kpi/
 - ArcGIS Online dashboard shell: https://urap.maps.arcgis.com/apps/dashboards/341377524e02486ba71684ad67d9b273
 - ArcGIS Online item page: https://urap.maps.arcgis.com/home/item.html?id=341377524e02486ba71684ad67d9b273
 - ArcGIS Online hosted feature layer: https://urap.maps.arcgis.com/home/item.html?id=47eb06a43565442d813189b78d318006

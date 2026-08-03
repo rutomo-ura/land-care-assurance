@@ -14,7 +14,7 @@ The brief answers four questions:
 ## Delivery and notification model
 
 - The workflow is [`landcare-morning-brief.yml`](../.github/workflows/landcare-morning-brief.yml).
-- Default direct recipients are `rutomo@ura.org` and `omedina@ura.org`.
+- Direct recipients come from the repository variable `LANDCARE_EMAIL_RECIPIENTS`.
 - The HTML email uses the LandCare Executive BI color system: deep blue masthead, readable decision cards, responsive single-column phone layout, source/freshness footer, and direct Map/KPI links.
 - Configure the four GitHub Actions secrets below to enable direct Microsoft 365 delivery. No secret is stored in code or documentation.
 
@@ -26,7 +26,7 @@ The brief answers four questions:
 | `M365_SENDER_UPN` | Approved service mailbox used as the sender |
 
 - The app registration needs Microsoft Graph **Application** `Mail.Send` permission, admin consent, and a mailbox policy that permits the configured sender.
-- Until all four secrets exist, the workflow creates one open Issue per Eastern-calendar day, assigned to `rutomo-ura` and labelled `landcare-brief`. GitHub then provides the account notification fallback.
+- Until all four secrets exist, the workflow creates one open Issue per Eastern-calendar day, optionally assigned to the username in `LANDCARE_ISSUE_ASSIGNEE` and labelled `landcare-brief`. GitHub then provides the account notification fallback.
 - GitHub Actions scheduled workflows are best-effort. The Issue creation timestamp is the delivery record.
 
 ## Schedule
@@ -55,7 +55,7 @@ Contractor contribution means the **assigned contractor**. It is not a claim abo
 
 ## Manual test
 
-In GitHub, open **Actions → LandCare morning executive brief → Run workflow**. The manual run bypasses the 9 AM time gate, creates the daily Issue if one does not already exist, and is safe to re-run because duplicate protection checks the Eastern date marker.
+In GitHub, open **Actions → LandCare morning executive brief → Run workflow**. The manual run bypasses the 9 AM time gate. Use `dry-run` to upload Markdown/HTML without email or issue delivery; use `live` only after the notification variables and secrets are verified.
 
 For a local rendering-only check:
 

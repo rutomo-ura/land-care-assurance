@@ -73,7 +73,7 @@ One-time setup:
 
 ```powershell
 cd C:\srv\GISWebApp
-git clone https://github.com/rutomo-ura/land-care-assurance.git
+git clone https://github.com/ura-gis/land-care-assurance.git
 cd C:\srv\GISWebApp\land-care-assurance
 py -3.12 -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements-landcare-refresh.txt

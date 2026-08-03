@@ -11,11 +11,11 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SendExecutiveEmailTests(unittest.TestCase):
-    def test_payload_uses_html_and_both_default_recipients(self):
-        payload = MODULE.build_message("Morning brief", "<strong>hello</strong>", ["rutomo@ura.org", "omedina@ura.org"])
+    def test_payload_uses_html_and_configured_recipients(self):
+        payload = MODULE.build_message("Morning brief", "<strong>hello</strong>", ["ops@example.org", "supervisor@example.org"])
         self.assertEqual(payload["message"]["body"]["contentType"], "HTML")
         self.assertEqual(
             [item["emailAddress"]["address"] for item in payload["message"]["toRecipients"]],
-            ["rutomo@ura.org", "omedina@ura.org"],
+            ["ops@example.org", "supervisor@example.org"],
         )
         self.assertTrue(payload["saveToSentItems"])
