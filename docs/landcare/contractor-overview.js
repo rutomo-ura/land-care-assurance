@@ -4,7 +4,7 @@ import Graphic from "https://js.arcgis.com/4.30/@arcgis/core/Graphic.js";
 import GraphicsLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
 import Zoom from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Zoom.js";
-import { fetchAssignmentGeojsonForPeriod } from "./assignment-layer.js?v=20260730-contractor-portal";
+import { fetchAssignmentGeojsonForPeriod } from "./assignment-layer.js?v=20260803-raw-completion";
 import {
   cleanOrganization,
   fetchArcgisJson,
@@ -13,7 +13,7 @@ import {
   loadSurvey123EvidenceByPeriod,
   parcelDigits,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260731-regrid-comments";
+} from "./survey-layer.js?v=20260803-raw-completion";
 
 const monthSelect = document.getElementById("assignmentMonth");
 const organizationSelect = document.getElementById("assignmentOrganization");

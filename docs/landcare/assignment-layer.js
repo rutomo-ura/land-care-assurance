@@ -1,4 +1,4 @@
-import { dateFromMillis, fetchArcgisJson } from "./survey-layer.js?v=20260731-regrid-comments";
+import { dateFromMillis, fetchArcgisJson } from "./survey-layer.js?v=20260803-raw-completion";
 
 export const ASSIGNMENT_CURRENT_LAYER_URL =
   "https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/gisdb_gis_regrid_bundle_assignments_current_period/FeatureServer/0";

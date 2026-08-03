@@ -155,6 +155,14 @@ export async function fetchLatestSurveyEvidenceForParcel(parcelNumber, periodLab
   return records[0] || null;
 }
 
+async function loadSurveyRecordsByPeriod(periodLabels) {
+  const uniquePeriods = [...new Set((periodLabels || []).filter(Boolean))];
+  const entries = await Promise.all(
+    uniquePeriods.map(async (periodLabel) => [periodLabel, await fetchSurveyRecordsForPeriod(periodLabel)])
+  );
+  return Object.fromEntries(entries);
+}
+
 export function surveyParcelKeys(records) {
   return new Set(
     records
@@ -164,14 +172,10 @@ export function surveyParcelKeys(records) {
 }
 
 export async function loadSurveyEvidenceByPeriod(periodLabels) {
-  const uniquePeriods = [...new Set((periodLabels || []).filter(Boolean))];
-  const entries = await Promise.all(
-    uniquePeriods.map(async (periodLabel) => {
-      const records = await fetchSurveyRecordsForPeriod(periodLabel);
-      return [periodLabel, surveyParcelKeys(records)];
-    })
+  const recordsByPeriod = await loadSurveyRecordsByPeriod(periodLabels);
+  return Object.fromEntries(
+    Object.entries(recordsByPeriod).map(([periodLabel, records]) => [periodLabel, surveyParcelKeys(records)])
   );
-  return Object.fromEntries(entries);
 }
 
 export async function fetchSurvey123EvidenceRecordsForPeriod(periodLabel) {
@@ -257,6 +261,40 @@ export async function loadCombinedEvidenceByPeriod(periodLabels, assignmentFeatu
     for (const record of survey123[period] || []) combined[period].add(parcelDigits(record.parcel_number));
   }
   return combined;
+}
+
+export async function loadCombinedEvidenceByPeriodWithStats(periodLabels, assignmentFeatures) {
+  const [recordsByPeriod, survey123] = await Promise.all([
+    loadSurveyRecordsByPeriod(periodLabels),
+    loadSurvey123EvidenceByPeriod(periodLabels, assignmentFeatures)
+  ]);
+  const assignmentPinsByPeriod = new Map();
+  for (const feature of assignmentFeatures || []) {
+    const props = feature.properties || {};
+    const period = props.period_month || props.period_label;
+    const parcelKey = parcelDigits(props.parcel_key || props.parcel_number);
+    if (!period || !parcelKey) continue;
+    const pins = assignmentPinsByPeriod.get(period) || new Set();
+    pins.add(parcelKey);
+    assignmentPinsByPeriod.set(period, pins);
+  }
+
+  const combined = {};
+  const surveyRecordStatsByPeriod = {};
+  for (const period of new Set([...(periodLabels || []), ...Object.keys(recordsByPeriod), ...Object.keys(survey123)])) {
+    const records = recordsByPeriod[period] || [];
+    const assignmentPins = assignmentPinsByPeriod.get(period) || new Set();
+    const matchedRecords = records.filter((record) => assignmentPins.has(parcelDigits(record.parcelnumb)));
+    surveyRecordStatsByPeriod[period] = {
+      period_month: period,
+      raw_count: records.length,
+      matched_count: matchedRecords.length,
+      matched_parcel_count: new Set(matchedRecords.map((record) => parcelDigits(record.parcelnumb)).filter(Boolean)).size
+    };
+    combined[period] = new Set(surveyParcelKeys(records));
+    for (const record of survey123[period] || []) combined[period].add(parcelDigits(record.parcel_number));
+  }
+  return { evidenceByPeriod: combined, surveyRecordStatsByPeriod };
 }
 
 export function survey123EvidenceMatchesAssignment(record, properties) {

@@ -1,18 +1,17 @@
 import {
   SURVEY_LAYER_URL,
   SURVEY_AGOL_ITEM_URL,
+  SURVEY_LAYER_NAME,
   dateFromMillis,
   fetchArcgisJson,
   fetchSurveyLayerMetadata,
   fetchSurveyPeriodStats,
   fetchSurveyRecordsForPeriod,
-  enrichLatestMonthlyMetrics,
   enrichSummaryWithSurveyLayer,
-  countReturnedAssigned,
-  loadCombinedEvidenceByPeriod,
+  loadCombinedEvidenceByPeriodWithStats,
   mergeSurveyEvidenceIntoGeojson,
   parcelDigits
-} from "./survey-layer.js?v=20260731-regrid-comments";
+} from "./survey-layer.js?v=20260803-raw-completion";
 import {
   enrichSummaryWithAssignmentLayers,
   fetchAssignmentHistoryGeojson,
@@ -26,7 +25,7 @@ import {
   ASSIGNMENT_HISTORY_LAYER_URL,
   ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
   ASSIGNMENT_HISTORY_AGOL_ITEM_URL
-} from "./assignment-layer.js?v=20260729-assignment-bundle";
+} from "./assignment-layer.js?v=20260803-raw-completion";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -86,22 +85,6 @@ async function fetchSurveyRecordsCached(periodLabel) {
     }));
   }
   return surveyRecordsCache.get(period);
-}
-
-function matchedSurveyRecordStats(features, records, periodLabel) {
-  const assignmentPins = new Set(
-    (features || [])
-      .filter((feature) => feature.properties?.period_month === periodLabel)
-      .map((feature) => parcelDigits(feature.properties?.parcel_key || feature.properties?.parcel_number))
-      .filter(Boolean)
-  );
-  const matched = (records || []).filter((record) => assignmentPins.has(parcelDigits(record.parcelnumb)));
-  return {
-    period_month: periodLabel,
-    raw_count: (records || []).length,
-    matched_count: matched.length,
-    matched_parcel_count: new Set(matched.map((record) => parcelDigits(record.parcelnumb)).filter(Boolean)).size
-  };
 }
 
 function formatMoney(value) {
@@ -459,7 +442,7 @@ function aggregateContractorMonthly(rows) {
   }));
 }
 
-function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats) {
+function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats, surveyRecordStatsByPeriod = {}) {
   const keyed = new Map();
   for (const feature of geojson.features || []) {
     const props = feature.properties || {};
@@ -486,7 +469,10 @@ function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats) {
     .map((row) => {
       const assignedActive = row.activeKeys.size;
       const assignedTotal = row.totalKeys.size;
-      const returned = row.returnedKeys.size;
+      const uniqueReturned = row.returnedKeys.size;
+      const returned = Number.isFinite(Number(surveyRecordStatsByPeriod[row.period_month]?.matched_count))
+        ? Number(surveyRecordStatsByPeriod[row.period_month].matched_count)
+        : uniqueReturned;
       const rawSurveys = Number(
         (surveyPeriodStats || []).find((stat) => stat.period_label === row.period_month)?.record_count || returned
       );
@@ -495,6 +481,7 @@ function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats) {
         assigned_active: assignedActive,
         assigned_total: assignedTotal,
         returned_assigned: returned,
+        returned_unique_assigned: uniqueReturned,
         request_only: row.requestOnlyKeys.size,
         open_active: Math.max(assignedActive - returned, 0),
         survey_rows_raw: rawSurveys,
@@ -776,7 +763,7 @@ function appendFinanceSourceToSummary(financeSummary) {
   if (!financeSummary?.metadata) return;
 }
 
-function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStats) {
+function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStatsByPeriod) {
   const latest = metricForMonth(monthlyMetrics, selectedMonth);
   const latestSurveyRecords = Number(
     latest.period_month === summary.latest_month
@@ -792,13 +779,11 @@ function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surv
   periodStatus.textContent = isReported ? "Reported" : "Awaiting submissions";
   periodStatusCard.classList.toggle("is-pending", !isReported);
   const surveyRecordsReadout = document.getElementById("surveyRecordsReadout");
-  const hasLatestSurveyStats = Boolean(
-    surveyRecordStats?.period_month === latest.period_month &&
-    latest.period_month === summary.latest_month
-  );
+  const surveyRecordStats = surveyRecordStatsByPeriod?.[latest.period_month];
+  const hasSurveyStats = Boolean(surveyRecordStats);
   if (surveyRecordsReadout) {
-    surveyRecordsReadout.hidden = !hasLatestSurveyStats;
-    surveyRecordsReadout.textContent = hasLatestSurveyStats
+    surveyRecordsReadout.hidden = !hasSurveyStats;
+    surveyRecordsReadout.textContent = hasSurveyStats
       ? `${formatNumber(surveyRecordStats.matched_count)} matched survey records`
       : "";
   }
@@ -872,7 +857,7 @@ function chartPointTooltip(row, rate, delta) {
     <span class="chart-tooltip-month">${escapeHtml(shortMonth(row.period_month))}</span>
     <strong class="chart-tooltip-rate">${formatPct(rate)}</strong>
     <span class="chart-tooltip-delta${deltaClass}">${escapeHtml(deltaText)}</span>
-    <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} returned</span>
+    <span class="chart-tooltip-count">${formatNumber(returned)} / ${formatNumber(assigned)} complete</span>
   `;
 }
 
@@ -1334,7 +1319,7 @@ function renderLineChart(monthlyMetrics) {
                 data-point-index="${index}"
                 tabindex="0"
                 role="button"
-                aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} returned"
+                aria-label="${escapeHtml(shortMonth(row.period_month))}: ${formatPct(rate)}, ${formatNumber(returned)} of ${formatNumber(assigned)} complete"
               ></circle>
               <text class="chart-value-label" x="${x.toFixed(1)}" y="${(y - 12).toFixed(1)}" text-anchor="middle">${formatPct(rate)}</text>
               <text class="chart-count-label" x="${x.toFixed(1)}" y="${(height - 18).toFixed(1)}" text-anchor="middle">${shortMonth(row.period_month)}</text>
@@ -1669,17 +1654,17 @@ async function loadData() {
     assignmentPeriodStats
   );
   const baseGeojson = assignmentHistoryResult.geojson || allMonthsGeojson;
-  const evidenceByPeriod = await loadCombinedEvidenceByPeriod(
+  const combinedEvidence = await loadCombinedEvidenceByPeriodWithStats(
     enrichedSummary.available_months,
     baseGeojson.features
-  ).catch(() => ({}));
+  ).catch(() => ({ evidenceByPeriod: {}, surveyRecordStatsByPeriod: {} }));
+  const evidenceByPeriod = combinedEvidence.evidenceByPeriod;
+  const surveyRecordStatsByPeriod = combinedEvidence.surveyRecordStatsByPeriod;
   const mergedGeojson = mergeSurveyEvidenceIntoGeojson(baseGeojson, evidenceByPeriod);
   const liveMonthlyMetrics = assignmentHistoryResult.geojson
-    ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats)
+    ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats, surveyRecordStatsByPeriod)
     : null;
   const latestMonth = liveMonthlyMetrics?.at(-1)?.period_month || enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
-  const latestSurveyRecords = await fetchSurveyRecordsCached(latestMonth).catch(() => []);
-  const surveyRecordStats = matchedSurveyRecordStats(mergedGeojson.features, latestSurveyRecords, latestMonth);
   const liveLatestSurveyRecordCount = Number(
     surveyPeriodStats.find((row) => row.period_label === latestMonth)?.record_count || 0
   );
@@ -1687,8 +1672,22 @@ async function loadData() {
   enrichedSummary.assignment_source = assignmentHistoryResult.geojson
     ? ASSIGNMENT_HISTORY_LAYER_NAME
     : "published_assignment_geojson_fallback";
-  const liveReturnedAssigned = countReturnedAssigned(mergedGeojson.features, latestMonth);
-  const enrichedMonthlyMetrics = liveMonthlyMetrics || enrichLatestMonthlyMetrics(monthlyMetrics, latestMonth, liveReturnedAssigned);
+  const enrichedMonthlyMetrics = liveMonthlyMetrics || monthlyMetrics.map((row) => {
+    const surveyRecordStats = surveyRecordStatsByPeriod[row.period_month];
+    if (!surveyRecordStats) return row;
+    const assignedActive = Number(row.assigned_active || 0);
+    const assignedTotal = Number(row.assigned_total || 0);
+    const returned = Number(surveyRecordStats.matched_count || 0);
+    return {
+      ...row,
+      returned_assigned: returned,
+      active_completion_rate_pct: assignedActive ? Math.round((1000 * returned) / assignedActive) / 10 : 0,
+      blended_completion_rate_pct: assignedTotal ? Math.round((1000 * returned) / assignedTotal) / 10 : 0,
+      survey_rows_raw: Number(surveyRecordStats.raw_count || 0),
+      survey_only_records: Math.max(Number(surveyRecordStats.raw_count || 0) - returned, 0),
+      survey_source: SURVEY_LAYER_NAME
+    };
+  });
   const liveContractorMonthly = assignmentHistoryResult.geojson
     ? aggregateLiveContractorMonthly(mergedGeojson)
     : null;
@@ -1705,7 +1704,7 @@ async function loadData() {
     summary: enrichedSummary,
     currentMetrics,
     assignmentGeojson: mergedGeojson,
-    surveyRecordStats
+    surveyRecordStatsByPeriod
   };
 }
 
@@ -1719,7 +1718,7 @@ async function main() {
     summary,
     currentMetrics,
     assignmentGeojson,
-    surveyRecordStats
+    surveyRecordStatsByPeriod
   } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   let selectedQuarter = quarterKey(selectedMonth);
@@ -1777,7 +1776,7 @@ async function main() {
     renderYearOptions();
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
-    renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStats);
+    renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStatsByPeriod);
     renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth);
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);

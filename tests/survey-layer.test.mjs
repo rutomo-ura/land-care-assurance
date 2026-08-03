@@ -58,3 +58,33 @@ test("retains legacy note aliases when loading a period", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("reports raw matched survey records separately from unique parcels", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => ({
+    ok: true,
+    json: async () => ({
+      features: String(url).includes("regrid_surveys")
+        ? [
+            { attributes: { parcelnumb: "A", period_label: "2026-07" } },
+            { attributes: { parcelnumb: "A", period_label: "2026-07" } },
+            { attributes: { parcelnumb: "B", period_label: "2026-07" } }
+          ]
+        : []
+    })
+  });
+  try {
+    const result = await surveyLayer.loadCombinedEvidenceByPeriodWithStats(
+      ["2026-07"],
+      [{ properties: { period_month: "2026-07", parcel_key: "A" } }]
+    );
+    assert.deepEqual(result.surveyRecordStatsByPeriod["2026-07"], {
+      period_month: "2026-07",
+      raw_count: 3,
+      matched_count: 2,
+      matched_parcel_count: 1
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
