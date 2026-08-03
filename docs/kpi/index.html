@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260729-kpi-reporting" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260803-survey-counts" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -102,7 +102,10 @@
               <span class="metric-status-chip" id="completionStatusChip" role="status" aria-live="polite">Checking</span>
             </div>
             <div class="completion-kpi" id="completionGauge" aria-live="polite"></div>
-            <p class="card-trend" id="completionReadoutCopy">Loading...</p>
+            <div class="card-trend-stack">
+              <p class="card-trend" id="completionReadoutCopy">Loading...</p>
+              <p class="card-trend survey-records-readout" id="surveyRecordsReadout" hidden></p>
+            </div>
           </article>
           <article class="insight-card warning" data-tone="risk">
             <div class="card-top">
@@ -275,6 +278,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260731-regrid-comments"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260803-survey-counts"></script>
   </body>
 </html>

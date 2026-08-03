@@ -60,6 +60,7 @@ const SERVICE_PERIOD_START_DAY = 15;
 const EASTERN_TIME_ZONE = "America/New_York";
 const CONTRACTOR_PALETTE = ["#4477AA", "#EE6677", "#228833", "#AA3377", "#66CCEE", "#EE7733", "#009988", "#332288", "#CCBB44", "#8C564B"];
 const UNASSIGNED_CONTRACTOR_COLOR = "#6b7280";
+const surveyRecordsCache = new globalThis.Map();
 const easternDateParts = new Intl.DateTimeFormat("en-US", {
   timeZone: EASTERN_TIME_ZONE,
   year: "numeric",
@@ -73,6 +74,34 @@ function formatNumber(value) {
 
 function formatPct(value) {
   return `${Number(value || 0).toFixed(1)}%`;
+}
+
+async function fetchSurveyRecordsCached(periodLabel) {
+  const period = String(periodLabel || "");
+  if (!period) return [];
+  if (!surveyRecordsCache.has(period)) {
+    surveyRecordsCache.set(period, fetchSurveyRecordsForPeriod(period).catch((error) => {
+      surveyRecordsCache.delete(period);
+      throw error;
+    }));
+  }
+  return surveyRecordsCache.get(period);
+}
+
+function matchedSurveyRecordStats(features, records, periodLabel) {
+  const assignmentPins = new Set(
+    (features || [])
+      .filter((feature) => feature.properties?.period_month === periodLabel)
+      .map((feature) => parcelDigits(feature.properties?.parcel_key || feature.properties?.parcel_number))
+      .filter(Boolean)
+  );
+  const matched = (records || []).filter((record) => assignmentPins.has(parcelDigits(record.parcelnumb)));
+  return {
+    period_month: periodLabel,
+    raw_count: (records || []).length,
+    matched_count: matched.length,
+    matched_parcel_count: new Set(matched.map((record) => parcelDigits(record.parcelnumb)).filter(Boolean)).size
+  };
 }
 
 function formatMoney(value) {
@@ -672,8 +701,8 @@ async function loadMtdCompletionComparison(geojson, selectedPeriod) {
   const currentStart = `${selectedPeriod}-15`;
   const previousStart = shiftServicePeriodStart(currentStart, -1);
   const [currentRecords, previousRecords] = await Promise.all([
-    fetchSurveyRecordsForPeriod(servicePeriodLabel(currentStart)),
-    fetchSurveyRecordsForPeriod(servicePeriodLabel(previousStart))
+    fetchSurveyRecordsCached(servicePeriodLabel(currentStart)),
+    fetchSurveyRecordsCached(servicePeriodLabel(previousStart))
   ]);
   return buildMtdCompletionComparison(geojson, currentRecords, previousRecords, selectedPeriod);
 }
@@ -747,7 +776,7 @@ function appendFinanceSourceToSummary(financeSummary) {
   if (!financeSummary?.metadata) return;
 }
 
-function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth) {
+function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStats) {
   const latest = metricForMonth(monthlyMetrics, selectedMonth);
   const latestSurveyRecords = Number(
     latest.period_month === summary.latest_month
@@ -762,6 +791,17 @@ function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth) {
   const isReported = hasReportedSurveyData({ ...latest, survey_rows_raw: latestSurveyRecords });
   periodStatus.textContent = isReported ? "Reported" : "Awaiting submissions";
   periodStatusCard.classList.toggle("is-pending", !isReported);
+  const surveyRecordsReadout = document.getElementById("surveyRecordsReadout");
+  const hasLatestSurveyStats = Boolean(
+    surveyRecordStats?.period_month === latest.period_month &&
+    latest.period_month === summary.latest_month
+  );
+  if (surveyRecordsReadout) {
+    surveyRecordsReadout.hidden = !hasLatestSurveyStats;
+    surveyRecordsReadout.textContent = hasLatestSurveyStats
+      ? `${formatNumber(surveyRecordStats.matched_count)} matched survey records`
+      : "";
+  }
 }
 
 function renderContractorOptions(rows) {
@@ -1638,6 +1678,8 @@ async function loadData() {
     ? aggregateLiveMonthlyMetrics(mergedGeojson, surveyPeriodStats)
     : null;
   const latestMonth = liveMonthlyMetrics?.at(-1)?.period_month || enrichedSummary.latest_month || monthlyMetrics.at(-1)?.period_month;
+  const latestSurveyRecords = await fetchSurveyRecordsCached(latestMonth).catch(() => []);
+  const surveyRecordStats = matchedSurveyRecordStats(mergedGeojson.features, latestSurveyRecords, latestMonth);
   const liveLatestSurveyRecordCount = Number(
     surveyPeriodStats.find((row) => row.period_label === latestMonth)?.record_count || 0
   );
@@ -1662,7 +1704,8 @@ async function loadData() {
     areaCompliance,
     summary: enrichedSummary,
     currentMetrics,
-    assignmentGeojson: mergedGeojson
+    assignmentGeojson: mergedGeojson,
+    surveyRecordStats
   };
 }
 
@@ -1675,7 +1718,8 @@ async function main() {
     areaCompliance,
     summary,
     currentMetrics,
-    assignmentGeojson
+    assignmentGeojson,
+    surveyRecordStats
   } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   let selectedQuarter = quarterKey(selectedMonth);
@@ -1733,7 +1777,7 @@ async function main() {
     renderYearOptions();
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
-    renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth);
+    renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStats);
     renderLeadershipInsights(monthlyMetrics, selectedContractorRows, financeSummary, selectedMonth);
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);

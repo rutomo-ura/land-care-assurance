@@ -657,8 +657,8 @@ function renderKpis() {
     ? "Current portfolio"
     : `${state.selectedMonth} monthly LandCare status`;
   document.getElementById("assignedKpiLabel").textContent = "Assigned";
-  document.getElementById("submittedKpiLabel").textContent = "Submitted";
-  document.getElementById("submittedKpiLabel").title = "Survey submissions joined to the current assignment and filter scope.";
+  document.getElementById("submittedKpiLabel").textContent = "Matched surveys";
+  document.getElementById("submittedKpiLabel").title = "Raw survey records matched to assignment parcels in the current filter; duplicate submissions can count more than once.";
   document.getElementById("openKpiLabel").textContent = "Open";
   document.getElementById("assignedKpi").textContent = formatNumber(assigned);
   document.getElementById("submittedKpi").textContent = formatNumber(submitted);
@@ -821,7 +821,7 @@ function renderActionFocus() {
   document.getElementById("actionFocus").innerHTML = `
     <div class="action-directive"><strong>Action</strong><span>${escapeHtml(directive)}</span></div>
     <div><strong>${formatNumber(activeOpen)}</strong><span>Open active parcels in current filter</span></div>
-    <div><strong>${formatNumber(submitted)}</strong><span>Submitted survey records joined to assignments</span></div>
+    <div><strong>${formatNumber(submitted)}</strong><span>Matched survey records in current filter</span></div>
     <div><strong>${formatNumber(rawSurveys)}</strong><span>All live survey records for ${escapeHtml(state.selectedMonth)}</span></div>
     <div><strong>${formatNumber(surveyOnly)}</strong><span>Survey-only records outside the matched assignment count</span></div>
     <div><strong>${formatNumber(requestOnly)}</strong><span>Request-only assignments excluded from active compliance</span></div>

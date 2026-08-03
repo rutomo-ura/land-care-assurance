@@ -1613,6 +1613,12 @@ body[data-page="monitoring"] .parcel-panel .section-heading {
   line-height: 1.4;
 }
 
+.card-trend-stack {
+  display: grid;
+  align-self: end;
+  gap: 2px;
+}
+
 .card-trend.up {
   color: var(--green);
 }
