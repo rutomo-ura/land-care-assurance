@@ -6,6 +6,7 @@ This kit captures the reusable visual language used by the LandCare KPI dashboar
 
 - `executive-bi.css` — portable tokens and component styles, scoped to `.bi-dashboard`.
 - `example.html` — a standalone reference page showing the core composition.
+- `agent-brief.md` — component inventory, build prompt, semantic color rules, and acceptance checklist.
 
 ## Design principles
 
@@ -48,6 +49,10 @@ Recommended information order:
 3. Copy the relevant markup from `example.html`.
 4. Override the brand tokens at the top of the CSS rather than editing individual components.
 5. Replace example values and labels with source-backed metrics.
+
+The core stylesheet has no required font import. Consumers may load Manrope (as
+the example page does) or use the built-in system-font fallback by setting
+`--bi-font-sans`.
 
 ```css
 .bi-dashboard {

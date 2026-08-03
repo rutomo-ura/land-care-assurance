@@ -79,7 +79,7 @@ flowchart TD
     B --> C["Open PowerShell in extracted bundle folder"]
     C --> D["Run install_landcare_daily_refresh.ps1"]
     D --> E{"Target repo exists?"}
-    E -->|No or empty| F["Clone rutomo-ura/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
+    E -->|No or empty| F["Clone ura-gis/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
     E -->|Git repo| G["Fetch, checkout master, pull --ff-only"]
     E -->|Non-empty non-git| H["Stop without changing folder"]
     F --> I["Copy refresh scripts and docs with backups"]

@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-DEFAULT_RECIPIENTS = "rutomo@ura.org,omedina@ura.org"
+DEFAULT_RECIPIENTS = ""
 
 
 def post_json(url: str, payload: dict, headers: dict[str, str]) -> dict:

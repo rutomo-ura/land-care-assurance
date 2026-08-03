@@ -67,22 +67,16 @@ Copy this extracted folder to the VM, then run PowerShell from the bundle folder
 .\install_landcare_daily_refresh.ps1 -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance
 ```
 
-## Install With Included Database Defaults
+## Install With VM-Local Database Settings
 
-This bundle defaults to:
+The bundle does not contain a database password. Supply the VM-local values
+through a secure prompt when writing `.env`:
 
 ```text
 PG_HOST=10.0.101.57
 PG_PORT=5432
 PG_DB=gisdb
 PG_USER=rutomo
-PG_PASSWORD=rutomo_pg2026
-```
-
-Run this to install/update the repo and write the VM-local `.env`:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance
 ```
 
 To prompt for the PostgreSQL password instead:

@@ -6,6 +6,15 @@ on:
     # the real 9 AM America/New_York run to publish (handles DST).
     - cron: "0 13,14 * * *"
   workflow_dispatch:
+    inputs:
+      delivery_mode:
+        description: "Use dry-run to create an artifact without email or issue delivery"
+        required: false
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - live
 
 permissions:
   contents: read
@@ -16,7 +25,8 @@ env:
   M365_CLIENT_ID: ${{ secrets.M365_CLIENT_ID }}
   M365_CLIENT_SECRET: ${{ secrets.M365_CLIENT_SECRET }}
   M365_SENDER_UPN: ${{ secrets.M365_SENDER_UPN }}
-  LANDCARE_EMAIL_RECIPIENTS: rutomo@ura.org,omedina@ura.org
+  LANDCARE_EMAIL_RECIPIENTS: ${{ vars.LANDCARE_EMAIL_RECIPIENTS }}
+  LANDCARE_ISSUE_ASSIGNEE: ${{ vars.LANDCARE_ISSUE_ASSIGNEE }}
 
 jobs:
   publish-brief:
@@ -72,7 +82,7 @@ jobs:
           python scripts/generate_landcare_morning_brief.py "${arguments[@]}"
 
       - name: Send executive HTML email
-        if: steps.window.outputs.run == 'true'
+        if: steps.window.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.delivery_mode == 'live')
         id: email
         shell: bash
         run: |
@@ -87,7 +97,7 @@ jobs:
           echo "sent=true" >> "$GITHUB_OUTPUT"
 
       - name: Create assigned daily issue when email is not configured
-        if: steps.window.outputs.run == 'true' && steps.email.outputs.sent != 'true'
+        if: steps.window.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.delivery_mode == 'live') && steps.email.outputs.sent != 'true'
         uses: actions/github-script@v7
         env:
           BRIEF_FILE: ${{ runner.temp }}/landcare-morning-brief.md
@@ -99,6 +109,7 @@ jobs:
             const fs = require('fs');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const assignee = (process.env.LANDCARE_ISSUE_ASSIGNEE || '').trim();
             const marker = `[LandCare Morning Brief] ${process.env.BRIEF_DATE}`;
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner, repo, state: 'open', labels: 'landcare-brief', per_page: 100,
@@ -113,11 +124,21 @@ jobs:
               if (error.status !== 404) throw error;
               await github.rest.issues.createLabel({ owner, repo, name: 'landcare-brief', color: '006c9f', description: 'Automated LandCare executive morning brief' });
             }
-            await github.rest.issues.create({
+            const issue = {
               owner,
               repo,
               title: process.env.BRIEF_TITLE,
               body: fs.readFileSync(process.env.BRIEF_FILE, 'utf8'),
               labels: ['landcare-brief'],
-              assignees: ['rutomo-ura'],
-            });
+            };
+            if (assignee) issue.assignees = [assignee];
+            await github.rest.issues.create(issue);
+
+      - name: Upload dry-run brief
+        if: steps.window.outputs.run == 'true' && github.event_name == 'workflow_dispatch' && inputs.delivery_mode != 'live'
+        uses: actions/upload-artifact@v4
+        with:
+          name: landcare-morning-brief-dry-run
+          path: |
+            ${{ runner.temp }}/landcare-morning-brief.md
+            ${{ runner.temp }}/landcare-morning-brief.html

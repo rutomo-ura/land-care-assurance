@@ -15,8 +15,8 @@ from zoneinfo import ZoneInfo
 
 
 REQUIRED_FILES = ("refresh_manifest.json", "latest_month_summary.json")
-MAP_MONITOR_URL = "https://rutomo-ura.github.io/land-care-assurance/monitoring/"
-KPI_DASHBOARD_URL = "https://rutomo-ura.github.io/land-care-assurance/kpi/"
+MAP_MONITOR_URL = "https://ura-gis.github.io/land-care-assurance/monitoring/"
+KPI_DASHBOARD_URL = "https://ura-gis.github.io/land-care-assurance/kpi/"
 
 
 def read_json(directory: Path, filename: str) -> dict:

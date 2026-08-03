@@ -1,6 +1,6 @@
 # LandCare Task Scheduler VM Operations
 
-Last updated: 2026-07-07
+Last updated: 2026-08-03
 
 This is the operational runbook now that Power Automate is not available. Windows Task Scheduler, local logs, and local status JSON are the control plane.
 
@@ -86,6 +86,29 @@ Get-ScheduledTaskInfo -TaskPath "\GIS Automations\" -TaskName "LandCare-Daily-Da
 
 Release evidence requires a successful manual run, followed by a successful scheduled invocation (`Start-ScheduledTask`), a `LastTaskResult` of `0`, and a same-day `daily-refresh-status.json` with `status: success`.
 
+## GitHub authentication after handover
+
+The VM must not use an intern's GitHub password or personal token. Create an
+Ed25519 key under the approved `landcare-refresh` service identity, add only the
+public key to the `ura-gis/land-care-assurance` repository as a deploy key with
+write access, and keep the private key in a VM-local secrets directory with an
+ACL limited to that service identity.
+
+Run the following as the same Windows identity that owns the scheduled task,
+after the repository transfer:
+
+```powershell
+ssh-keygen -t ed25519 -C "landcare-refresh@ura-gis" -f C:\srv\secrets\github_landcare_ed25519
+Get-Content C:\srv\secrets\github_landcare_ed25519.pub
+cd C:\srv\GISWebApp\land-care-assurance
+git remote set-url origin git@github.com:ura-gis/land-care-assurance.git
+git ls-remote origin
+```
+
+Verify the GitHub host key through the approved URA workstation procedure; do
+not disable host-key checking. Confirm one checked refresh can commit and push,
+then remove any old personal HTTPS credential from Windows Credential Manager.
+
 Run the proof command after registration. It starts the task, waits for it to finish, checks the exit result and same-day status JSON, and saves a durable verification JSON beside the daily logs:
 
 ```powershell
@@ -111,7 +134,7 @@ flowchart TD
     B --> C["Open PowerShell in extracted bundle folder"]
     C --> D["Run install_landcare_daily_refresh.ps1"]
     D --> E{"Target repo exists-"}
-    E -->|No or empty| F["Clone rutomo-ura/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
+    E -->|No or empty| F["Clone ura-gis/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
     E -->|Git repo| G["Fetch, checkout master, pull --ff-only"]
     E -->|Non-empty non-git| H["Stop without changing folder"]
     F --> I["Copy refresh scripts and docs with backups"]
