@@ -321,6 +321,8 @@ body[data-page="contractor"] .assignment-check { margin: 0; }
 .field-note-row:hover { border-color: #5c9dc0; background: #f2f9fc; }
 .field-note-row:focus-visible { outline: 3px solid var(--ura-blue); outline-offset: 2px; }
 .field-note-row__parcel { color: var(--ura-deep); font-size: 12px; font-weight: 850; }
+.field-note-row__meta { display: inline-flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.field-note-row__contractor { display: inline-flex; max-width: 75%; align-items: center; min-width: 0; padding: 2px 7px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--contractor-color) 55%, #ffffff); border-radius: 999px; background: color-mix(in srgb, var(--contractor-color) 13%, #ffffff); color: var(--contractor-color); font-size: 10px; font-weight: 850; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .field-note-row__date { color: var(--muted); font-size: 11px; font-weight: 700; }
 .field-note-row__text { grid-column: 1 / -1; color: #2f414c; font-size: 12px; font-weight: 700; line-height: 1.4; white-space: pre-wrap; }
 .survey-photo-evidence.compact { display: block; width: fit-content; margin: 0; padding: 0; background: transparent; }

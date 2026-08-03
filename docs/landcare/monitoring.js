@@ -861,9 +861,12 @@ function renderFieldNotes() {
     const props = feature.properties || {};
     const date = evidenceDate(record.service_date || record.date_of_services || record.date_services || record.created_at);
     const dateText = date ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Date unavailable";
+    const contractor = props.organization || "Unassigned";
+    const contractorLabel = shortContractor(contractor);
+    const contractorColorValue = contractorColor(contractor);
     return `<button class="field-note-row" type="button" data-field-note-index="${index}" aria-label="Open parcel ${escapeHtml(props.block_lot || props.parcel_key || record.parcelnumb)}">
       <span class="field-note-row__parcel">${escapeHtml(props.block_lot || props.parcel_key || record.parcelnumb)}</span>
-      <span class="field-note-row__date">${escapeHtml(dateText)}</span>
+      <span class="field-note-row__meta"><span class="field-note-row__contractor" style="--contractor-color: ${escapeHtml(contractorColorValue)}">${escapeHtml(contractorLabel)}</span><span class="field-note-row__date">${escapeHtml(dateText)}</span></span>
       <span class="field-note-row__text">${escapeHtml(note)}</span>
     </button>`;
   }).join("");
