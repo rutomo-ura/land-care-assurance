@@ -269,6 +269,7 @@ export async function loadCombinedEvidenceByPeriodWithStats(periodLabels, assign
     loadSurvey123EvidenceByPeriod(periodLabels, assignmentFeatures)
   ]);
   const assignmentPinsByPeriod = new Map();
+  const assignmentContractorsByPeriod = new Map();
   for (const feature of assignmentFeatures || []) {
     const props = feature.properties || {};
     const period = props.period_month || props.period_label;
@@ -277,6 +278,9 @@ export async function loadCombinedEvidenceByPeriodWithStats(periodLabels, assign
     const pins = assignmentPinsByPeriod.get(period) || new Set();
     pins.add(parcelKey);
     assignmentPinsByPeriod.set(period, pins);
+    const contractors = assignmentContractorsByPeriod.get(period) || new Map();
+    contractors.set(parcelKey, String(props.organization || "Unassigned"));
+    assignmentContractorsByPeriod.set(period, contractors);
   }
 
   const combined = {};
@@ -284,12 +288,19 @@ export async function loadCombinedEvidenceByPeriodWithStats(periodLabels, assign
   for (const period of new Set([...(periodLabels || []), ...Object.keys(recordsByPeriod), ...Object.keys(survey123)])) {
     const records = recordsByPeriod[period] || [];
     const assignmentPins = assignmentPinsByPeriod.get(period) || new Set();
+    const assignmentContractors = assignmentContractorsByPeriod.get(period) || new Map();
     const matchedRecords = records.filter((record) => assignmentPins.has(parcelDigits(record.parcelnumb)));
+    const matchedByContractor = {};
+    for (const record of matchedRecords) {
+      const contractor = assignmentContractors.get(parcelDigits(record.parcelnumb)) || "Unassigned";
+      matchedByContractor[contractor] = (matchedByContractor[contractor] || 0) + 1;
+    }
     surveyRecordStatsByPeriod[period] = {
       period_month: period,
       raw_count: records.length,
       matched_count: matchedRecords.length,
-      matched_parcel_count: new Set(matchedRecords.map((record) => parcelDigits(record.parcelnumb)).filter(Boolean)).size
+      matched_parcel_count: new Set(matchedRecords.map((record) => parcelDigits(record.parcelnumb)).filter(Boolean)).size,
+      matched_by_contractor: matchedByContractor
     };
     combined[period] = new Set(surveyParcelKeys(records));
     for (const record of survey123[period] || []) combined[period].add(parcelDigits(record.parcel_number));

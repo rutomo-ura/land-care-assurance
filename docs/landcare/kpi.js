@@ -11,7 +11,7 @@ import {
   loadCombinedEvidenceByPeriodWithStats,
   mergeSurveyEvidenceIntoGeojson,
   parcelDigits
-} from "./survey-layer.js?v=20260803-raw-completion";
+} from "./survey-layer.js?v=20260803-raw-completion-v2";
 import {
   enrichSummaryWithAssignmentLayers,
   fetchAssignmentHistoryGeojson,
@@ -25,7 +25,7 @@ import {
   ASSIGNMENT_HISTORY_LAYER_URL,
   ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
   ASSIGNMENT_HISTORY_AGOL_ITEM_URL
-} from "./assignment-layer.js?v=20260803-raw-completion";
+} from "./assignment-layer.js?v=20260803-raw-completion-v2";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -493,7 +493,7 @@ function aggregateLiveMonthlyMetrics(geojson, surveyPeriodStats, surveyRecordSta
     });
 }
 
-function aggregateLiveContractorMonthly(geojson) {
+function aggregateLiveContractorMonthly(geojson, surveyRecordStatsByPeriod = {}) {
   const keyed = new Map();
   for (const feature of geojson.features || []) {
     const props = feature.properties || {};
@@ -512,7 +512,8 @@ function aggregateLiveContractorMonthly(geojson) {
   }
   return [...keyed.values()].map((row) => {
     const assigned = row.assignedKeys.size;
-    const returned = row.returnedKeys.size;
+    const rawReturned = surveyRecordStatsByPeriod[row.period_month]?.matched_by_contractor?.[row.organization];
+    const returned = Number.isFinite(Number(rawReturned)) ? Number(rawReturned) : row.returnedKeys.size;
     return {
       period_month: row.period_month,
       organization: row.organization,
@@ -523,22 +524,26 @@ function aggregateLiveContractorMonthly(geojson) {
   });
 }
 
-function activeAssignmentKeysForPeriod(geojson, periodLabel) {
+function assignmentKeysForPeriod(geojson, periodLabel, activeOnly = false) {
   const keys = new Set();
   for (const feature of geojson?.features || []) {
     const props = feature.properties || {};
-    if (props.period_month !== periodLabel || props.maintenance_level !== "Active") continue;
+    if (props.period_month !== periodLabel || (activeOnly && props.maintenance_level !== "Active")) continue;
     const key = parcelDigits(props.parcel_key);
     if (key) keys.add(key);
   }
   return keys;
 }
 
-function activeAssignmentKeysByContractor(geojson, periodLabel) {
+function activeAssignmentKeysForPeriod(geojson, periodLabel) {
+  return assignmentKeysForPeriod(geojson, periodLabel, true);
+}
+
+function assignmentKeysByContractor(geojson, periodLabel, activeOnly = false) {
   const assignments = new Map();
   for (const feature of geojson?.features || []) {
     const props = feature.properties || {};
-    if (props.period_month !== periodLabel || props.maintenance_level !== "Active") continue;
+    if (props.period_month !== periodLabel || (activeOnly && props.maintenance_level !== "Active")) continue;
     const parcelKey = parcelDigits(props.parcel_key);
     if (!parcelKey) continue;
     const contractor = normalizeContractorName(props.organization);
@@ -547,6 +552,10 @@ function activeAssignmentKeysByContractor(geojson, periodLabel) {
     assignments.set(contractor, keys);
   }
   return assignments;
+}
+
+function activeAssignmentKeysByContractor(geojson, periodLabel) {
+  return assignmentKeysByContractor(geojson, periodLabel, true);
 }
 
 function contractorColor(geojson, contractor) {
@@ -560,7 +569,7 @@ function contractorColor(geojson, contractor) {
   return CONTRACTOR_PALETTE[index % CONTRACTOR_PALETTE.length];
 }
 
-function contractorReturnedKeysByDate(records, assignmentsByContractor, startDateKey, endDateKey) {
+function contractorReturnedCountsByDate(records, assignmentsByContractor, startDateKey, endDateKey) {
   const parcelContractors = new Map();
   for (const [contractor, parcelKeys] of assignmentsByContractor) {
     for (const parcelKey of parcelKeys) parcelContractors.set(parcelKey, contractor);
@@ -572,30 +581,30 @@ function contractorReturnedKeysByDate(records, assignmentsByContractor, startDat
     const contractor = parcelContractors.get(parcelKey);
     if (!contractor || !submittedDate || submittedDate < startDateKey || submittedDate > endDateKey) continue;
     const byDate = returnedByContractor.get(contractor) || new Map();
-    const keys = byDate.get(submittedDate) || new Set();
-    keys.add(parcelKey);
-    byDate.set(submittedDate, keys);
+    byDate.set(submittedDate, (byDate.get(submittedDate) || 0) + 1);
     returnedByContractor.set(contractor, byDate);
   }
   return returnedByContractor;
 }
 
 function buildContractorDailyCompletionSeries(geojson, records, startDateKey, endDateKey) {
-  const assignmentsByContractor = activeAssignmentKeysByContractor(geojson, servicePeriodLabel(startDateKey));
-  const returnedByContractor = contractorReturnedKeysByDate(records, assignmentsByContractor, startDateKey, endDateKey);
+  const periodLabel = servicePeriodLabel(startDateKey);
+  const activeAssignmentsByContractor = activeAssignmentKeysByContractor(geojson, periodLabel);
+  const surveyAssignmentsByContractor = assignmentKeysByContractor(geojson, periodLabel);
+  const returnedByContractor = contractorReturnedCountsByDate(records, surveyAssignmentsByContractor, startDateKey, endDateKey);
   const totalDays = Math.max(Math.floor((dateFromKey(endDateKey) - dateFromKey(startDateKey)) / 86400000), 0);
-  return [...assignmentsByContractor.entries()]
+  return [...activeAssignmentsByContractor.entries()]
     .map(([contractor, assignmentKeys]) => {
-      const returned = new Set();
+      let returned = 0;
       const byDate = returnedByContractor.get(contractor) || new Map();
       const days = [];
       for (let offset = 0; offset <= totalDays; offset += 1) {
         const date = dateKeyForOffset(startDateKey, offset);
-        for (const parcelKey of byDate.get(date) || []) returned.add(parcelKey);
+        returned += byDate.get(date) || 0;
         days.push({
           date,
-          completionRate: assignmentKeys.size ? (100 * returned.size) / assignmentKeys.size : 0,
-          returned: returned.size
+          completionRate: assignmentKeys.size ? (100 * returned) / assignmentKeys.size : 0,
+          returned
         });
       }
       return {
@@ -609,16 +618,14 @@ function buildContractorDailyCompletionSeries(geojson, records, startDateKey, en
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function returnedKeysByDate(records, assignmentKeys, startDateKey, endDateKey) {
+function returnedCountsByDate(records, assignmentKeys, startDateKey, endDateKey) {
   const recordsByDate = new Map();
   for (const record of records || []) {
     const parcelKey = parcelDigits(record.parcelnumb);
     const submittedDate = easternDateKey(record.created_at);
     if (!parcelKey || !assignmentKeys.has(parcelKey) || !submittedDate) continue;
     if (submittedDate < startDateKey || submittedDate > endDateKey) continue;
-    const keys = recordsByDate.get(submittedDate) || new Set();
-    keys.add(parcelKey);
-    recordsByDate.set(submittedDate, keys);
+    recordsByDate.set(submittedDate, (recordsByDate.get(submittedDate) || 0) + 1);
   }
   return recordsByDate;
 }
@@ -634,38 +641,40 @@ function buildMtdCompletionComparison(geojson, currentRecords, previousRecords, 
   const previousEnd = dateKeyForOffset(previousStart, elapsedDays);
   const currentAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(currentStart));
   const previousAssignmentKeys = activeAssignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
-  const currentByDate = returnedKeysByDate(currentRecords, currentAssignmentKeys, currentStart, currentEnd);
-  const previousByDate = returnedKeysByDate(previousRecords, previousAssignmentKeys, previousStart, currentStart);
+  const currentSurveyAssignmentKeys = assignmentKeysForPeriod(geojson, servicePeriodLabel(currentStart));
+  const previousSurveyAssignmentKeys = assignmentKeysForPeriod(geojson, servicePeriodLabel(previousStart));
+  const currentByDate = returnedCountsByDate(currentRecords, currentSurveyAssignmentKeys, currentStart, currentEnd);
+  const previousByDate = returnedCountsByDate(previousRecords, previousSurveyAssignmentKeys, previousStart, currentStart);
   const contractorSeries = buildContractorDailyCompletionSeries(geojson, currentRecords, currentStart, currentEnd);
-  const currentReturned = new Set();
-  const previousReturned = new Set();
+  let currentReturned = 0;
+  let previousReturned = 0;
   const axisSpanDays = Math.max(Math.floor((dateFromKey(axisEnd) - dateFromKey(currentStart)) / 86400000), 0);
   const previousDays = [];
   const days = [];
 
   for (let offset = 0; offset <= axisSpanDays; offset += 1) {
     const previousDate = dateKeyForOffset(previousStart, offset);
-    for (const key of previousByDate.get(previousDate) || []) previousReturned.add(key);
+    previousReturned += previousByDate.get(previousDate) || 0;
     previousDays.push({
       serviceDay: offset + 1,
       axisDate: dateKeyForOffset(currentStart, offset),
       previousDate,
-      previousReturned: previousReturned.size,
-      previousRate: previousAssignmentKeys.size ? (100 * previousReturned.size) / previousAssignmentKeys.size : 0
+      previousReturned,
+      previousRate: previousAssignmentKeys.size ? (100 * previousReturned) / previousAssignmentKeys.size : 0
     });
   }
 
   for (let offset = 0; offset <= elapsedDays; offset += 1) {
     const currentDate = dateKeyForOffset(currentStart, offset);
     const previousDay = previousDays[offset];
-    for (const key of currentByDate.get(currentDate) || []) currentReturned.add(key);
+    currentReturned += currentByDate.get(currentDate) || 0;
     days.push({
       serviceDay: offset + 1,
       currentDate,
       previousDate: previousDay.previousDate,
-      currentReturned: currentReturned.size,
+      currentReturned,
       previousReturned: previousDay.previousReturned,
-      currentRate: currentAssignmentKeys.size ? (100 * currentReturned.size) / currentAssignmentKeys.size : 0,
+      currentRate: currentAssignmentKeys.size ? (100 * currentReturned) / currentAssignmentKeys.size : 0,
       previousRate: previousDay.previousRate
     });
   }
@@ -784,7 +793,7 @@ function renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surv
   if (surveyRecordsReadout) {
     surveyRecordsReadout.hidden = !hasSurveyStats;
     surveyRecordsReadout.textContent = hasSurveyStats
-      ? `${formatNumber(surveyRecordStats.matched_count)} matched survey records`
+      ? `${formatNumber(surveyRecordStats.matched_count)} complete survey records`
       : "";
   }
 }
@@ -1452,7 +1461,7 @@ function renderMtdCompletionComparison(comparison) {
       return `
         <span class="chart-tooltip-month">M-1 · ${escapeHtml(shortDate(day.previousDate))} · service day ${day.serviceDay}</span>
         <strong class="chart-tooltip-rate">${formatPct(day.previousRate)}</strong>
-        <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} returned</span>
+    <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} complete</span>
       `;
     }
     const day = days[Number(marker.dataset.dayIndex)];
@@ -1460,7 +1469,7 @@ function renderMtdCompletionComparison(comparison) {
       <span class="chart-tooltip-month">${escapeHtml(shortDate(day.currentDate))} · service day ${day.serviceDay}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.currentRate)}</strong>
       <span class="chart-tooltip-delta">M-1 ${escapeHtml(shortDate(day.previousDate))}: ${formatPct(day.previousRate)}</span>
-      <span class="chart-tooltip-count">Selected: ${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} · M-1: ${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)}</span>
+    <span class="chart-tooltip-count">Selected: ${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} complete · M-1: ${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)}</span>
     `;
   });
   bindDailyPathTooltips(container, ".daily-line-hit", (path, event) => {
@@ -1473,14 +1482,14 @@ function renderMtdCompletionComparison(comparison) {
       return `
         <span class="chart-tooltip-month">M-1 · ${escapeHtml(shortDate(day.previousDate))} · service day ${day.serviceDay}</span>
         <strong class="chart-tooltip-rate">${formatPct(day.previousRate)}</strong>
-        <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} returned</span>
+    <span class="chart-tooltip-count">${formatNumber(day.previousReturned)} / ${formatNumber(comparison.previousAssigned)} complete</span>
       `;
     }
     return `
       <span class="chart-tooltip-month">${escapeHtml(shortDate(day.currentDate))} · service day ${day.serviceDay}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.currentRate)}</strong>
       <span class="chart-tooltip-delta">M-1: ${formatPct(day.previousRate)}</span>
-      <span class="chart-tooltip-count">${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} returned</span>
+    <span class="chart-tooltip-count">${formatNumber(day.currentReturned)} / ${formatNumber(comparison.currentAssigned)} complete</span>
     `;
   });
 }
@@ -1526,9 +1535,9 @@ function renderContractorPaceChart(comparison) {
         }).join("")}
         <line class="chart-axis" x1="${margin.left}" x2="${width - margin.right}" y1="${margin.top + plotHeight}" y2="${margin.top + plotHeight}"></line>
         <line class="chart-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotHeight}"></line>
-        ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} returned)</title></path>`).join("")}
+        ${series.map((item) => `<path class="contractor-pace-line" stroke="${item.color}" d="${pathFor(item)}"><title>${escapeHtml(item.label)}: ${formatPct(item.days.at(-1).completionRate)} (${formatNumber(item.days.at(-1).returned)} of ${formatNumber(item.assigned)} complete)</title></path>`).join("")}
         ${series.map((item, seriesIndex) => `<path class="daily-line-hit" d="${pathFor(item)}" data-series-index="${seriesIndex}" tabindex="0" role="button" aria-label="Hover for ${escapeHtml(item.label)} daily detail"></path>`).join("")}
-        ${series.flatMap((item, seriesIndex) => item.days.map((day, dayIndex) => `<circle class="daily-hover-marker contractor-daily-marker" style="--series-color:${item.color}" cx="${toX(day.date).toFixed(1)}" cy="${toY(day.completionRate).toFixed(1)}" r="7" data-series-index="${seriesIndex}" data-day-index="${dayIndex}" tabindex="0" role="button" aria-label="${escapeHtml(item.label)}, ${shortDate(day.date)}: ${formatPct(day.completionRate)}, ${formatNumber(day.returned)} of ${formatNumber(item.assigned)} returned"></circle>`)).join("")}
+        ${series.flatMap((item, seriesIndex) => item.days.map((day, dayIndex) => `<circle class="daily-hover-marker contractor-daily-marker" style="--series-color:${item.color}" cx="${toX(day.date).toFixed(1)}" cy="${toY(day.completionRate).toFixed(1)}" r="7" data-series-index="${seriesIndex}" data-day-index="${dayIndex}" tabindex="0" role="button" aria-label="${escapeHtml(item.label)}, ${shortDate(day.date)}: ${formatPct(day.completionRate)}, ${formatNumber(day.returned)} of ${formatNumber(item.assigned)} complete"></circle>`)).join("")}
         ${xLabels.map((dateKey) => `<text class="chart-count-label" x="${toX(dateKey).toFixed(1)}" y="${height - 17}" text-anchor="middle">${dayOfMonth(dateKey)}</text>`).join("")}
       </svg>
       <div class="chart-floating-tooltip" hidden></div>
@@ -1540,7 +1549,7 @@ function renderContractorPaceChart(comparison) {
     return `
       <span class="chart-tooltip-month">${escapeHtml(item.label)} · ${escapeHtml(shortDate(day.date))}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.completionRate)}</strong>
-      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} returned</span>
+      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} complete</span>
     `;
   });
   bindDailyPathTooltips(container, ".daily-line-hit", (path, event) => {
@@ -1551,7 +1560,7 @@ function renderContractorPaceChart(comparison) {
     return `
       <span class="chart-tooltip-month">${escapeHtml(item.label)} · ${escapeHtml(shortDate(day.date))}</span>
       <strong class="chart-tooltip-rate">${formatPct(day.completionRate)}</strong>
-      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} returned</span>
+      <span class="chart-tooltip-count">${formatNumber(day.returned)} / ${formatNumber(item.assigned)} complete</span>
     `;
   });
 }
@@ -1689,7 +1698,7 @@ async function loadData() {
     };
   });
   const liveContractorMonthly = assignmentHistoryResult.geojson
-    ? aggregateLiveContractorMonthly(mergedGeojson)
+    ? aggregateLiveContractorMonthly(mergedGeojson, surveyRecordStatsByPeriod)
     : null;
   const liveQuarterlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveQuarterlyMetrics(mergedGeojson, liveMonthlyMetrics)

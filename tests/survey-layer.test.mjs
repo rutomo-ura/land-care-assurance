@@ -82,7 +82,8 @@ test("reports raw matched survey records separately from unique parcels", async 
       period_month: "2026-07",
       raw_count: 3,
       matched_count: 2,
-      matched_parcel_count: 1
+      matched_parcel_count: 1,
+      matched_by_contractor: { Unassigned: 2 }
     });
   } finally {
     globalThis.fetch = originalFetch;

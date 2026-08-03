@@ -24,7 +24,7 @@ import {
   mergeAvailableMonths,
   mergeSurveyEvidenceIntoGeojson,
   survey123EvidenceMatchesAssignment
-} from "./survey-layer.js?v=20260803-raw-completion";
+} from "./survey-layer.js?v=20260803-raw-completion-v2";
 import {
   ASSIGNMENT_CURRENT_LAYER_NAME,
   ASSIGNMENT_CURRENT_LAYER_URL,
@@ -38,7 +38,7 @@ import {
   fetchAssignmentHistoryGeojson,
   fetchAssignmentLayerMetadata,
   fetchAssignmentPeriodStats
-} from "./assignment-layer.js?v=20260803-raw-completion";
+} from "./assignment-layer.js?v=20260803-raw-completion-v2";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
