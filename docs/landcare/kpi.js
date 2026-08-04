@@ -1748,7 +1748,6 @@ async function main() {
   } = await loadData();
   let selectedMonth = summary.latest_month || monthlyMetrics.at(-1).period_month;
   let selectedQuarter = quarterKey(selectedMonth);
-  let selectedYear = selectedMonth.slice(0, 4);
   let comparisonRenderId = 0;
   const comparisonCache = new Map();
 
@@ -1760,30 +1759,22 @@ async function main() {
     selectedQuarter = select.value || selectedQuarter;
   };
 
-  const renderYearOptions = () => {
-    const select = document.getElementById("kpiYearSelect");
-    const years = [...new Set((financeSummary.current_contracts || []).flatMap((row) => [
-      String(row.start_date || "").slice(0, 4),
-      String(row.end_date || "").slice(0, 4),
-    ]).filter((year) => /^\d{4}$/.test(year)))].sort();
-    select.innerHTML = years.map((year) => `<option value="${year}">${year}</option>`).join("");
-    select.value = years.includes(selectedYear) ? selectedYear : years.at(-1) || selectedYear;
-    selectedYear = select.value || selectedYear;
-  };
-
   const renderQuarterScoped = () => {
     renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuarter);
-    renderFinance(financeSummary, selectedQuarter);
-    renderInvoices(financeSummary, selectedQuarter);
-    renderBudget(financeSummary, selectedYear);
   };
 
   const setContextControls = (tab) => {
     const usesMonth = tab === "landing" || tab === "areaDistribution";
-    const usesYear = tab === "budget";
+    const usesQuarter = tab === "quarterlyReporting";
+    const isPowerBi = tab === "powerBiBudget";
+    document.getElementById("reportContext").hidden = isPowerBi;
     document.getElementById("monthControl").hidden = !usesMonth;
-    document.getElementById("quarterControl").hidden = usesMonth || usesYear;
-    document.getElementById("yearControl").hidden = !usesYear;
+    document.getElementById("quarterControl").hidden = !usesQuarter;
+  };
+
+  const loadPowerBiBudgetEmbed = () => {
+    const frame = document.getElementById("powerBiBudgetFrame");
+    if (frame && !frame.hasAttribute("src")) frame.src = frame.dataset.src;
   };
 
   const comparisonForMonth = (month) => {
@@ -1799,7 +1790,6 @@ async function main() {
     const selectedContractorRows = contractorRowsForMonth(contractorMonthly, selectedMonth);
     renderMonthOptions(monthlyMetrics, selectedMonth);
     renderQuarterOptions();
-    renderYearOptions();
     renderSourceSummary(summary, currentMetrics, selectedMonth);
     appendFinanceSourceToSummary(financeSummary);
     renderKpis(monthlyMetrics, summary, currentMetrics, selectedMonth, surveyRecordStatsByPeriod);
@@ -1828,6 +1818,7 @@ async function main() {
   await renderSelectedMonth();
   setupTabs((tab) => {
     setContextControls(tab);
+    if (tab === "powerBiBudget") loadPowerBiBudgetEmbed();
     renderQuarterScoped();
   });
   setContextControls("landing");
@@ -1835,18 +1826,12 @@ async function main() {
   document.getElementById("kpiMonthSelect").addEventListener("change", async (event) => {
     selectedMonth = event.target.value;
     selectedQuarter = quarterKey(selectedMonth);
-    selectedYear = selectedMonth.slice(0, 4);
     await renderSelectedMonth();
   });
 
   document.getElementById("kpiQuarterSelect").addEventListener("change", (event) => {
     selectedQuarter = event.target.value;
     renderQuarterScoped();
-  });
-
-  document.getElementById("kpiYearSelect").addEventListener("change", (event) => {
-    selectedYear = event.target.value;
-    renderBudget(financeSummary, selectedYear);
   });
 
   document.getElementById("exportQuarterCsvButton").addEventListener("click", () => {

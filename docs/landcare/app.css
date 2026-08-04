@@ -760,6 +760,7 @@ body[data-page="kpi"] .report-tabs button.is-active {
 }
 
 body[data-page="kpi"] .report-context { gap: 0; max-width: 1040px; align-items: center; }
+body[data-page="kpi"] .report-context[hidden] { display: none; }
 body[data-page="kpi"] .report-context div,
 body[data-page="kpi"] .report-context label,
 body[data-page="kpi"] .report-context p {
@@ -879,6 +880,59 @@ body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-pace-panel {
 
 body[data-page="kpi"] .tab-panel:not([data-panel="landing"]) {
   gap: 14px;
+}
+
+.powerbi-embed-shell {
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid #d5dee2;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 47, 76, .045);
+}
+
+.powerbi-embed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #d5dee2;
+  background: #f5f9fb;
+}
+
+.powerbi-embed-toolbar div {
+  display: grid;
+  gap: 2px;
+}
+
+.powerbi-embed-toolbar strong {
+  color: var(--ura-deep);
+  font-size: 13px;
+}
+
+.powerbi-embed-toolbar span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.powerbi-frame-wrap {
+  position: relative;
+  min-height: 720px;
+  background: #eef3f5;
+}
+
+.powerbi-frame-wrap iframe {
+  display: block;
+  width: 100%;
+  height: clamp(720px, 76vh, 920px);
+  border: 0;
+  background: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .powerbi-embed-toolbar { align-items: flex-start; flex-direction: column; }
+  .powerbi-frame-wrap,
+  .powerbi-frame-wrap iframe { min-height: 620px; height: 72vh; }
 }
 
 .tab-intro {

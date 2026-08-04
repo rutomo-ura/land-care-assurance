@@ -14,6 +14,8 @@ The Power BI **Land Care Budget** semantic model is the authoritative finance so
 
 The public browser never calls Power BI. It reads the sanitized GitHub Pages JSON contract, so Entra credentials and model permissions remain on the VM.
 
+The KPI page also provides a secure iframe of the **Land Care Budget** report page for authorized URA users. The iframe uses Microsoft authentication and existing report permissions; it is not Publish to web. Overview, Quarterly Reporting, and Parcel Area remain native operational views, while the former Budget, Check Requests, and Expenses tabs are consolidated into this embedded finance workspace.
+
 ## Semantic mapping
 
 | KPI output | Semantic source |

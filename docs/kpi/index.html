@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260803-survey-counts" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260804-powerbi-embed-v1" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -37,13 +37,11 @@
       <nav class="report-tabs" aria-label="LandCare report sections" role="tablist">
         <button class="is-active" type="button" data-tab="landing" role="tab" aria-selected="true">Overview</button>
         <button type="button" data-tab="quarterlyReporting" role="tab" aria-selected="false">Quarterly Reporting</button>
-        <button type="button" data-tab="budget" role="tab" aria-selected="false">Budget</button>
-        <button type="button" data-tab="invoices" role="tab" aria-selected="false">Check Requests</button>
         <button type="button" data-tab="areaDistribution" role="tab" aria-selected="false">Parcel Area</button>
-        <button type="button" data-tab="maintenanceExpenses" role="tab" aria-selected="false">Expenses</button>
+        <button type="button" data-tab="powerBiBudget" role="tab" aria-selected="false">Land Care Budget</button>
       </nav>
 
-      <section class="report-context compact" aria-label="Report context">
+      <section class="report-context compact" id="reportContext" aria-label="Report context">
         <div>
           <span class="eyebrow">Period</span>
           <strong id="periodKpi">Loading...</strong>
@@ -55,10 +53,6 @@
         <label class="field-label compact-field" id="quarterControl" for="kpiQuarterSelect" hidden>
           <span>Calendar quarter</span>
           <select id="kpiQuarterSelect" aria-label="KPI calendar quarter"></select>
-        </label>
-        <label class="field-label compact-field" id="yearControl" for="kpiYearSelect" hidden>
-          <span>Calendar year</span>
-          <select id="kpiYearSelect" aria-label="KPI calendar year"></select>
         </label>
         <div class="period-status" id="periodStatusCard">
           <span class="eyebrow">Data Status</span>
@@ -191,43 +185,6 @@
         </section>
       </section>
 
-      <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
-        <header class="tab-intro">
-          <div><span class="section-kicker">Financial control</span><h2>Budget position and contractor exposure</h2></div>
-          <p>Compare contract expectations with LandCare check requests recorded in NetSuite.</p>
-        </header>
-        <article class="metric-band metric-group">
-          <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Annual contracted budget</span><strong id="annualRunRateKpi">--</strong><small id="quarterlyForecastNote">Contract workbook expectation</small></div>
-            <div class="reference-card"><span>Expected to date</span><strong id="monthlyInvoiceKpi">--</strong><small>Calendar-year contract pace</small></div>
-            <div class="reference-card"><span>Check requests to date</span><strong id="totalContractKpi">--</strong><small>NetSuite contractor actuals</small></div>
-            <div class="reference-card"><span>Remaining budget</span><strong id="financeContractorsKpi">--</strong><small>Contracted less actual</small></div>
-          </div>
-        </article>
-        <article class="panel analysis-workspace">
-          <div class="panel-head compact-head">
-            <div><h1>Expected invoices by contractor</h1><p class="panel-sub">Workbook expectation for the selected calendar year</p></div>
-          </div>
-          <div class="grouped-chart" id="budgetContractChart" aria-label="Annual contract amount by contractor"></div>
-        </article>
-      </section>
-
-      <section class="tab-panel" data-panel="invoices" aria-label="Check Request History">
-        <header class="tab-intro">
-          <div><span class="section-kicker">Payment operations</span><h2>Invoice tracking</h2></div>
-          <p>Compare workbook expectations with aggregate LandCare check requests from NetSuite.</p>
-        </header>
-        <article class="panel data-ledger">
-          <div class="panel-head compact-head">
-            <div><h1>Expected versus requested</h1><p class="panel-sub" id="invoiceSummary">Loading selected-quarter check requests...</p></div>
-          </div>
-          <div class="data-table-wrap">
-            <table class="data-table" id="invoiceTable"></table>
-          </div>
-          <p class="source-footnote" id="financeSourceNote">Checking finance records...</p>
-        </article>
-      </section>
-
       <section class="tab-panel" data-panel="areaDistribution" aria-label="Parcel Area Distribution">
         <header class="tab-intro">
           <div><span class="section-kicker">Contract compliance</span><h2>Parcel area compliance</h2></div>
@@ -243,33 +200,28 @@
         </article>
       </section>
 
-      <section class="tab-panel" data-panel="maintenanceExpenses" aria-label="Maintenance Expenses">
+      <section class="tab-panel powerbi-embed-panel" data-panel="powerBiBudget" aria-label="Embedded Power BI Land Care Budget">
         <header class="tab-intro">
-          <div><span class="section-kicker">Cost efficiency</span><h2>Maintenance expense intensity</h2></div>
-          <p>Evaluate quarter-scoped contract forecast against the active contract footprint.</p>
+          <div><span class="section-kicker">Finance reporting</span><h2>Land Care Budget</h2></div>
+          <p>Secure Power BI view using the governed Landcare classification and finance measures.</p>
         </header>
-        <article class="metric-band metric-group">
-          <div class="reference-card-grid four-up executive-band">
-            <div class="reference-card featured"><span>Quarter Forecast / Sq Ft</span><strong id="quarterForecastPerSqFtKpi">--</strong><small>Quarter-scoped contract intensity</small></div>
-            <div class="reference-card"><span>Monthly / Contract Parcel</span><strong id="monthlyCostPerParcelKpi">--</strong><small>Active contract baseline</small></div>
-            <div class="reference-card"><span>Contract square feet</span><strong id="contractAcresKpi">--</strong><small>Active in selected quarter</small></div>
-            <div class="reference-card"><span>Contract Parcels</span><strong id="contractParcelsKpi">--</strong><small>Active in selected quarter</small></div>
+        <article class="powerbi-embed-shell" aria-label="Power BI report frame">
+          <div class="powerbi-embed-toolbar">
+            <div>
+              <strong>URA sign-in required</strong>
+              <span>The report follows existing Power BI permissions.</span>
+            </div>
+            <a class="export-button" href="https://app.powerbi.com/groups/me/reports/2d592a10-7083-470a-96aa-41fbdc59218c/8c93bab49c96aa8e3bd2" target="_blank" rel="noopener noreferrer">Open in Power BI</a>
           </div>
-        </article>
-        <article class="panel analysis-workspace">
-          <div class="panel-head compact-head">
-            <div><h1>Expected versus actual by contractor</h1><p class="panel-sub">Actuals are aggregate check requests from NetSuite saved search 1618.</p></div>
+          <div class="powerbi-frame-wrap">
+            <iframe
+              id="powerBiBudgetFrame"
+              title="Power BI Land Care Budget report"
+              data-src="https://app.powerbi.com/reportEmbed?reportId=2d592a10-7083-470a-96aa-41fbdc59218c&amp;groupId=A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5&amp;autoAuth=true&amp;ctid=c77df146-c538-49e4-9577-c9ee1d243d16&amp;pageName=8c93bab49c96aa8e3bd2&amp;navContentPaneEnabled=false&amp;filterPaneEnabled=false"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen></iframe>
           </div>
-          <div class="grouped-chart" id="expenseIntensityChart" aria-label="Quarter expected cost by contractor"></div>
-        </article>
-        <article class="panel data-ledger">
-          <div class="panel-head compact-head">
-            <div><h1>Expense ledger</h1><p class="panel-sub">Contract-level cost and acreage detail</p></div>
-          </div>
-          <div class="data-table-wrap">
-            <table class="data-table" id="maintenanceExpenseTable"></table>
-          </div>
-          <p class="source-footnote" id="expenseSourceNote">Checking expense records...</p>
         </article>
       </section>
     </main>
@@ -278,6 +230,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260804-powerbi-semantic-v1"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260804-powerbi-embed-v1"></script>
   </body>
 </html>
