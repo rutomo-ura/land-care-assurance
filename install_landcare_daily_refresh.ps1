@@ -56,6 +56,7 @@ $bundleFiles = @(
   "requirements-landcare-refresh.txt",
   "README.md",
   "docs\landcare-architecture.md",
+  "docs\netsuite-landcare-finance-source.md",
   "docs\task-scheduler-vm-operations.md",
   "power-platform\daily-refresh-status.schema.json",
   "scripts\refresh_landcare_dashboard.ps1",
@@ -64,7 +65,8 @@ $bundleFiles = @(
   "scripts\validate_landcare_daily_refresh.py",
   "scripts\export_landcare_postgres_data.py",
   "scripts\build_landcare_web_data.py",
-  "scripts\build_landcare_finance_data.py"
+  "scripts\build_landcare_finance_data.py",
+  "scripts\ingest_landcare_netsuite_checks.py"
 )
 foreach ($relativePath in $bundleFiles) {
   Backup-And-Copy -Source (Join-Path $BundleRoot $relativePath) -Destination (Join-Path $TargetRepoRoot $relativePath)

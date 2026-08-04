@@ -186,6 +186,18 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8", newline="\n")
 
 
+def preserve_netsuite_actuals(payload: dict[str, Any], output: Path) -> None:
+    if not output.exists():
+        return
+    previous = json.loads(output.read_text(encoding="utf-8"))
+    source = previous.get("actual_invoice_source", {})
+    if source.get("status") != "available":
+        return
+    for key in ("actual_invoices", "other_program_actuals", "actual_invoice_source"):
+        if key in previous:
+            payload[key] = previous[key]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build LandCare finance dashboard data from the budgeting workbook.")
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
@@ -193,7 +205,9 @@ def main() -> None:
     args = parser.parse_args()
     if not args.source.exists():
         raise SystemExit(f"Finance source workbook not found: {args.source}")
-    write_json(args.output, build_summary(args.source))
+    payload = build_summary(args.source)
+    preserve_netsuite_actuals(payload, args.output)
+    write_json(args.output, payload)
     print(f"Wrote LandCare finance data to {args.output}")
 
 

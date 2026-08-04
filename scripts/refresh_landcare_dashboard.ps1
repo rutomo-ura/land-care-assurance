@@ -205,6 +205,11 @@ try {
   Invoke-Checked "Finance data rebuild" {
     & $Python scripts\build_landcare_finance_data.py
   }
+  if ($env:LANDCARE_NETSUITE_CHECKS_CSV) {
+    Invoke-Checked "NetSuite LandCare check-request aggregation" {
+      & $Python scripts\ingest_landcare_netsuite_checks.py --source $env:LANDCARE_NETSUITE_CHECKS_CSV
+    }
+  }
 
   $qaArgs = @("scripts\validate_landcare_daily_refresh.py")
   if (Test-Path $previousManifest) {

@@ -58,7 +58,8 @@ flowchart TD
     G --> H["Export PostgreSQL app-ready GeoJSON"]
     H --> I["Build docs/landcare/data JSON and GeoJSON"]
     I --> J["Build finance_summary.json from workbook"]
-    J --> K["Run QA/QC validation"]
+    J --> NS["Aggregate optional NetSuite CSV"]
+    NS --> K["Run QA/QC validation"]
     K --> L{"Generated data changed-"}
     L -->|No| M["Write success log/status: checked and unchanged"]
     L -->|Yes| N["Commit docs/landcare/data"]
@@ -238,6 +239,7 @@ flowchart TD
 - Daily survey source of truth: `gis.regrid_survey_submissions`.
 - Runtime returned survey map layer: AGOL `gisdb_gis_regrid_surveys`.
 - Assignment denominator source: `gis.regrid_bundle_assignments`.
-- Finance source: LandCare budgeting workbook.
+- Finance expectation source: LandCare budgeting workbook.
+- Finance actual source: optional VM-local NetSuite CSV path in `LANDCARE_NETSUITE_CHECKS_CSV`. The raw export stays off GitHub; only monthly contractor aggregates are published. See [`netsuite-landcare-finance-source.md`](netsuite-landcare-finance-source.md).
 - G-drive survey CSV: archive only.
 - Metric definitions and denominator rules: [`docs/landcare-metrics-context.md`](landcare-metrics-context.md).
