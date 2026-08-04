@@ -105,6 +105,7 @@ and tests.
 ## Canonical references
 
 - [`AGENTS.md`](AGENTS.md) - Codex start rules
+- [`docs/landcare-pm-handover.md`](docs/landcare-pm-handover.md) - owner briefing: data flow, Regrid replacement plan, agent prompts, design system
 - [`docs/landcare-architecture.md`](docs/landcare-architecture.md) - source and runtime architecture
 - [`docs/landcare-metrics-context.md`](docs/landcare-metrics-context.md) - metric definitions
 - [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) - scheduler/runbook
