@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="LandCare Map Monitor" description="URA operations parcel map with sidebar filters and field notes recreation" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="font-family:var(--font-sans);background:var(--panel)">
+<header style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:68px;padding:9px 18px;color:#fff;background:var(--ura-blue);border-bottom:3px solid var(--ura-blue-dark)">
+<a href="#" style="display:grid;place-items:center;width:50px;height:50px;background:#fff;border:1px solid rgba(255,255,255,.65);border-radius:12px"><img src="../../assets/logo.png" alt="URA" style="width:42px;height:42px;object-fit:contain"></a>
+<div style="display:grid;gap:2px;min-width:0"><span style="color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase">LandCare</span><strong style="color:#fff;font-size:22px;font-weight:800">URA Operations</strong></div>
+<nav style="display:flex;gap:6px"><a href="#" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 17px;color:var(--ura-deep);background:#fff;border:2px solid rgba(255,255,255,.55);border-radius:999px;font-size:12px;font-weight:800;text-decoration:none">Map</a><a href="#" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 17px;color:#fff;border:2px solid rgba(255,255,255,.55);border-radius:999px;font-size:12px;font-weight:800;text-decoration:none">KPI</a></nav>
+<div style="max-width:260px;text-align:right;color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1.35">Export ready</div>
+</header>
+<section style="display:flex;align-items:end;justify-content:space-between;gap:28px;padding:18px 22px 16px;background:#fff;border-bottom:1px solid var(--line)">
+<div><span style="display:block;margin-bottom:8px;color:var(--ura-blue-dark);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">URA operations</span><h1 style="margin:0;color:var(--ura-deep);font-size:clamp(24px,2.3vw,32px);font-weight:800;letter-spacing:-.03em;line-height:1.08">LandCare portfolio map</h1><p style="max-width:680px;margin:7px 0 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.5">Find open maintenance exposure, verify survey evidence, and focus contractor action by place.</p></div>
+<div style="display:grid;justify-items:end;gap:10px"><button style="min-height:34px;padding:8px 14px;border:1px solid #004a6d;border-radius:7px;background:#005b7f;color:#fff;font-size:12px;font-weight:850;cursor:pointer">Clear all filters</button><div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:13px;color:#52646d;font-size:11px;font-weight:750"><span style="display:inline-flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></i>Open work needs follow-up</span><span style="display:inline-flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:50%;background:var(--ura-blue);display:inline-block"></i>Filters define the exported brief</span></div></div>
+</section>
+<div style="display:grid;grid-template-columns:292px minmax(0,1fr) 330px;min-height:640px">
+<aside style="overflow:auto;background:#f3f6f7;border-right:1px solid var(--line)">
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff">
+<span style="color:var(--muted);font-size:13px;font-weight:600">Latest survey month</span>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.FieldSelect" label="Survey Month" hint-size="100%,60px"><option>July 2026</option><option>June 2026</option></x-import>
+<div style="display:grid;grid-template-columns:1fr;gap:0;overflow:hidden;border:1px solid #dbe4e7;border-radius:7px;margin-top:8px">
+<article style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:64px;padding:11px 14px;background:linear-gradient(135deg,#00334f,#005b7f)"><span style="color:rgba(255,255,255,.82);font-size:11px">Assigned</span><strong style="color:#fff;font-size:27px">386</strong></article>
+<article style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:64px;padding:11px 14px;background:#f0f8f2;border-top:1px solid #dbe4e7"><span style="color:var(--muted);font-size:11px">Submitted</span><strong style="color:#24703a;font-size:27px">301</strong></article>
+<article style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:64px;padding:11px 14px;background:#f5f6f7;border-top:1px solid #dbe4e7"><span style="color:var(--muted);font-size:11px">Open</span><strong style="color:#59656d;font-size:27px">85</strong></article>
+</div>
+</section>
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff">
+<span style="color:var(--muted);font-size:13px;font-weight:600">Color Map By</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px"><button style="min-height:31px;border:2px solid var(--ura-blue-dark);background:var(--ura-blue-dark);color:#fff;font-size:11px;font-weight:800;cursor:pointer">LandCare Status</button><button style="min-height:31px;border:2px solid var(--ura-blue-dark);background:#fff;color:var(--ink);font-size:11px;font-weight:800;cursor:pointer">Assignments</button></div>
+</section>
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff">
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.FieldInput" label="Block &amp; lot or parcel PIN" placeholder="e.g., 50-B-45" hint-size="100%,60px"></x-import>
+<p style="margin:8px 0 0;color:var(--muted);font-size:11px;font-weight:600;line-height:1.4">Searches active URA and Pittsburgh Land Bank LandCare parcels.</p>
+</section>
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff">
+<span style="color:var(--muted);font-size:13px;font-weight:600">Contractor Filter</span>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.Legend" items="{{ contractorLegend }}" hint-size="100%,120px"></x-import>
+</section>
+</aside>
+<section style="position:relative;min-width:0;background:#d4e3ed;border-right:1px solid #d1dde2;border-left:1px solid #d1dde2">
+<div style="width:100%;height:100%;display:grid;place-items:center;color:#5b7385;font-size:13px;font-weight:700">Esri parcel map renders here (ArcGIS JS API)</div>
+<div style="position:absolute;z-index:5;top:64px;left:16px;width:min(264px,calc(100% - 32px));padding:11px;background:rgba(255,255,255,.97);border:1px solid #8eb9ca;border-radius:8px;box-shadow:0 10px 28px rgba(0,47,76,.18)">
+<span style="color:var(--ura-deep);font-size:12px;font-weight:850">Map Key</span>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.Legend" items="{{ mapLegend }}" hint-size="100%,110px"></x-import>
+</div>
+</section>
+<aside style="overflow:auto;background:#f3f6f7;border-left:1px solid var(--line);display:grid;grid-template-rows:minmax(155px,.8fr) minmax(220px,1.1fr) minmax(0,1fr)">
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff;overflow:auto">
+<span style="color:var(--muted);font-size:13px;font-weight:600">Field Notes</span>
+<p style="margin:9px 0 0;color:var(--muted);font-size:12px">Loading notes for the current map filters…</p>
+</section>
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff;overflow:auto">
+<span style="color:var(--muted);font-size:13px;font-weight:600">Selected Parcel</span>
+<p style="margin:9px 0 0;color:var(--muted);font-size:13px;line-height:1.55">Select a parcel to review contractor, status, ownership, survey period, and returned photos.</p>
+</section>
+<section style="margin:10px;padding:15px;border:1px solid #dce5e8;border-radius:8px;box-shadow:0 3px 13px rgba(0,47,76,.025);background:#fff;overflow:auto">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="color:var(--muted);font-size:13px;font-weight:600">Action Focus</span><x-import component-from-global-scope="URALandCareDesignSystem_d38a66.Button" variant="solid" hint-size="80,28"><span style="font-size:11px">Export Brief</span></x-import></div>
+<div style="display:grid;gap:8px;margin-top:10px">
+<div style="padding:10px 11px;background:#f7fbfd;border:1px solid var(--line);border-left:4px solid var(--orange);display:grid;gap:3px"><strong style="color:var(--orange);font-size:14px">85 open parcels</strong><span style="color:var(--ink);font-size:12px;font-weight:750">need contractor follow-up this month</span></div>
+</div>
+</section>
+</aside>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      mapLegend: [
+        { color: "#c2410c", label: "Open, needs follow-up", count: 85 },
+        { color: "#2e7d32", label: "Complete", count: 301 },
+        { color: "#0098d3", label: "URA-owned", count: "" },
+      ],
+      contractorLegend: [
+        { color: "#0584ba", label: "Supplier Alpha", count: 128 },
+        { color: "#3a9952", label: "Supplier Beta", count: 96 },
+        { color: "#c2410c", label: "Supplier Gamma", count: 42 },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

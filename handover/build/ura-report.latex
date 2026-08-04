@@ -1,0 +1,191 @@
+\documentclass[11pt,a4paper]{article}
+
+% Pandoc LaTeX template for URA LandCare handover reports.
+% Real LaTeX typography (serif body, microtype, proper TOC) carrying the URA
+% brand colours from docs/landcare/app.css :root.
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% TeX Gyre Pagella for the body. If tectonic cannot fetch it, Latin Modern is
+% already bundled and reads acceptably.
+\IfFileExists{tgpagella.sty}{\usepackage{tgpagella}}{\usepackage{lmodern}}
+\IfFileExists{tgheros.sty}{\usepackage{tgheros}}{}
+\IfFileExists{inconsolata.sty}{\usepackage{inconsolata}}{}
+\renewcommand{\familydefault}{\rmdefault}
+
+\usepackage{microtype}
+\usepackage[a4paper,top=25mm,bottom=24mm,left=27mm,right=27mm]{geometry}
+\usepackage[table]{xcolor}  % table option pulls in colortbl for \arrayrulecolor
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{calc}  % pandoc's proportional table columns use \real from calc
+\usepackage{ragged2e}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{adjustbox}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- brand ----
+% Sourced from docs/landcare/app.css :root and the design system skill.
+\definecolor{uraBlue}{HTML}{0098D3}
+\definecolor{uraBlueDark}{HTML}{006C9F}
+\definecolor{uraDeep}{HTML}{00334F}
+\definecolor{uraSoft}{HTML}{E8F6FC}
+\definecolor{uraRisk}{HTML}{C2410C}
+\definecolor{uraSuccess}{HTML}{2E7D32}
+\definecolor{uraInk}{HTML}{111820}
+\definecolor{uraMuted}{HTML}{6B7C86}
+\definecolor{uraLine}{HTML}{E2EAEF}
+\definecolor{uraPanel}{HTML}{F0F4F7}
+
+% \color in the preamble would start the document body, so defer it.
+\AtBeginDocument{\color{uraInk}}
+\hypersetup{colorlinks=true,linkcolor=uraBlueDark,urlcolor=uraBlueDark,
+            citecolor=uraBlueDark,pdftitle={$title$},pdfauthor={$author$}}
+
+% ----------------------------------------------------------- structure ----
+\titleformat{\section}
+  {\normalfont\sffamily\Large\bfseries\color{uraDeep}}{\thesection}{0.7em}{}
+  [\vspace{2pt}{\color{uraBlueDark}\titlerule[1.2pt]}]
+\titleformat{\subsection}
+  {\normalfont\sffamily\large\bfseries\color{uraBlueDark}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\normalfont\sffamily\normalsize\bfseries\color{uraDeep}}{\thesubsubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{13pt}{5pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\sffamily\color{uraMuted} $title$}
+\fancyhead[R]{\footnotesize\sffamily\color{uraMuted} $subtitle$}
+\fancyfoot[C]{\footnotesize\sffamily\color{uraMuted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{uraLine}\leaders\hrule height \headrulewidth\hfill}}
+
+\setlist{itemsep=1pt,parsep=0pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\renewcommand{\arraystretch}{1.22}
+\setlength{\tabcolsep}{4pt}
+\setlength{\emergencystretch}{3em}
+
+% Identifiers such as gisdb_gis_regrid_surveys and 32-character ArcGIS item IDs are
+% single unbreakable words in a narrow table column, so they overrun into the next
+% cell. \LCbrk is a zero-width, hyphen-free break opportunity that build_report.py
+% injects into \texttt spans.
+\newcommand{\LCbrk}{\discretionary{}{}{}}
+
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize}
+
+% Pandoc writes tables with these; make them brand-aware and never overfull.
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\let\oldtoprule\toprule
+\renewcommand{\toprule}{\arrayrulecolor{uraDeep}\oldtoprule\arrayrulecolor{uraLine}}
+\renewcommand{\bottomrule}{\arrayrulecolor{uraDeep}\oldtoprule\arrayrulecolor{black}}
+
+% Pandoc scaffolding.
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\pandocbounded}[1]{#1}
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+% Verbatim blocks: pale panel, brand left rule, never overflowing the margin.
+\usepackage{fancyvrb}
+\usepackage{framed}
+\definecolor{shadecolor}{HTML}{F4F8FA}
+% Pandoc only emits the Shaded environment when a fence carries a language, so
+% define it defensively before restyling it.
+\makeatletter
+\@ifundefined{Shaded}{\newenvironment{Shaded}{}{}}{}
+\makeatother
+\renewenvironment{Shaded}{%
+  \def\FrameCommand{\color{uraBlueDark}\vrule width 2.5pt\hspace{6pt}%
+                    \colorbox{shadecolor}}%
+  \MakeFramed{\advance\hsize-\width\FrameRestore}\small}%
+  {\endMakeFramed}
+\fvset{fontsize=\small,xleftmargin=0pt,commandchars=\\\{\}}
+
+% --------------------------------------------------- architecture figure ----
+% Hand-drawn so the report has no Mermaid or CDN dependency at build time.
+\tikzset{
+  dsbox/.style={rectangle,rounded corners=3pt,draw=uraBlueDark,line width=0.7pt,
+                fill=uraSoft,inner sep=5pt,align=center,font=\sffamily\scriptsize,
+                minimum height=8.5mm,text width=21mm},
+  dsapp/.style={dsbox,fill=uraDeep,draw=uraDeep,text=white},
+  dsflow/.style={-{Stealth[length=4pt]},draw=uraMuted,line width=0.6pt},
+  dslabel/.style={font=\sffamily\scriptsize,text=uraBlueDark,inner sep=2pt}
+}
+
+\newcommand{\archdiagram}{%
+\begin{figure}[htbp]
+\centering
+% max width keeps the figure inside the margin no matter how it grows.
+\begin{adjustbox}{max width=\textwidth}
+\begin{tikzpicture}[node distance=7mm]
+  \node[dsbox] (src)  {Regrid export\\Monthly bundle};
+  \node[dsbox,right=8mm of src]  (vm)   {GIS VM\\4:00 AM pipeline};
+  \node[dsbox,right=8mm of vm]   (pg)   {PostgreSQL\\gisdb};
+  \node[dsbox,above=7mm of pg]    (agol) {ArcGIS Online\\live layers};
+  \node[dsbox,right=8mm of pg]   (ref)  {7:00 AM refresh\\GitHub Pages};
+  \node[dsapp,right=8mm of ref]  (app)  {Map Monitor\\KPI, Contractor};
+  \node[dsbox,below=8mm of ref]   (s123) {Survey123\\URA review};
+
+  \draw[dsflow] (src) -- (vm);
+  \draw[dsflow] (vm)  -- (pg);
+  \draw[dsflow] (vm.north) |- (agol.west);
+  \draw[dsflow] (pg)  -- (ref);
+  \draw[dsflow] (ref) -- (app);
+  \draw[dsflow] (agol.east) -| node[dslabel,pos=0.25,above]{live query at page load} (app.north);
+  \draw[dsflow] (app.south) |- (s123.east);
+  \draw[dsflow] (s123.west) -| node[dslabel,pos=0.25,below]{approved only} (pg.south);
+\end{tikzpicture}
+\end{adjustbox}
+\caption*{\footnotesize\sffamily\color{uraMuted}%
+Nightly ingestion publishes to PostgreSQL and ArcGIS Online. The 7:00 AM refresh commits the
+published data contract and deploys Pages. The browser queries ArcGIS directly at page load,
+which is why counts move between publishes.}
+\end{figure}}
+
+% ------------------------------------------------------------- document ----
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace*{18mm}
+$if(logo)$\includegraphics[height=15mm]{$logo$}\\[10mm]$endif$
+{\sffamily\footnotesize\bfseries\color{uraBlueDark}\MakeUppercase{Urban Redevelopment Authority of Pittsburgh}}\\[10mm]
+{\color{uraBlueDark}\rule{\textwidth}{1.4pt}}\\[7mm]
+{\sffamily\fontsize{34}{38}\selectfont\bfseries\color{uraDeep} $title$}\\[3mm]
+{\sffamily\LARGE\color{uraBlueDark} $subtitle$}\\[9mm]
+{\large\color{uraInk} $author$}\\[4mm]
+{\color{uraMuted} $date$}
+\vfill
+{\color{uraLine}\rule{\textwidth}{0.6pt}}\\[3mm]
+{\sffamily\footnotesize\color{uraMuted}%
+ura-gis/land-care-assurance \quad\textperiodcentered\quad
+/monitoring/ \quad /kpi/ \quad /contractor/}
+\end{titlepage}
+
+\setcounter{page}{1}
+{\hypersetup{linkcolor=uraDeep}
+\titlecontents{section}[0em]{\vspace{3pt}\sffamily\bfseries\color{uraDeep}}
+  {\thecontentslabel\quad}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[1.6em]{\sffamily\small\color{uraInk}}
+  {\thecontentslabel\quad}{}{\titlerule*[0.6pc]{.}\contentspage}
+\tableofcontents}
+\newpage
+
+$body$
+
+\end{document}

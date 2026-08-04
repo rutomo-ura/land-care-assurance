@@ -1,5 +1,7 @@
 # LandCare Quick Handover
 
+> Superseded by [`handover/`](../handover/). That folder is the current entry point for taking over this project. This document is kept for its detail and history.
+
 Purpose: explain how LandCare works today, how to maintain it with Codex, and how to replace Regrid with a URA-controlled contractor front end while keeping ArcGIS as the GIS platform.
 
 ## 1. System architecture and data flow

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="LandCare Contractor Portal" description="Field contractor completion overview and service submission recreation" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="font-family:var(--font-sans);background:var(--panel);min-height:100vh">
+<header style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:68px;padding:9px 18px;color:#fff;background:var(--ura-blue);border-bottom:3px solid var(--ura-blue-dark)">
+<a href="#" style="display:grid;place-items:center;width:50px;height:50px;background:#fff;border:1px solid rgba(255,255,255,.65);border-radius:12px"><img src="../../assets/logo.png" alt="URA" style="width:42px;height:42px;object-fit:contain"></a>
+<div style="display:grid;gap:2px;min-width:0"><span style="color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase">LandCare</span><strong style="color:#fff;font-size:22px;font-weight:800">Contractor Portal</strong></div>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.Tabs" variant="underline" items="{{ tabs }}" active-id="{{ activeTab }}" on-change="{{ setTab }}" hint-size="300,40"></x-import>
+<div style="max-width:260px;text-align:right;color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase">Choose your organization to begin</div>
+</header>
+<main style="max-width:1240px;margin:0 auto;padding:24px 22px 48px;display:grid;gap:16px">
+<section style="padding:26px 28px;color:#fff;background:linear-gradient(120deg,var(--ura-deep),#045f91);border-radius:22px;box-shadow:var(--shadow)">
+<span style="color:#9fdcf4;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">LandCare field workspace</span>
+<h1 style="max-width:760px;margin:5px 0 8px;font-size:clamp(28px,4vw,40px);line-height:1.08;letter-spacing:-.04em">Track progress and submit completed service</h1>
+<p style="max-width:670px;margin:0;color:#d9edf7;font-size:14px;line-height:1.6">Select your assignment month and organization once. The completion overview and service form stay in sync.</p>
+</section>
+<section style="display:grid;grid-template-columns:minmax(220px,.7fr) minmax(260px,1fr);gap:14px 18px;align-items:end;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)">
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.FieldSelect" label="Assignment month" hint-size="100%,60px"><option>July 2026</option></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.FieldSelect" label="Organization" hint-size="100%,60px"><option>Supplier Alpha</option></x-import>
+</section>
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<section style="display:grid;gap:16px">
+<div style="display:flex;align-items:end;justify-content:space-between;gap:18px;padding:6px 2px 0"><div><span style="color:var(--ura-blue-dark);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">Completion overview</span><h2 style="margin:4px 0 0;color:var(--ura-deep);font-size:24px;letter-spacing:-.025em">Supplier Alpha — July 2026</h2></div><p style="max-width:470px;margin:0;color:var(--muted);font-size:12px;font-weight:650;line-height:1.55">Assigned, submitted, and open values use the same LandCare assignment and evidence sources as the URA map.</p></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+<article style="position:relative;overflow:hidden;padding:18px 20px;border-radius:10px;box-shadow:var(--shadow);background:linear-gradient(135deg,#0584ba 0%,#005477 100%);min-height:128px"><span style="color:rgba(255,255,255,.83);font-size:12px;font-weight:800">Assigned</span><strong style="display:block;margin:4px 0 2px;color:#fff;font-size:34px;letter-spacing:-.04em">128</strong><small style="color:rgba(255,255,255,.9);font-size:12px;font-weight:650">Active parcels</small></article>
+<article style="position:relative;overflow:hidden;padding:18px 20px;border-radius:10px;box-shadow:var(--shadow);background:linear-gradient(135deg,#3a9952 0%,#1d652f 100%);min-height:128px"><span style="color:rgba(255,255,255,.83);font-size:12px;font-weight:800">Submitted</span><strong style="display:block;margin:4px 0 2px;color:#fff;font-size:34px;letter-spacing:-.04em">96</strong><small style="color:rgba(255,255,255,.9);font-size:12px;font-weight:650">Matched service submissions</small></article>
+<article style="position:relative;overflow:hidden;padding:18px 20px;border-radius:10px;box-shadow:var(--shadow);background:linear-gradient(135deg,#75838d 0%,#42515a 100%);min-height:128px"><span style="color:rgba(255,255,255,.83);font-size:12px;font-weight:800">Open</span><strong style="display:block;margin:4px 0 2px;color:#fff;font-size:34px;letter-spacing:-.04em">32</strong><small style="color:rgba(255,255,255,.9);font-size:12px;font-weight:650">Still needing a submission</small></article>
+</div>
+<div style="display:grid;grid-template-columns:minmax(150px,auto) 1fr;gap:16px;align-items:center;padding:13px 18px;border:1px solid #cbe8f4;border-radius:18px;background:var(--soft-blue)"><div><span style="display:block;color:#42606e;font-size:11px;font-weight:800">Completion rate</span><strong style="color:var(--ura-deep);font-size:20px">75%</strong></div><div style="height:10px;overflow:hidden;border-radius:999px;background:#c1e4f3"><i style="display:block;width:75%;height:100%;border-radius:inherit;background:var(--green)"></i></div></div>
+<section style="overflow:hidden;border:1px solid var(--line);border-radius:22px;background:var(--paper);box-shadow:var(--shadow)">
+<div style="display:flex;align-items:end;justify-content:space-between;gap:16px;padding:18px 20px 14px;border-bottom:1px solid var(--line)"><div><span style="color:var(--ura-blue-dark);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase">Assigned parcels</span><h3 style="margin:4px 0 0;color:var(--ura-deep);font-size:20px;letter-spacing:-.02em">Parcel list</h3></div></div>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.DataTable" columns="{{ parcelColumns }}" rows="{{ parcelRows }}" hint-size="100%,220px"></x-import>
+</section>
+</section>
+</sc-if>
+<sc-if value="{{ isSubmit }}" hint-placeholder-val="{{ false }}">
+<section style="display:grid;grid-template-columns:minmax(260px,.85fr) minmax(420px,1.35fr);gap:24px;align-items:end;padding:24px;background:linear-gradient(120deg,var(--ura-deep),#045f91);border-radius:22px;color:#fff">
+<div><span style="color:#9fdcf4;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">Current assignment</span><h2 style="margin:5px 0 8px;font-size:23px;letter-spacing:-.025em">Choose an assigned parcel</h2><p style="max-width:480px;margin:0;color:#d9edf7;font-size:13px;line-height:1.55">Select an open parcel from your assigned bundle. The address and assignment period carry into the service form.</p></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end"><label style="display:grid;gap:6px;color:#d9edf7;font-size:11px;font-weight:800"><span>Assigned parcel</span><select style="width:100%;min-height:42px;border:0;border-radius:8px;background:#fff;color:var(--ink);font-size:13px;font-weight:700"><option>50-B-45 · 118 Elm St</option></select></label><button style="min-height:42px;padding:0 15px;border:1px solid #67c7eb;border-radius:8px;background:#0e9bce;color:#fff;font-weight:800;cursor:pointer">Continue to service form</button></div>
+</section>
+<section style="overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 24px;border-bottom:1px solid var(--line)"><div><span style="color:var(--ura-blue-dark);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase">LandCare Network</span><h2 style="margin:3px 0 0;color:var(--ura-deep);font-size:21px">Service submission form</h2></div></div>
+<div style="min-height:280px;display:grid;place-content:center;background:#f7fafc;padding:32px;text-align:center;color:var(--ura-deep)"><strong>Choose a parcel to load the service form.</strong><p style="max-width:520px;margin:8px auto 0;color:var(--muted);line-height:1.55">The Survey123 form is prefilled from the selected assignment.</p></div>
+</section>
+</sc-if>
+</main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: "overview" };
+  renderVals() {
+    const tab = this.state.tab;
+    return {
+      tabs: [{ id: "overview", label: "Completion Overview" }, { id: "submit", label: "Submit Service" }],
+      activeTab: tab,
+      setTab: (id) => this.setState({ tab: id }),
+      isOverview: tab === "overview",
+      isSubmit: tab === "submit",
+      parcelColumns: [
+        { key: "blockLot", label: "Block & lot" },
+        { key: "address", label: "Address" },
+        { key: "district", label: "District" },
+        { key: "status", label: "Status" },
+      ],
+      parcelRows: [
+        { blockLot: "50-B-45", address: "118 Elm St", district: "9", status: "Open" },
+        { blockLot: "12-A-3", address: "402 Bates St", district: "5", status: "Submitted" },
+        { blockLot: "77-C-19", address: "20 Frazier St", district: "9", status: "Open" },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

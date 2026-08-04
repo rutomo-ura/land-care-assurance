@@ -13,8 +13,8 @@ Public application:
 
 | Need | Read this |
 |---|---|
-| Start the resignation handover | [`HANDOVER.md`](HANDOVER.md) and [`AGENTS.md`](AGENTS.md) |
-| Take ownership: architecture, Regrid replacement, agent workflow, design system | [`docs/landcare-pm-handover.md`](docs/landcare-pm-handover.md) |
+| **Take over this project** | [`handover/`](handover/) - owner guide, agent playbook, and briefing deck |
+| Run the repository and Pages cutover | [`HANDOVER.md`](HANDOVER.md) and [`AGENTS.md`](AGENTS.md) |
 | Understand the full data and submission lifecycle | [`docs/landcare-submission-and-evidence-flow.md`](docs/landcare-submission-and-evidence-flow.md) |
 | Understand sources, metric rules, runtime layers, and daily refresh | [`docs/landcare-architecture.md`](docs/landcare-architecture.md) |
 | Operate the VM daily refresh | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |

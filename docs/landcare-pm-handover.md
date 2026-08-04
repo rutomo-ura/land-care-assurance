@@ -1,5 +1,7 @@
 # LandCare Assurance: Owner Handover
 
+> Superseded by [`handover/`](../handover/). That folder is the current entry point for taking over this project. This document is kept for its detail and history.
+
 For the incoming owner of `ura-gis/land-care-assurance`. Read this once to understand what
 you own, what is finished, what is not, and how to keep building it with an AI coding agent.
 It sits above [`HANDOVER.md`](../HANDOVER.md) (cutover checklist) and

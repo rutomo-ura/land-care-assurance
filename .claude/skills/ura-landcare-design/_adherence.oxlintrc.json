@@ -1,0 +1,267 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/buttons/**",
+              "components/cards/**",
+              "components/data/**",
+              "components/feedback/**",
+              "components/forms/**",
+              "components/navigation/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Manrope))/i]",
+        "message": "Font not provided by the design system. Available: Manrope."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|active|disabled|children|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, active, disabled, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:solid|pill|segmented|text)$/]",
+        "message": "<Button> variant must be one of 'solid' | 'pill' | 'segmented' | 'text'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DataTableColumn'] > JSXAttribute > JSXIdentifier[name!=/^(?:key|label|key|ref|className|style|children)$/]",
+        "message": "<DataTableColumn> doesn't accept that prop. Declared props: key, label."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FieldSelect'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|compact|children|key|ref|className|style|children)$/]",
+        "message": "<FieldSelect> doesn't accept that prop. Declared props: label, compact, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LegendItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:color|label|count|key|ref|className|style|children)$/]",
+        "message": "<LegendItem> doesn't accept that prop. Declared props: color, label, count."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MetricCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|value|note|tone|featured|key|ref|className|style|children)$/]",
+        "message": "<MetricCard> doesn't accept that prop. Declared props: label, value, note, tone, featured."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MetricCard'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:neutral|risk|info|finance)$/]",
+        "message": "<MetricCard> tone must be one of 'neutral' | 'risk' | 'info' | 'finance'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusPill'] > JSXAttribute > JSXIdentifier[name!=/^(?:tone|children|key|ref|className|style|children)$/]",
+        "message": "<StatusPill> doesn't accept that prop. Declared props: tone, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusPill'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:submitted|open|risk|success|info)$/]",
+        "message": "<StatusPill> tone must be one of 'submitted' | 'open' | 'risk' | 'success' | 'info'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TabItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:id|label|key|ref|className|style|children)$/]",
+        "message": "<TabItem> doesn't accept that prop. Declared props: id, label."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "Button": {
+        "replaces": []
+      },
+      "DataTableColumn": {
+        "replaces": []
+      },
+      "FieldSelect": {
+        "replaces": []
+      },
+      "LegendItem": {
+        "replaces": []
+      },
+      "MetricCard": {
+        "replaces": []
+      },
+      "StatusPill": {
+        "replaces": []
+      },
+      "TabItem": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--border-default",
+      "--font-mono",
+      "--font-sans",
+      "--gold",
+      "--green",
+      "--green-soft",
+      "--header-height",
+      "--ink",
+      "--leading-normal",
+      "--leading-relaxed",
+      "--leading-tight",
+      "--line",
+      "--link",
+      "--link-hover",
+      "--muted",
+      "--orange",
+      "--orange-soft",
+      "--panel",
+      "--paper",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-pill",
+      "--radius-sm",
+      "--shadow",
+      "--shadow-dialog",
+      "--shadow-hover",
+      "--shadow-panel",
+      "--soft-blue",
+      "--space-1",
+      "--space-10",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-7",
+      "--space-8",
+      "--status-info",
+      "--status-info-soft",
+      "--status-risk",
+      "--status-risk-soft",
+      "--status-success",
+      "--status-success-soft",
+      "--surface-canvas",
+      "--surface-card",
+      "--surface-soft",
+      "--text-body",
+      "--text-body-lg",
+      "--text-body-sm",
+      "--text-caption",
+      "--text-display",
+      "--text-h1",
+      "--text-h2",
+      "--text-h3",
+      "--text-heading",
+      "--text-kicker",
+      "--text-micro",
+      "--text-muted",
+      "--tracking-kicker",
+      "--tracking-tight",
+      "--ura-blue",
+      "--ura-blue-dark",
+      "--ura-blue-muted",
+      "--ura-blue-soft",
+      "--ura-deep",
+      "--weight-black",
+      "--weight-bold",
+      "--weight-medium",
+      "--weight-regular"
+    ],
+    "tokenKinds": {
+      "--ura-blue": "color",
+      "--ura-blue-dark": "color",
+      "--ura-deep": "color",
+      "--ura-blue-soft": "color",
+      "--ura-blue-muted": "color",
+      "--soft-blue": "color",
+      "--gold": "color",
+      "--orange": "color",
+      "--orange-soft": "color",
+      "--green": "color",
+      "--green-soft": "color",
+      "--ink": "color",
+      "--muted": "color",
+      "--line": "color",
+      "--panel": "color",
+      "--paper": "color",
+      "--text-heading": "font",
+      "--text-body": "font",
+      "--text-muted": "font",
+      "--text-kicker": "font",
+      "--surface-canvas": "color",
+      "--surface-card": "color",
+      "--surface-soft": "color",
+      "--border-default": "color",
+      "--link": "color",
+      "--link-hover": "color",
+      "--status-risk": "color",
+      "--status-risk-soft": "color",
+      "--status-success": "color",
+      "--status-success-soft": "color",
+      "--status-info": "color",
+      "--status-info-soft": "color",
+      "--font-sans": "font",
+      "--font-mono": "font",
+      "--text-display": "font",
+      "--text-h1": "font",
+      "--text-h2": "font",
+      "--text-h3": "font",
+      "--text-body-lg": "font",
+      "--text-body-sm": "font",
+      "--text-caption": "font",
+      "--text-micro": "font",
+      "--weight-regular": "font",
+      "--weight-medium": "font",
+      "--weight-bold": "font",
+      "--weight-black": "font",
+      "--tracking-tight": "font",
+      "--tracking-kicker": "font",
+      "--leading-tight": "font",
+      "--leading-normal": "font",
+      "--leading-relaxed": "font",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-7": "spacing",
+      "--space-8": "spacing",
+      "--space-10": "spacing",
+      "--radius-sm": "radius",
+      "--radius-md": "radius",
+      "--radius-lg": "radius",
+      "--radius-pill": "radius",
+      "--shadow": "shadow",
+      "--shadow-hover": "shadow",
+      "--shadow-panel": "shadow",
+      "--shadow-dialog": "shadow",
+      "--header-height": "spacing"
+    },
+    "fontFamilies": [
+      "Manrope"
+    ]
+  }
+}

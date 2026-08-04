@@ -1,0 +1,6 @@
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;color:var(--text-body);background:var(--surface-canvas);font-family:var(--font-sans);font-feature-settings:"cv02","cv03","cv04","cv11"}
+button,select,input,textarea{font:inherit}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover);text-decoration:underline}

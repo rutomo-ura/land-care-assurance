@@ -1,0 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+:root{
+--font-sans:"Manrope","Segoe UI",Arial,sans-serif;
+--font-mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+--text-display:clamp(26px,2.5vw,38px);
+--text-h1:clamp(24px,2.3vw,32px);
+--text-h2:clamp(21px,2vw,28px);
+--text-h3:18px;
+--text-body-lg:14px;
+--text-body:13px;
+--text-body-sm:12px;
+--text-caption:11px;
+--text-micro:10px;
+--weight-regular:400;
+--weight-medium:600;
+--weight-bold:700;
+--weight-black:800;
+--tracking-tight:-0.035em;
+--tracking-kicker:0.12em;
+--leading-tight:1.05;
+--leading-normal:1.4;
+--leading-relaxed:1.6;
+}

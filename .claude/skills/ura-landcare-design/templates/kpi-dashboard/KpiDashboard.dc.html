@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="LandCare KPI Dashboard" description="Executive BI-style KPI dashboard recreation for URA LandCare" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="font-family:var(--font-sans);background:#f4f6f5;min-height:100vh">
+<header style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:68px;padding:9px 18px;color:#fff;background:var(--ura-blue);border-bottom:3px solid var(--ura-blue-dark)">
+<a href="#" style="display:grid;place-items:center;width:50px;height:50px;background:#fff;border:1px solid rgba(255,255,255,.65);border-radius:12px"><img src="../../assets/logo.png" alt="URA" style="width:42px;height:42px;object-fit:contain"></a>
+<div style="display:grid;gap:2px;min-width:0"><span style="color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase">LandCare</span><strong style="color:#fff;font-size:22px;font-weight:800">URA Operations</strong></div>
+<nav style="display:flex;gap:6px"><a href="#" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 17px;color:#fff;border:2px solid rgba(255,255,255,.55);border-radius:999px;font-size:12px;font-weight:800;text-decoration:none">Map</a><a href="#" style="display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 17px;color:var(--ura-deep);background:#fff;border:2px solid rgba(255,255,255,.55);border-radius:999px;font-size:12px;font-weight:800;text-decoration:none">KPI</a></nav>
+<div style="max-width:260px;text-align:right;color:rgba(255,255,255,.82);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1.35">Refreshed Today, 8:00 AM</div>
+</header>
+<main style="display:grid;gap:16px;max-width:1680px;margin:0 auto;padding:28px 28px 32px">
+<section style="display:flex;align-items:end;justify-content:space-between;gap:32px;padding:4px 2px 8px">
+<div><span style="display:block;margin-bottom:8px;color:var(--ura-blue-dark);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">URA operations</span><h1 style="margin:0;color:var(--ura-deep);font-size:clamp(26px,2.5vw,38px);font-weight:780;letter-spacing:-.035em;line-height:1.05">LandCare operating performance</h1><p style="max-width:720px;margin:10px 0 0;color:#53646d;font-size:14px;font-weight:550">Completion, contractor exposure, portfolio scope, and financial pace in one decision view.</p></div>
+<div style="display:flex;gap:18px;padding-bottom:4px;color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:7px"><i style="width:7px;height:7px;background:var(--orange);border-radius:50%;display:inline-block"></i>Action required</span><span style="display:inline-flex;align-items:center;gap:7px"><i style="width:7px;height:7px;background:var(--ura-blue);border-radius:50%;display:inline-block"></i>Operating context</span></div>
+</section>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.Tabs" items="{{ reportTabs }}" active-id="{{ activeTab }}" on-change="{{ setTab }}" variant="pill" hint-size="100%,44px"></x-import>
+<section style="display:grid;grid-template-columns:minmax(150px,.35fr) minmax(190px,.45fr) minmax(0,1fr);gap:10px">
+<div style="margin:0;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)"><span style="display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase">Period</span><strong style="display:block;margin-top:4px;color:var(--ink);font-size:20px;font-weight:800">July 2026</strong></div>
+<div style="margin:0;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)"><span style="display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase">Data status</span><strong style="display:block;margin-top:4px;color:var(--green);font-size:20px;font-weight:800">Current</strong></div>
+<div style="margin:0;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)"><span style="display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase">Refreshed</span><strong style="display:block;margin-top:4px;color:var(--ink);font-size:20px;font-weight:800">Today, 8:00 AM</strong></div>
+</section>
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<section style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;overflow:hidden;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 8px 30px rgba(0,47,76,.045)">
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" featured="{{ true }}" label="Current Completion" value="78%" note="Active assignments, this month" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" tone="risk" label="Open Queue" value="42" note="Needs action" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" tone="info" label="LandCare Inventory" value="1,204" note="386 active parcels" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" tone="finance" label="Monthly Invoice Baseline" value="$64.6K" note="Selected month" hint-size="100%,170px"></x-import>
+</section>
+<section style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<article style="position:relative;overflow:hidden;padding:22px 24px;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 2px 10px rgba(0,47,76,.035)"><div style="margin:-2px -4px 18px;padding:0 4px 16px;border-bottom:1px solid #e4eaed"><h1 style="margin:0;color:var(--ura-deep);font-size:17px;font-weight:780;letter-spacing:-.015em">Reported Completion Trend</h1><p style="margin:6px 0 0;color:var(--muted);font-size:13px">Active completion % vs. 80% target</p></div><div style="display:grid;min-height:220px;place-items:center;color:var(--muted);background:linear-gradient(180deg,rgba(232,246,252,.35),transparent);font-size:12px;font-weight:700">Chart placeholder — connect Power BI / survey data source</div></article>
+<article style="position:relative;overflow:hidden;padding:22px 24px;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 2px 10px rgba(0,47,76,.035)"><div style="margin:-2px -4px 18px;padding:0 4px 16px;border-bottom:1px solid #e4eaed"><h1 style="margin:0;color:var(--ura-deep);font-size:17px;font-weight:780;letter-spacing:-.015em">Contractor Queue</h1><p style="margin:6px 0 0;color:var(--muted);font-size:13px">Complete vs. open, latest month</p></div><div style="display:grid;min-height:220px;place-items:center;color:var(--muted);background:linear-gradient(180deg,rgba(232,246,252,.35),transparent);font-size:12px;font-weight:700">Grouped bar chart placeholder</div></article>
+</section>
+</sc-if>
+<sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+<section style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;overflow:hidden;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 8px 30px rgba(0,47,76,.045)">
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" featured="{{ true }}" label="Annual contracted budget" value="$775K" note="Contract workbook expectation" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" label="Expected to date" value="$451K" note="Calendar-year contract pace" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" label="Actual to date" value="Pending" note="NetSuite feed required" hint-size="100%,170px"></x-import>
+<x-import component-from-global-scope="URALandCareDesignSystem_d38a66.MetricCard" label="Remaining budget" value="$324K" note="Contracted less actual" hint-size="100%,170px"></x-import>
+</section>
+<article style="position:relative;overflow:hidden;padding:22px 24px;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 2px 10px rgba(0,47,76,.035)"><div style="margin:-2px -4px 18px;padding:0 4px 16px;border-bottom:1px solid #e4eaed"><h1 style="margin:0;color:var(--ura-deep);font-size:17px;font-weight:780;letter-spacing:-.015em">Expected invoices by contractor</h1><p style="margin:6px 0 0;color:var(--muted);font-size:13px">Workbook expectation for the selected calendar year</p></div><x-import component-from-global-scope="URALandCareDesignSystem_d38a66.DataTable" columns="{{ budgetColumns }}" rows="{{ budgetRows }}" hint-size="100%,220px"></x-import></article>
+</sc-if>
+<sc-if value="{{ isInvoices }}" hint-placeholder-val="{{ false }}">
+<article style="position:relative;overflow:hidden;padding:22px 24px;background:#fff;border:1px solid #d8e1e5;border-radius:8px;box-shadow:0 2px 10px rgba(0,47,76,.035)"><div style="margin:-2px -4px 18px;padding:0 4px 16px;border-bottom:1px solid #e4eaed"><h1 style="margin:0;color:var(--ura-deep);font-size:17px;font-weight:780;letter-spacing:-.015em">Invoice ledger</h1><p style="margin:6px 0 0;color:var(--muted);font-size:13px">Workbook expectation vs. posted NetSuite invoices</p></div><x-import component-from-global-scope="URALandCareDesignSystem_d38a66.DataTable" columns="{{ invoiceColumns }}" rows="{{ invoiceRows }}" hint-size="100%,220px"></x-import></article>
+</sc-if>
+</main>
+<footer style="padding:10px 20px 16px;color:var(--muted);border-top:1px solid var(--line);background:var(--panel)"><p style="margin:0;font-size:11px;font-weight:600;text-align:center">Sources: URA assignment records, Regrid, Survey123 evidence — updated daily via VM refresh.</p></footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: "landing" };
+  renderVals() {
+    const tab = this.state.tab;
+    return {
+      reportTabs: [
+        { id: "landing", label: "Overview" },
+        { id: "budget", label: "Budget" },
+        { id: "invoices", label: "Invoices" },
+      ],
+      activeTab: tab,
+      setTab: (id) => this.setState({ tab: id }),
+      isOverview: tab === "landing",
+      isBudget: tab === "budget",
+      isInvoices: tab === "invoices",
+      budgetColumns: [
+        { key: "contractor", label: "Contractor" },
+        { key: "parcels", label: "Parcels" },
+        { key: "amount", label: "Annual amount" },
+      ],
+      budgetRows: [
+        { contractor: "Supplier Alpha", parcels: "380", amount: "$280,000" },
+        { contractor: "Supplier Beta", parcels: "209", amount: "$192,000" },
+        { contractor: "Supplier Gamma", parcels: "124", amount: "$108,000" },
+      ],
+      invoiceColumns: [
+        { key: "month", label: "Month" },
+        { key: "expected", label: "Expected" },
+        { key: "posted", label: "Posted" },
+        { key: "status", label: "Status" },
+      ],
+      invoiceRows: [
+        { month: "May 2026", expected: "$64,600", posted: "$64,600", status: "Reconciled" },
+        { month: "June 2026", expected: "$64,600", posted: "Pending", status: "Awaiting NetSuite" },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

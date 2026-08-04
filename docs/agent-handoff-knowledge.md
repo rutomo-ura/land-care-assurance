@@ -1,5 +1,7 @@
 # Agent Handoff Knowledge
 
+> Superseded by [`handover/`](../handover/). That folder is the current entry point for taking over this project. This document is kept for its detail and history.
+
 Last updated: July 14, 2026
 
 This is the living handoff document for future Codex or analyst sessions. Update it at the end of each meaningful work session so the next agent can continue without rediscovering the project.

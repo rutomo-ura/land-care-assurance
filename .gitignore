@@ -28,3 +28,8 @@ prototype/source/
 *.xlsx
 *.parquet
 !prototype/data/*.csv
+
+# Design-tool scratch. The deck and design system are committed under
+# handover/ and .claude/skills/ instead.
+claude-design/
+handover/build/.work/
