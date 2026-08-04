@@ -1,6 +1,8 @@
 # OS/editor noise
 .DS_Store
 Thumbs.db
+.Rhistory
+.RData
 .vscode/
 .idea/
 

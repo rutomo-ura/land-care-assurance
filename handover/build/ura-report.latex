@@ -102,6 +102,7 @@ $endif$
 
 % Verbatim blocks: pale panel, brand left rule, never overflowing the margin.
 \usepackage{fancyvrb}
+\usepackage{fvextra}  % breaklines/breakanywhere live here, not in fancyvrb
 \usepackage{framed}
 \definecolor{shadecolor}{HTML}{F4F8FA}
 % Pandoc only emits the Shaded environment when a fence carries a language, so
@@ -114,7 +115,8 @@ $endif$
                     \colorbox{shadecolor}}%
   \MakeFramed{\advance\hsize-\width\FrameRestore}\small}%
   {\endMakeFramed}
-\fvset{fontsize=\small,xleftmargin=0pt,commandchars=\\\{\}}
+% breaklines lets long commands and paths wrap instead of running off the page.
+\fvset{fontsize=\small,xleftmargin=0pt,commandchars=\\\{\},breaklines=true,breakanywhere=true,breaksymbolleft={}}
 
 % --------------------------------------------------- architecture figure ----
 % Hand-drawn so the report has no Mermaid or CDN dependency at build time.

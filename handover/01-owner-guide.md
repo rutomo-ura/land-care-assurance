@@ -43,6 +43,7 @@ Three layers with three different owners.
 | Ingestion | GIS VM Task Scheduler, repo `URA-GIS-User/URA-Data-Repository` | GIS and data operations |
 | Store | PostgreSQL `gisdb` and ArcGIS Online (`urap.maps.arcgis.com`) | GIS and data operations |
 | Publish and application | This repository, GitHub Pages | Web and dashboard owner |
+| Finance actuals | NetSuite saved search, exported by hand into the VM refresh | Finance, with GIS operations running the import |
 
 \archdiagram
 
@@ -60,10 +61,15 @@ treat the committed files as truth.
 | 4:00 AM | `regrid_survey_daily_pipeline.py` upstream | Regrid CSV into `gis.regrid_survey_submissions`, then the ArcGIS survey layer |
 | 4:15 AM on the 15th | `regrid_survey_monthly_export.py` | G-drive CSV archive only, not a dashboard source |
 | 7:00 AM | `refresh_landcare_dashboard.ps1` in this repo | `docs/landcare/data/*` committed and pushed when changed |
+| On demand | `ingest_landcare_netsuite_checks.py` | NetSuite check-request actuals folded into `finance_summary.json` |
 
 The 7:00 AM job runs three hours after ingestion so the Postgres export reflects the latest
 state. Because the browser also queries ArcGIS at page load, completion counts can rise
 between publishes.
+
+The NetSuite step is not automatic. The refresh script runs it only when the environment
+variable `LANDCARE_NETSUITE_CHECKS_CSV` points at an exported CSV. With that variable unset,
+the daily job skips it and the last published actuals stay in place. See section 4.
 
 ## Live ArcGIS sources
 
@@ -101,6 +107,7 @@ Keep it that way. An ArcGIS URL appearing in `monitoring.js` or `kpi.js` is a de
 | Product styling | `docs/landcare/app.css` |
 | Nightly VM job and its QA gate | `scripts/refresh_landcare_dashboard.ps1`, `scripts/validate_landcare_daily_refresh.py` |
 | Published data build | `scripts/build_landcare_web_data.py`, `scripts/build_landcare_finance_data.py` |
+| NetSuite actuals import and vendor aliases | `scripts/ingest_landcare_netsuite_checks.py` |
 
 # Metrics and the denominator rule
 
@@ -138,9 +145,30 @@ includes survey-only rows, the second is filtered to assignment matches. Do not 
 current parcel universe to a monthly assignment period; the first is live inventory, the
 second is a historical export. Treat Request Only as inventory context.
 
-Finance figures come from the LandCare budgeting workbook, not from ArcGIS. The contract
-parcel count is contract scope and is a different population from either the EPP universe or
-a monthly assignment slice. Do not mix them in one ratio.
+Contract expectations come from the LandCare budgeting workbook, not from ArcGIS. The
+contract parcel count is contract scope and is a different population from either the EPP
+universe or a monthly assignment slice. Do not mix them in one ratio.
+
+## Finance actuals
+
+Since 4 August 2026 the KPI dashboard shows actual spend alongside the workbook forecast.
+The two are different things and the dashboard labels them separately.
+
+| Term | What it is |
+|---|---|
+| Expected | Workbook contract forecast: term, parcels, monthly and annual amounts |
+| Check requests | Actual check requests posted to the LandCare lawn-maintenance account in NetSuite |
+| Other program actuals | Amounts on the same account that do not map to a current contractor |
+
+**A check request is not a cleared payment.** It records that payment was requested, not that
+money moved. Do not describe it as paid, and do not treat a contractor showing zero in a
+period as proof that no work happened or that no liability exists; it means no matching check
+request was found in that period.
+
+Quarterly comparisons use only records posted in the selected quarter. Annual actuals include
+current-cycle contractor check requests for the selected year. Other program actuals are
+published in the data contract but excluded from contractor-to-contract variance, because
+they are not attributable to a contractor.
 
 # Daily operations
 
@@ -177,6 +205,98 @@ creates an assigned GitHub Issue labelled `landcare-brief`.
 
 After the transfer, set the repository variables `LANDCARE_EMAIL_RECIPIENTS` and
 `LANDCARE_ISSUE_ASSIGNEE`, then test with the `dry-run` delivery mode before going live.
+
+# NetSuite finance actuals
+
+Deployed 4 August 2026. This is the newest part of the system and the part most likely to go
+stale, because refreshing it is a manual task rather than a scheduled one.
+
+## What it is
+
+NetSuite supplies actual LandCare check-request amounts to the KPI dashboard. It complements
+the budgeting workbook rather than replacing it: the workbook still defines contract
+expectations, term, parcels, and forecast; ArcGIS still owns assignments, evidence, and
+completion.
+
+| Item | Value |
+|---|---|
+| Saved search | `All URA LandCare Check Requests`, ID `1618` |
+| Transaction type | Check Request |
+| Account | `66220 Property Management : Lawn Maintenance` |
+| Supporting report | `All URA LandCare Check Requests`, report ID `697` |
+| Funding reference | `All URA LandCare Funding Requests`, report ID `704`, reconciliation only |
+
+## Reading as published on 4 August 2026
+
+| Figure | Value |
+|---|---:|
+| Saved-search records | 628 |
+| Saved-search total | $4,538,233.89 |
+| Current cycle records, from 1 November 2025 | 85 |
+| Current cycle total | $618,513.87 |
+| Mapped to current contractors | $592,179.76 |
+| Retained as other LandCare program expense | $26,334.11 |
+| Latest transaction date | 4 August 2026 |
+
+These live in `finance_summary.json` under `actual_invoice_source`, which is where you check
+freshness. If `refreshed_at` is old, the dashboard is showing stale actuals.
+
+## What is published and what is not
+
+`actual_invoices` holds one aggregate row per posting month and current-cycle contractor.
+`other_program_actuals` holds monthly amounts on the LandCare account with no current
+contractor. `actual_invoice_source` records report identity, freshness, row counts, and
+reconciliation totals.
+
+Document numbers, memos, and transaction-level vendor records are deliberately not published.
+GitHub Pages serves this file to anyone, so transaction detail must never enter it.
+
+## Refreshing it
+
+1. Open saved search `1618` in NetSuite. Do not edit or resave the search.
+2. Export CSV to the secured GIS VM or approved finance share. Never into this repository.
+3. Rebuild the workbook portion of `finance_summary.json` if contract terms changed.
+4. Run the importer:
+
+   ```powershell
+   python scripts\ingest_landcare_netsuite_checks.py `
+     --source C:\secure\exports\landcare-checks.csv
+   ```
+
+5. Check source count, source total, current-cycle total, contractor total, other-program
+   total, and latest date against NetSuite.
+6. Run the tests and Pages validation before publishing.
+
+Setting `LANDCARE_NETSUITE_CHECKS_CSV` on the VM makes the 7:00 AM refresh run step 4
+automatically. The export in step 2 is still manual, so a stale CSV produces stale actuals
+without any error.
+
+## Vendor aliases
+
+NetSuite vendor names do not match contractor names in the assignment layer, so
+`scripts/ingest_landcare_netsuite_checks.py` holds an alias table. One contractor can appear
+under several NetSuite names, for example `K.R.J. Enterprises Inc` and
+`K.R.J. Enterprises Inc. - Eltridra` both map to KRJ Enterprises.
+
+An unrecognised vendor is not dropped. It stays in `other_program_actuals`, which is why that
+bucket exists. **Add an alias only after Finance or the LandCare program owner confirms the
+relationship.** Guessing moves money onto the wrong contractor's variance line.
+
+## The reconciliation gate
+
+`scripts/validate_landcare_daily_refresh.py` fails the publish if the published contractor
+aggregates do not sum to `current_cycle_contractor_total` in the source metadata. It also
+rejects malformed periods and aggregate rows missing an organisation or amount. If that check
+fails, the import and the metadata disagree; re-run the import rather than editing the JSON.
+
+## Access
+
+Use a named NetSuite account with read-only report access. Never store passwords, session
+cookies, browser profiles, raw exports, document numbers, or memos in GitHub. Inspection and
+export must not submit forms, edit records, customise searches, schedule reports, or change
+NetSuite settings.
+
+Full detail in `docs/netsuite-landcare-finance-source.md`.
 
 # Replacing Regrid with a URA front end
 
@@ -288,6 +408,11 @@ The skill's `tokens/colors.css` is an exact extraction of the `:root` block in `
 the product and the design system cannot drift apart silently. `github.md` inside the skill
 carries a screen map from each design artifact back to its repo source.
 
+The export was taken before the NetSuite deployment, so its KPI template and some copy
+examples still show the pre-NetSuite wording such as "NetSuite feed required". Tokens,
+components, and visual rules are unaffected. See
+`.claude/skills/ura-landcare-design/SYNC-NOTES.md`.
+
 ## Invoking it
 
 The design system is installed as a Claude Code skill. Any agent opening this repository
@@ -338,6 +463,8 @@ follow-up, and finance. The escalation table lives in `HANDOVER.md`.
 | Item | What it means for you |
 |---|---|
 | Survey123 evidence path is code-complete but not deployed | Approved photos cannot appear and Regrid stays the only evidence source. The single blocker on the replacement |
+| NetSuite actuals refresh by hand, not on a schedule | A stale CSV publishes stale money figures with no error. Decide who owns the export and how often |
+| One check request, $26,334.11, sits in other program actuals | It is on the LandCare account with no current contractor. Ask Finance whether it should be aliased to a contractor or stay separate |
 | Survey123 submissions do not change official completion in v1 | Whether they should is a governance decision, not a code change |
 | Committed snapshot is dated 2026-07-07 while live ArcGIS moves daily | Static and live numbers differ. Decide whether the fallback stays once the live path is trusted |
 | Morning brief falls back to a GitHub Issue without Microsoft 365 secrets | Set the two repository variables and test with `dry-run` first |
@@ -349,8 +476,9 @@ follow-up, and finance. The escalation table lives in `HANDOVER.md`.
 2. Watch two unattended refresh cycles complete with `status: success`.
 3. Run the morning brief manually in `dry-run` mode and read the artifact.
 4. Open all four routes and reconcile one contractor's numbers by hand against the map.
-5. Make one harmless documentation change through an agent, end to end, including tests.
-6. Decide whether to deploy the Survey123 evidence path this quarter.
+5. Refresh the NetSuite actuals once end to end, so you have done it before it is urgent.
+6. Make one harmless documentation change through an agent, end to end, including tests.
+7. Decide whether to deploy the Survey123 evidence path this quarter.
 
 # Appendix
 
@@ -379,12 +507,12 @@ Generated daily by the VM refresh into `docs/landcare/data/`.
 
 | File | Contents |
 |---|---|
-| `all_months.geojson` | URA-owned assignment rows with geometry, all periods |
-| `latest_month.geojson`, `latest_month_summary.json` | Latest comparable month slice |
+| `all_months.geojson` | URA-owned assignment rows with geometry |
+| `latest_month.geojson`, `latest_month_summary.json` | Latest month slice |
 | `monthly_metrics.json` | Completion rates by month |
 | `contractor_monthly.json` | Contractor completion by month |
 | `kpi_summary.json` | Summary metadata and latest metrics |
-| `finance_summary.json` | Budget and contract totals |
+| `finance_summary.json` | Workbook expectations plus NetSuite aggregates |
 | `refresh_manifest.json` | Freshness, counts, survey metadata |
 
 ## Environment variable names
@@ -398,6 +526,9 @@ Survey123 evidence path: `LANDCARE_PG_DSN`, `LANDCARE_SURVEY_WEBHOOK_TOKEN`,
 `SURVEY123_PUBLIC_ATTACHMENT_LAYER_URL`, `LANDCARE_ASSIGNMENT_HISTORY_LAYER_URL`,
 `LANDCARE_SURVEY_EVIDENCE_ENABLED`, `LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID`,
 `LANDCARE_SURVEY_EVIDENCE_LAYER_URL`, `LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN`.
+
+NetSuite actuals: `LANDCARE_NETSUITE_CHECKS_CSV`, the path to the exported CSV on the VM.
+Unset means the daily refresh skips the import and keeps the last published actuals.
 
 GitHub Actions secrets: `M365_TENANT_ID`, `M365_CLIENT_ID`, `M365_CLIENT_SECRET`,
 `M365_SENDER_UPN`. Repository variables: `LANDCARE_EMAIL_RECIPIENTS`,
@@ -423,6 +554,7 @@ On the VM:
 
 - `docs/landcare-architecture.md` for source and runtime architecture
 - `docs/landcare-metrics-context.md` for the full metric glossary
+- `docs/netsuite-landcare-finance-source.md` for the NetSuite saved search and refresh procedure
 - `docs/landcare-submission-and-evidence-flow.md` for the contractor intake contract
 - `docs/survey123-landcare-network-setup.md` for Survey123 and webhook configuration
 - `docs/task-scheduler-vm-operations.md` for the VM runbook and failure triage

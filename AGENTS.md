@@ -30,6 +30,11 @@ LandCare; do not import it into a product page.
   canonical `additional_notes` normalization and cache-busting imports intact.
 - All ArcGIS endpoints live in `survey-layer.js`, `assignment-layer.js`, and
   `survey-submission-config.js`. An endpoint anywhere else is a defect.
+- Contract expectations come from the LandCare budgeting workbook. Actual spend
+  comes from NetSuite saved search 1618 via
+  `scripts/ingest_landcare_netsuite_checks.py`. Actuals are check requests, not
+  cleared payments. `finance_summary.json` carries aggregates only; document
+  numbers, memos, and transaction-level vendor records must never be published.
 - Completion currently uses raw survey records matched to assignment parcels,
   like the Map Monitor. It is intentionally not a unique-parcel count.
 

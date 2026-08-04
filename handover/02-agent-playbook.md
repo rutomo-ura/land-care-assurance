@@ -208,6 +208,41 @@ docs/landcare-metrics-context.md and the tests in the same pull request. Do not
 retire the Regrid scheduled task in the same change.
 ```
 
+## Refresh the NetSuite finance actuals
+
+```text
+Task: refresh the NetSuite check-request actuals in the KPI dashboard.
+
+Read docs/netsuite-landcare-finance-source.md first. The CSV export from saved
+search 1618 is a manual step I do in NetSuite; you start from the exported file.
+
+Run scripts/ingest_landcare_netsuite_checks.py --source [path]. Then report the
+source record count, source total, current-cycle total, contractor total,
+other-program total, and latest transaction date, so I can check them against
+NetSuite before anything is published.
+
+Do not add a vendor alias. If a vendor does not match, leave it in
+other_program_actuals and tell me which name it was. Do not put document
+numbers, memos, or transaction-level vendor records into finance_summary.json;
+that file is served publicly by GitHub Pages.
+```
+
+## Add a NetSuite vendor alias
+
+Only after Finance or the LandCare program owner confirms the relationship in writing.
+
+```text
+Task: map the NetSuite vendor "[exact NetSuite name]" to contractor
+"[contractor name as it appears in the assignment layer]".
+
+[Name] confirmed this relationship on [date].
+
+Add it to VENDOR_ALIASES in scripts/ingest_landcare_netsuite_checks.py, add a
+case to tests/test_ingest_landcare_netsuite_checks.py, and re-run the import.
+Show me the before and after for both the contractor total and the
+other-program total, since money is moving between those two buckets.
+```
+
 ## Debug a failed 7:00 AM refresh
 
 ```text
@@ -234,7 +269,7 @@ warnings; keep them near zero.
 
 ---
 
-# Four failure modes specific to this repository
+# Five failure modes specific to this repository
 
 An agent will get these wrong unless the prompt says otherwise.
 
@@ -248,6 +283,9 @@ An agent will get these wrong unless the prompt says otherwise.
    and `survey-submission-config.js`. Anywhere else is a defect.
 4. **Hand-editing generated data.** Files under `docs/landcare/data/` come from the VM
    refresh. Hand edits are silently reverted by the next run.
+5. **Guessing a NetSuite vendor alias.** An unmatched vendor is supposed to sit in
+   `other_program_actuals`. Mapping it on a name that merely looks similar moves money onto
+   the wrong contractor's variance line. Only Finance can confirm the relationship.
 
 # What never goes in a prompt or a commit
 
@@ -274,10 +312,11 @@ comments, photos, field notes, filters, and the selected reporting period.
 
 # Reviewing what an agent produced
 
-Ask five questions before merging. They catch most of what goes wrong.
+Ask six questions before merging. They catch most of what goes wrong.
 
 1. Which source does this read, and is it the authoritative one?
 2. Did any published number change, and was the metrics doc updated with it?
 3. Are all ArcGIS URLs still inside the two adapter files?
 4. If a shared module changed, did every importer's `?v=` version move?
-5. What is the rollback, and has it been stated in the pull request?
+5. If `finance_summary.json` changed, does it still contain only aggregates?
+6. What is the rollback, and has it been stated in the pull request?
