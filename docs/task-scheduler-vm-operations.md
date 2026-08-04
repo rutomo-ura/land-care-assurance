@@ -227,7 +227,7 @@ flowchart TD
     Regrid["Regrid survey submissions"] --> GISDBSurvey["gis.regrid_survey_submissions"]
     GISDBSurvey --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
     Bundle["Bundle assignments"] --> GISDBAssign["gis.regrid_bundle_assignments"]
-    Workbook["Finance workbook"] --> FinanceJson["finance_summary.json"]
+    PowerBI["Power BI Land Care Budget semantic model"] --> FinanceJson["finance_summary.json"]
     GISDBSurvey --> Export["LandCare Postgres export"]
     GISDBAssign --> Export
     Export --> DataJson["docs/landcare/data"]
@@ -239,7 +239,7 @@ flowchart TD
 - Daily survey source of truth: `gis.regrid_survey_submissions`.
 - Runtime returned survey map layer: AGOL `gisdb_gis_regrid_surveys`.
 - Assignment denominator source: `gis.regrid_bundle_assignments`.
-- Finance expectation source: LandCare budgeting workbook.
-- Finance actual source: optional VM-local NetSuite CSV path in `LANDCARE_NETSUITE_CHECKS_CSV`. The raw export stays off GitHub; only monthly contractor aggregates are published. See [`netsuite-landcare-finance-source.md`](netsuite-landcare-finance-source.md).
+- Finance production source: Power BI Land Care Budget semantic model, queried after its completed overnight refresh. See [`powerbi-landcare-finance-source.md`](powerbi-landcare-finance-source.md).
+- NetSuite saved search 1618 remains an upstream reconciliation reference. Raw exports stay off GitHub.
 - G-drive survey CSV: archive only.
 - Metric definitions and denominator rules: [`docs/landcare-metrics-context.md`](landcare-metrics-context.md).

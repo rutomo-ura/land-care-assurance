@@ -26,6 +26,11 @@ import {
   ASSIGNMENT_HISTORY_AGOL_ITEM_ID,
   ASSIGNMENT_HISTORY_AGOL_ITEM_URL
 } from "./assignment-layer.js?v=20260803-raw-completion-v2";
+import {
+  financeFeedState,
+  semanticQuarterSummary,
+  semanticYearSummary
+} from "./finance-semantic.js?v=20260804-powerbi-semantic-v1";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -1123,21 +1128,23 @@ function aggregateLiveQuarterlyMetrics(geojson, monthlyMetrics) {
 
 function renderBudget(financeSummary, selectedYear) {
   const yearFinance = buildYearFinance(financeSummary, selectedYear);
-  const actualAvailable = financeSummary.actual_invoice_source?.status === "available";
-  const actualToDate = actualAvailable
-    ? (financeSummary.actual_invoices || [])
+  const feed = financeFeedState(financeSummary);
+  const semanticYear = semanticYearSummary(financeSummary, selectedYear);
+  const actualToDate = feed.available
+    ? semanticYear?.total_amount_spent ?? (financeSummary.actual_invoices || [])
       .filter((invoice) => String(invoice.period_month || invoice.posting_date || invoice.invoice_date || "").startsWith(String(selectedYear)))
       .reduce((sum, invoice) => sum + Number(invoice.actual_amount || invoice.amount || 0), 0)
     : null;
-  document.getElementById("annualRunRateKpi").textContent = formatMoney(yearFinance.annualExpected);
+  const annualLimit = semanticYear?.yearly_limit ?? yearFinance.annualExpected;
+  document.getElementById("annualRunRateKpi").textContent = formatMoney(annualLimit);
   document.getElementById("monthlyInvoiceKpi").textContent = formatMoney(yearFinance.expectedToDate);
   document.getElementById("totalContractKpi").textContent = formatOptionalMoney(actualToDate);
   document.getElementById("financeContractorsKpi").textContent = actualToDate === null
     ? "Unavailable"
-    : formatMoney(yearFinance.annualExpected - actualToDate);
-  document.getElementById("quarterlyForecastNote").textContent = actualAvailable
-    ? `${selectedYear} contract expectation; contractor check requests from NetSuite`
-    : `${selectedYear} contract expectation; NetSuite check-request feed unavailable`;
+    : formatMoney(annualLimit - actualToDate);
+  document.getElementById("quarterlyForecastNote").textContent = feed.available
+    ? `${selectedYear} Landcare limit · ${semanticYear?.percentage_spent?.toFixed(2) || "0.00"}% spent${feed.stale ? " · stale" : ""}`
+    : `${selectedYear} contract expectation; finance actuals unavailable`;
   renderMoneyBarChart("budgetContractChart", yearFinance.rows, "annual_expected");
 }
 
@@ -1147,7 +1154,9 @@ function dayOfMonth(dateKey) {
 
 function renderInvoices(financeSummary, selectedQuarter) {
   const quarterFinance = buildQuarterFinance(financeSummary, selectedQuarter);
-  const actualStatus = financeSummary.actual_invoice_source?.status || "unavailable";
+  const feed = financeFeedState(financeSummary);
+  const actualStatus = feed.available ? "available" : "unavailable";
+  const semanticQuarter = semanticQuarterSummary(financeSummary, selectedQuarter);
   const actualByOrganization = new Map();
   const quarterActuals = (financeSummary.actual_invoices || []).filter((invoice) => {
     const month = String(invoice.period_month || invoice.posting_date || invoice.invoice_date || "").slice(0, 7);
@@ -1164,7 +1173,7 @@ function renderInvoices(financeSummary, selectedQuarter) {
   const rows = quarterFinance.rows.map((row) => {
     const actual = actualStatus === "available" ? actualByOrganization.get(normalizeContractorName(row.organization)) ?? 0 : null;
     return {
-      invoice_id: actualStatus === "available" ? "NetSuite check request(s)" : "Expected invoice forecast",
+      invoice_id: actualStatus === "available" ? "Landcare check request(s)" : "Expected invoice forecast",
       organization: row.organization,
       service_period: quarterFinance.label,
       invoice_date: actualStatus === "available" ? "Selected quarter" : "—",
@@ -1172,7 +1181,7 @@ function renderInvoices(financeSummary, selectedQuarter) {
       actual_amount: actual,
       variance: actual === null ? null : actual - Number(row.quarterly_forecast || 0),
       status: actualStatus === "available" ? "Recorded" : "Expected · actual unavailable",
-      reference: actualStatus === "available" ? "NetSuite" : "Workbook contract schedule"
+      reference: actualStatus === "available" ? feed.sourceLabel : "Contract schedule"
     };
   });
   renderTable(document.getElementById("invoiceTable"), [
@@ -1187,11 +1196,11 @@ function renderInvoices(financeSummary, selectedQuarter) {
     { label: "Source", value: (row) => row.reference }
   ], rows);
   document.getElementById("invoiceSummary").textContent = actualStatus === "available"
-    ? `${rows.length} contractor check-request comparison(s) in ${quarterFinance.label}`
-    : `${rows.length} expected contractor invoice forecast(s) in ${quarterFinance.label}; NetSuite check requests are unavailable.`;
+    ? `${rows.length} contractor comparison(s) in ${quarterFinance.label} · ${formatMoney(semanticQuarter?.amount_spent || 0)} total`
+    : `${rows.length} expected contractor invoice forecast(s) in ${quarterFinance.label}; finance actuals are unavailable.`;
   document.getElementById("financeSourceNote").textContent = actualStatus === "available"
-    ? `Expected: workbook; actual: NetSuite check requests through ${financeSummary.actual_invoice_source?.refreshed_at || "unknown"} · ${quarterFinance.label}`
-    : `Expected: finance workbook · NetSuite check requests unavailable · ${quarterFinance.label}`;
+    ? `${feed.sourceLabel} · refreshed ${feed.refreshedAt || "unknown"} · ${quarterFinance.label}${feed.stale ? " · showing last successful data" : ""}`
+    : `Finance actuals unavailable · ${quarterFinance.label}`;
 }
 
 function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuarter) {

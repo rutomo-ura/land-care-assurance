@@ -31,6 +31,7 @@ $commitBefore = ""
 $commitAfter = ""
 $publishedDataChanges = $false
 $upstreamContext = $null
+$powerBiContext = $null
 
 function Get-UpstreamContext {
   $manifestPath = Join-Path $RepoRoot "docs\landcare\data\refresh_manifest.json"
@@ -115,6 +116,9 @@ function Write-RunStatus {
 
   if ($upstreamContext) {
     $statusPayload.upstream = $upstreamContext
+  }
+  if ($powerBiContext) {
+    $statusPayload.power_bi_finance = $powerBiContext
   }
 
   $statusJson = $statusPayload | ConvertTo-Json -Depth 5
@@ -205,9 +209,25 @@ try {
   Invoke-Checked "Finance data rebuild" {
     & $Python scripts\build_landcare_finance_data.py
   }
-  if ($env:LANDCARE_NETSUITE_CHECKS_CSV) {
-    Invoke-Checked "NetSuite LandCare check-request aggregation" {
-      & $Python scripts\ingest_landcare_netsuite_checks.py --source $env:LANDCARE_NETSUITE_CHECKS_CSV
+  $powerBiVariables = @(
+    $env:LANDCARE_POWERBI_TENANT_ID,
+    $env:LANDCARE_POWERBI_CLIENT_ID,
+    $env:LANDCARE_POWERBI_CERTIFICATE_PATH,
+    $env:LANDCARE_POWERBI_CERTIFICATE_THUMBPRINT
+  )
+  if (($powerBiVariables | Where-Object { -not $_ }).Count -eq 0) {
+    $powerBiStatusPath = Join-Path $tempDir "powerbi-finance-status.json"
+    Invoke-Checked "Power BI Land Care Budget semantic extraction" {
+      & $Python scripts\extract_landcare_powerbi_semantic.py --status-output $powerBiStatusPath
+    }
+    if (Test-Path -LiteralPath $powerBiStatusPath) {
+      $powerBiContext = Get-Content -LiteralPath $powerBiStatusPath -Raw | ConvertFrom-Json
+    }
+  } else {
+    $powerBiContext = [ordered]@{
+      status = "configuration_pending"
+      feed_status = "unavailable"
+      message = "Power BI service-principal configuration is incomplete; retained the previously published finance source."
     }
   }
 

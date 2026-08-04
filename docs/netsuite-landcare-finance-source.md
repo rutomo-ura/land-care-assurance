@@ -2,10 +2,11 @@
 
 ## Purpose
 
-NetSuite supplies actual LandCare check-request amounts for the KPI dashboard. It complements, but does not replace, the LandCare budgeting workbook:
+NetSuite is the upstream accounting source for LandCare check requests. The production KPI feed uses the Power BI Land Care Budget semantic model, which applies the governed `Item Type = Landcare` classification before publishing aggregates.
 
 - The workbook defines contract expectations, term, parcels, and forecast amounts.
-- NetSuite supplies actual check requests posted to the LandCare lawn-maintenance account.
+- NetSuite supplies the accounting transactions reconciled by saved search 1618.
+- Power BI owns the classification and measures used by the KPI dashboard.
 - ArcGIS remains the source for assignments, survey evidence, comments, and completion metrics.
 
 ## Authoritative NetSuite view
@@ -21,9 +22,9 @@ NetSuite supplies actual LandCare check-request amounts for the KPI dashboard. I
 
 The funding-request report is a useful reconciliation reference but is not loaded into KPI actuals.
 
-## Published contract
+## Reconciliation role
 
-The public app reads `docs/landcare/data/finance_summary.json`.
+The public app reads `docs/landcare/data/finance_summary.json`, normally generated from Power BI. This NetSuite path remains available for supervised reconciliation.
 
 - `actual_invoices` contains one aggregate row per posting month and current-cycle contractor.
 - `other_program_actuals` contains monthly amounts that use the LandCare account but do not map to a current contractor.
@@ -32,7 +33,7 @@ The public app reads `docs/landcare/data/finance_summary.json`.
 
 The August 4, 2026 read-only inspection found 628 saved-search records totaling $4,538,233.89. For the current contract cycle beginning November 1, 2025, 85 records totaled $618,513.87. Of that amount, $592,179.76 mapped to current contractors and $26,334.11 was retained as other LandCare program expense. The latest transaction date was August 4, 2026.
 
-## Refresh procedure
+## Manual reconciliation procedure
 
 1. In NetSuite, open saved search `1618`. Do not edit or resave the search.
 2. Export CSV. Store the raw file on the secured GIS VM or approved finance share, never in this repository.
@@ -44,18 +45,18 @@ The August 4, 2026 read-only inspection found 628 saved-search records totaling 
    ```
 
 5. Confirm source count, source total, current-cycle total, contractor total, other-program total, and latest date against NetSuite.
-6. Run the repository tests and Pages validation before publishing.
+6. Compare the result to the Power BI semantic output at the same timestamp. Do not publish the manual import as current semantic data.
 
 The importer recognizes the current contractor vendor aliases. An unknown vendor remains in `other_program_actuals`; add an alias only after Finance or the LandCare program owner confirms the relationship.
 
-## KPI interpretation
+## Interpretation
 
 - Actuals are check requests, not proof that a payment cleared.
-- Quarterly comparisons use only records in the selected quarter.
-- Annual actuals include current-cycle contractor check requests for the selected year.
+- Power BI Land Care Budget values control production quarter and annual KPI totals.
+- Account-only NetSuite totals can include maintenance expenses or other program activity and are not equivalent to the semantic `Landcare` classification.
 - Other program expenses are disclosed in the data contract but excluded from contractor-to-contract variance.
 - A zero for one contractor means no matching check request in that period. It does not prove no work was performed or no liability exists.
 
 ## Access and security
 
-Use a named NetSuite account with read-only report access. Never store passwords, session cookies, browser profiles, raw exports, document numbers, or memos in GitHub. Browser inspection and CSV export must not submit forms, edit records, customize searches, schedule reports, or change NetSuite settings.
+Use a named NetSuite account with read-only report access. Never store passwords, session cookies, browser profiles, raw exports, document numbers, or memos in GitHub. See [`powerbi-landcare-finance-source.md`](powerbi-landcare-finance-source.md) for the production feed.

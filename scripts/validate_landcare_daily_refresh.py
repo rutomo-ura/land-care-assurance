@@ -198,11 +198,40 @@ def validate_finance_summary(finance: dict[str, Any]) -> None:
         if not invoice.get("organization") or not isinstance(invoice.get("actual_amount"), (int, float)):
             raise ValidationError(f"finance_summary.json has an invalid aggregate actual invoice {invoice_id!r}")
     if actual_source.get("status") == "available" and not invoices:
-        warnings.warn("NetSuite source is marked available but contains no invoice rows.", stacklevel=2)
+        warnings.warn("Finance actual source is marked available but contains no invoice rows.", stacklevel=2)
     if actual_source.get("status") == "available":
         published_total = round(sum(float(invoice["actual_amount"]) for invoice in invoices), 2)
         if published_total != actual_source.get("current_cycle_contractor_total"):
-            raise ValidationError("finance_summary.json NetSuite contractor aggregates do not reconcile to source metadata")
+            raise ValidationError("finance_summary.json contractor aggregates do not reconcile to source metadata")
+
+    if actual_source.get("source_system") != "Power BI semantic model":
+        return
+    if actual_source.get("feed_status") not in {"current", "stale"}:
+        raise ValidationError("Power BI finance source has an invalid feed_status")
+    semantic = finance.get("semantic_summary")
+    if not isinstance(semantic, dict) or semantic.get("item_type_filter") != "Landcare":
+        raise ValidationError("Power BI finance source is missing the Landcare semantic summary")
+    if semantic.get("feed_status") != actual_source.get("feed_status"):
+        raise ValidationError("Power BI semantic and actual source freshness do not agree")
+    annual_rows = semantic.get("annual")
+    if not isinstance(annual_rows, list) or not annual_rows:
+        raise ValidationError("Power BI semantic summary has no annual rows")
+    for annual in annual_rows:
+        year = annual.get("year")
+        total = annual.get("total_amount_spent")
+        limit = annual.get("yearly_limit")
+        percentage = annual.get("percentage_spent")
+        quarters = annual.get("quarters")
+        if not isinstance(year, int) or not all(isinstance(value, (int, float)) for value in (total, limit, percentage)):
+            raise ValidationError("Power BI semantic summary has an invalid annual row")
+        if not isinstance(quarters, list):
+            raise ValidationError(f"Power BI semantic summary {year} has invalid quarter rows")
+        quarter_total = round(sum(float(row.get("amount_spent", 0)) for row in quarters if isinstance(row, dict)), 2)
+        if quarter_total != round(float(total), 2):
+            raise ValidationError(f"Power BI semantic summary {year} quarter values do not reconcile")
+        calculated_percentage = round(100 * float(total) / float(limit), 2) if limit else 0
+        if abs(calculated_percentage - float(percentage)) > 0.01:
+            raise ValidationError(f"Power BI semantic summary {year} percentage does not reconcile")
 
 
 def validate_quarterly_metrics(payload: Any) -> None:

@@ -186,16 +186,26 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8", newline="\n")
 
 
-def preserve_netsuite_actuals(payload: dict[str, Any], output: Path) -> None:
+def preserve_published_actuals(payload: dict[str, Any], output: Path) -> None:
     if not output.exists():
         return
     previous = json.loads(output.read_text(encoding="utf-8"))
     source = previous.get("actual_invoice_source", {})
     if source.get("status") != "available":
         return
-    for key in ("actual_invoices", "other_program_actuals", "actual_invoice_source"):
+    for key in (
+        "actual_invoices",
+        "other_program_actuals",
+        "actual_invoice_source",
+        "semantic_summary",
+        "semantic_contracts",
+    ):
         if key in previous:
             payload[key] = previous[key]
+    if source.get("source_system") == "Power BI semantic model" and previous.get("current_contracts"):
+        payload["current_contracts"] = previous["current_contracts"]
+        payload["metadata"]["source_kind"] = "powerbi_landcare_semantic_model"
+        payload["metadata"]["note"] = "Retained the last successful Power BI semantic finance aggregates during the workbook rebuild."
 
 
 def main() -> None:
@@ -206,7 +216,7 @@ def main() -> None:
     if not args.source.exists():
         raise SystemExit(f"Finance source workbook not found: {args.source}")
     payload = build_summary(args.source)
-    preserve_netsuite_actuals(payload, args.output)
+    preserve_published_actuals(payload, args.output)
     write_json(args.output, payload)
     print(f"Wrote LandCare finance data to {args.output}")
 

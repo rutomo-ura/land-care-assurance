@@ -1,5 +1,7 @@
 pandas
 openpyxl
 psycopg2-binary
+msal
+requests
 fastapi
 uvicorn

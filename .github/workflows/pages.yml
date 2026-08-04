@@ -40,7 +40,7 @@ jobs:
           test -f docs/contractor/index.html
           test -f docs/survey-submission/index.html
           test -f docs/landcare/contractor-overview.js
-          node --test tests/survey-layer.test.mjs
+          node --test tests/survey-layer.test.mjs tests/kpi-finance.test.mjs
           test -f docs/landcare/data/latest_month_summary.json
           test -f docs/landcare/data/latest_month.geojson
           test -f docs/landcare/data/all_months.geojson

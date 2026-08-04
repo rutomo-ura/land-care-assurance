@@ -1,6 +1,6 @@
 ﻿# LandCare Metrics Context
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 This is the operating glossary for the monitoring map, KPI dashboard, daily refresh QA, and supervisor review. It explains which counts are comparable and which counts intentionally come from different source scopes.
 
@@ -21,6 +21,8 @@ This is the operating glossary for the monitoring map, KPI dashboard, daily refr
 | Unmatched survey records | Live AGOL survey features whose normalized `parcelnumb` does not match the selected assignment keys | Browser reconciliation of AGOL surveys to AGOL assignment history | Excluded from completion numerator |
 | Finance contract parcel count | Parcel count from the budgeting workbook contract scope | `finance_summary.json.summary.parcel_count` | 1,237 |
 | Finance annual run rate | Annualized current contract invoice run rate | `finance_summary.json.summary.annual_invoice_run_rate` | $775,000 |
+| LandCare amount spent | Check-request amount classified as `Item Type = Landcare` | Power BI `LandCare Check Requests[Cumulative Total Sum]`, published in `finance_summary.json.semantic_summary` | $458,995.17 on August 4, 2026 |
+| Percentage of yearly limit | `LandCare amount spent / Power BI yearly limit` | Power BI semantic measure, reconciled again during extraction | 59.23% on August 4, 2026 |
 
 ## Source Ownership
 
@@ -30,7 +32,7 @@ This is the operating glossary for the monitoring map, KPI dashboard, daily refr
 | What is the monthly assignment denominator? | Live AGOL assignment snapshots: current item `0b4733cb5d204da6ab936c9f6d49e401`, history item `df7d77eb57f14c68b717c2cf3cdaada4` | Checked-in `docs/landcare/data` remains fallback/cache during transition. |
 | What survey records exist for a service period? | Live AGOL all-period survey layer | Raw record count is available for the selected filter. |
 | What should completion rate use? | Live assignment denominator plus raw assignment-matched survey records | Keep the same raw matched numerator in Map, KPI cards, trends, and line charts. |
-| What should finance use? | LandCare budgeting workbook | Finance parcel counts are contract scope, not the same denominator as current EPP or monthly assignments. |
+| What should finance use? | Power BI Land Care Budget semantic model with `Item Type = Landcare` | NetSuite is upstream; the workbook and saved search are reconciliation references. Finance scope is not the assignment denominator. |
 
 ## Reconciliation Rules
 
@@ -40,6 +42,7 @@ This is the operating glossary for the monitoring map, KPI dashboard, daily refr
 - Use `Complete survey records` as the shared Map/KPI completion count; keep unique completed parcels as a diagnostic.
 - Use `Active completion %` as the primary operational KPI. Keep `Blended completion %` as secondary context only.
 - Treat `Request Only` as assigned inventory context, not as recurring-survey failure.
+- Exclude Maintenance Expenses from LandCare budget totals. An account-only NetSuite sum is not interchangeable with the semantic `Item Type = Landcare` measure.
 
 ## July 7 Source Snapshot
 

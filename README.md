@@ -17,7 +17,7 @@ Public application:
 | Run the repository and Pages cutover | [`HANDOVER.md`](HANDOVER.md) and [`AGENTS.md`](AGENTS.md) |
 | Understand the full data and submission lifecycle | [`docs/landcare-submission-and-evidence-flow.md`](docs/landcare-submission-and-evidence-flow.md) |
 | Understand sources, metric rules, runtime layers, and daily refresh | [`docs/landcare-architecture.md`](docs/landcare-architecture.md) |
-| Refresh NetSuite check-request actuals for KPI | [`docs/netsuite-landcare-finance-source.md`](docs/netsuite-landcare-finance-source.md) |
+| Operate the KPI finance feed | [`docs/powerbi-landcare-finance-source.md`](docs/powerbi-landcare-finance-source.md); use the [NetSuite guide](docs/netsuite-landcare-finance-source.md) for reconciliation |
 | Operate the VM daily refresh | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |
 | Configure Survey123 review, webhook, PostgreSQL, and public evidence | [`docs/survey123-landcare-network-setup.md`](docs/survey123-landcare-network-setup.md) |
 | Present or hand over the product | [`docs/v1.0-operational-handover.md`](docs/v1.0-operational-handover.md) and [`docs/v1.0-presentation-script.md`](docs/v1.0-presentation-script.md) |
