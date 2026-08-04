@@ -38,7 +38,7 @@
         <button class="is-active" type="button" data-tab="landing" role="tab" aria-selected="true">Overview</button>
         <button type="button" data-tab="quarterlyReporting" role="tab" aria-selected="false">Quarterly Reporting</button>
         <button type="button" data-tab="budget" role="tab" aria-selected="false">Budget</button>
-        <button type="button" data-tab="invoices" role="tab" aria-selected="false">Invoices</button>
+        <button type="button" data-tab="invoices" role="tab" aria-selected="false">Check Requests</button>
         <button type="button" data-tab="areaDistribution" role="tab" aria-selected="false">Parcel Area</button>
         <button type="button" data-tab="maintenanceExpenses" role="tab" aria-selected="false">Expenses</button>
       </nav>
@@ -194,13 +194,13 @@
       <section class="tab-panel" data-panel="budget" aria-label="Land Care Budget">
         <header class="tab-intro">
           <div><span class="section-kicker">Financial control</span><h2>Budget position and contractor exposure</h2></div>
-          <p>Compare the current invoice pace with committed contract value and supplier concentration.</p>
+          <p>Compare contract expectations with LandCare check requests recorded in NetSuite.</p>
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
             <div class="reference-card featured"><span>Annual contracted budget</span><strong id="annualRunRateKpi">--</strong><small id="quarterlyForecastNote">Contract workbook expectation</small></div>
             <div class="reference-card"><span>Expected to date</span><strong id="monthlyInvoiceKpi">--</strong><small>Calendar-year contract pace</small></div>
-            <div class="reference-card"><span>Actual to date</span><strong id="totalContractKpi">--</strong><small>NetSuite feed required</small></div>
+            <div class="reference-card"><span>Check requests to date</span><strong id="totalContractKpi">--</strong><small>NetSuite contractor actuals</small></div>
             <div class="reference-card"><span>Remaining budget</span><strong id="financeContractorsKpi">--</strong><small>Contracted less actual</small></div>
           </div>
         </article>
@@ -212,14 +212,14 @@
         </article>
       </section>
 
-      <section class="tab-panel" data-panel="invoices" aria-label="Invoice History">
+      <section class="tab-panel" data-panel="invoices" aria-label="Check Request History">
         <header class="tab-intro">
           <div><span class="section-kicker">Payment operations</span><h2>Invoice tracking</h2></div>
-          <p>Compare workbook expectations with posted NetSuite invoices when the secured finance feed is available.</p>
+          <p>Compare workbook expectations with aggregate LandCare check requests from NetSuite.</p>
         </header>
         <article class="panel data-ledger">
           <div class="panel-head compact-head">
-            <div><h1>Invoice ledger</h1><p class="panel-sub" id="invoiceSummary">Loading selected-quarter invoices...</p></div>
+            <div><h1>Expected versus requested</h1><p class="panel-sub" id="invoiceSummary">Loading selected-quarter check requests...</p></div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="invoiceTable"></table>
@@ -258,7 +258,7 @@
         </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Expected versus actual by contractor</h1><p class="panel-sub">Actuals remain explicitly unavailable until NetSuite is connected.</p></div>
+            <div><h1>Expected versus actual by contractor</h1><p class="panel-sub">Actuals are aggregate check requests from NetSuite saved search 1618.</p></div>
           </div>
           <div class="grouped-chart" id="expenseIntensityChart" aria-label="Quarter expected cost by contractor"></div>
         </article>
@@ -278,6 +278,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260803-raw-completion-v2"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260804-netsuite-actuals-v1"></script>
   </body>
 </html>

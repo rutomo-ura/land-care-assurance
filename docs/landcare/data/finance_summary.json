@@ -1,8 +1,8 @@
 {
   "metadata": {
     "schema_version": 2,
-    "generated_on": "2026-07-29",
-    "source_kind": "landcare_budget_workbook",
+    "generated_on": "2026-08-04",
+    "source_kind": "landcare_budget_workbook_plus_netsuite_check_requests",
     "source_file": "\\\\ura-fs\\share\\Public\\LandCare\\Land Care Annual Budgeting and Contracting.xlsx",
     "workbook_sheets": [
       "2025 - 2027 Cycle",
@@ -11,7 +11,7 @@
     "postgres_table": "gis.land_care_budgeting_contracts",
     "loader_script": "URA-Data-Repository/ContractsDriveToSQL.py",
     "postgres_export_sql": "prototype/sql/export_landcare_finance_readonly.sql",
-    "note": "Workbook source is the same finance source loaded into PostgreSQL by ContractsDriveToSQL.py."
+    "note": "Workbook expectations are combined with aggregate-only NetSuite check requests from saved search 1618."
   },
   "summary": {
     "cycle_start_date": "2025-11-01",
@@ -295,11 +295,79 @@
       "mr_check_note": "Current amount OK; was $5,821.68 from Nov 23 - Jul 24, $5,758.40 for Aug 24, and $5,695.12 from Sep 24 on)"
     }
   ],
-  "actual_invoices": [],
+  "actual_invoices": [
+    {"invoice_id":"NS-2025-11-chatman-properties","period_month":"2025-11","posting_date":"2025-11-01","organization":"Chatman Properties","actual_amount":12125.27,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-11-ervin-home-beautification","period_month":"2025-11","posting_date":"2025-11-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-11-hilltop-rising","period_month":"2025-11","posting_date":"2025-11-01","organization":"Hilltop Rising","actual_amount":8808.72,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-11-krj-enterprises","period_month":"2025-11","posting_date":"2025-11-01","organization":"KRJ Enterprises","actual_amount":21950.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-12-chatman-properties","period_month":"2025-12","posting_date":"2025-12-01","organization":"Chatman Properties","actual_amount":16625.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-12-ervin-home-beautification","period_month":"2025-12","posting_date":"2025-12-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-12-hilltop-rising","period_month":"2025-12","posting_date":"2025-12-01","organization":"Hilltop Rising","actual_amount":15750.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-12-krj-enterprises","period_month":"2025-12","posting_date":"2025-12-01","organization":"KRJ Enterprises","actual_amount":17833.33,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2025-12-one-call-handles-it-all","period_month":"2025-12","posting_date":"2025-12-01","organization":"One Call Handles It All","actual_amount":5695.12,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-01-chatman-properties","period_month":"2026-01","posting_date":"2026-01-01","organization":"Chatman Properties","actual_amount":18125.0,"transaction_count":4,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-01-fhcv-contracting-llc-lawncare","period_month":"2026-01","posting_date":"2026-01-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":1390.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-01-krj-enterprises","period_month":"2026-01","posting_date":"2026-01-01","organization":"KRJ Enterprises","actual_amount":17833.33,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-01-one-call-handles-it-all","period_month":"2026-01","posting_date":"2026-01-01","organization":"One Call Handles It All","actual_amount":4583.34,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-02-chatman-properties","period_month":"2026-02","posting_date":"2026-02-01","organization":"Chatman Properties","actual_amount":1100.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-02-ervin-home-beautification","period_month":"2026-02","posting_date":"2026-02-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-02-krj-enterprises","period_month":"2026-02","posting_date":"2026-02-01","organization":"KRJ Enterprises","actual_amount":17833.33,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-02-one-call-handles-it-all","period_month":"2026-02","posting_date":"2026-02-01","organization":"One Call Handles It All","actual_amount":4583.34,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-chatman-properties","period_month":"2026-03","posting_date":"2026-03-01","organization":"Chatman Properties","actual_amount":35450.0,"transaction_count":5,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-ervin-home-beautification","period_month":"2026-03","posting_date":"2026-03-01","organization":"Ervin Home Beautification","actual_amount":8166.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-fhcv-contracting-llc-lawncare","period_month":"2026-03","posting_date":"2026-03-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":1390.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-hilltop-rising","period_month":"2026-03","posting_date":"2026-03-01","organization":"Hilltop Rising","actual_amount":47250.0,"transaction_count":3,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-krj-enterprises","period_month":"2026-03","posting_date":"2026-03-01","organization":"KRJ Enterprises","actual_amount":17833.33,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-one-call-handles-it-all","period_month":"2026-03","posting_date":"2026-03-01","organization":"One Call Handles It All","actual_amount":4583.34,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-03-operation-better-block","period_month":"2026-03","posting_date":"2026-03-01","organization":"Operation Better Block","actual_amount":4374.99,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-04-chatman-properties","period_month":"2026-04","posting_date":"2026-04-01","organization":"Chatman Properties","actual_amount":16625.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-04-ervin-home-beautification","period_month":"2026-04","posting_date":"2026-04-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-04-fhcv-contracting-llc-lawncare","period_month":"2026-04","posting_date":"2026-04-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":2780.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-04-krj-enterprises","period_month":"2026-04","posting_date":"2026-04-01","organization":"KRJ Enterprises","actual_amount":17833.33,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-04-one-call-handles-it-all","period_month":"2026-04","posting_date":"2026-04-01","organization":"One Call Handles It All","actual_amount":9166.68,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-amani-christian-cdc","period_month":"2026-05","posting_date":"2026-05-01","organization":"Amani Christian CDC","actual_amount":1532.12,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-center-that-cares","period_month":"2026-05","posting_date":"2026-05-01","organization":"Center That CARES","actual_amount":22034.65,"transaction_count":8,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-chatman-properties","period_month":"2026-05","posting_date":"2026-05-01","organization":"Chatman Properties","actual_amount":16625.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-ervin-home-beautification","period_month":"2026-05","posting_date":"2026-05-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-fhcv-contracting-llc-lawncare","period_month":"2026-05","posting_date":"2026-05-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":1390.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-hilltop-rising","period_month":"2026-05","posting_date":"2026-05-01","organization":"Hilltop Rising","actual_amount":16250.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-05-krj-enterprises","period_month":"2026-05","posting_date":"2026-05-01","organization":"KRJ Enterprises","actual_amount":42122.95,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-amani-christian-cdc","period_month":"2026-06","posting_date":"2026-06-01","organization":"Amani Christian CDC","actual_amount":9192.72,"transaction_count":6,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-center-that-cares","period_month":"2026-06","posting_date":"2026-06-01","organization":"Center That CARES","actual_amount":1500.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-chatman-properties","period_month":"2026-06","posting_date":"2026-06-01","organization":"Chatman Properties","actual_amount":16625.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-ervin-home-beautification","period_month":"2026-06","posting_date":"2026-06-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-fhcv-contracting-llc-lawncare","period_month":"2026-06","posting_date":"2026-06-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":1390.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-hilltop-rising","period_month":"2026-06","posting_date":"2026-06-01","organization":"Hilltop Rising","actual_amount":17691.53,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-one-call-handles-it-all","period_month":"2026-06","posting_date":"2026-06-01","organization":"One Call Handles It All","actual_amount":9166.68,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-06-operation-better-block","period_month":"2026-06","posting_date":"2026-06-01","organization":"Operation Better Block","actual_amount":4374.99,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-07-chatman-properties","period_month":"2026-07","posting_date":"2026-07-01","organization":"Chatman Properties","actual_amount":16625.0,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-07-ervin-home-beautification","period_month":"2026-07","posting_date":"2026-07-01","organization":"Ervin Home Beautification","actual_amount":4083.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-07-fhcv-contracting-llc-lawncare","period_month":"2026-07","posting_date":"2026-07-01","organization":"FHCV Contracting LLC & LawnCare","actual_amount":1390.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-07-hilltop-rising","period_month":"2026-07","posting_date":"2026-07-01","organization":"Hilltop Rising","actual_amount":15750.0,"transaction_count":1,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-07-krj-enterprises","period_month":"2026-07","posting_date":"2026-07-01","organization":"KRJ Enterprises","actual_amount":35666.33,"transaction_count":2,"reference":"NetSuite saved search 1618"},
+    {"invoice_id":"NS-2026-08-one-call-handles-it-all","period_month":"2026-08","posting_date":"2026-08-01","organization":"One Call Handles It All","actual_amount":4583.34,"transaction_count":1,"reference":"NetSuite saved search 1618"}
+  ],
+  "other_program_actuals": [
+    {"period_month":"2026-08","actual_amount":26334.11,"transaction_count":1}
+  ],
   "actual_invoice_source": {
-    "status": "unavailable",
-    "message": "NetSuite actual invoices have not been configured for this published snapshot.",
-    "refreshed_at": null
+    "status": "available",
+    "source_system": "NetSuite",
+    "saved_search_name": "All URA LandCare Check Requests",
+    "saved_search_id": "1618",
+    "account": "66220 Property Management : Lawn Maintenance",
+    "refreshed_at": "2026-08-04",
+    "publication_grain": "month and current-cycle contractor",
+    "privacy_note": "Public output excludes document numbers, memos, and transaction-level vendor records.",
+    "source_record_count": 628,
+    "source_total": 4538233.89,
+    "current_cycle_record_count": 85,
+    "current_cycle_total": 618513.87,
+    "current_cycle_contractor_record_count": 84,
+    "current_cycle_contractor_total": 592179.76,
+    "current_cycle_other_record_count": 1,
+    "current_cycle_other_total": 26334.11,
+    "latest_transaction_date": "2026-08-04"
   },
   "owner_quarter_responsibility": [
     {

@@ -126,7 +126,8 @@ flowchart TD
 | Current URA-owned LandCare parcels | AGOL `gisdb_gis_epp_parcels_full` | Latest month from published GeoJSON |
 | Returned survey evidence | AGOL `gisdb_gis_regrid_surveys` via [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) for all-period evidence | Postgres export in published GeoJSON |
 | Assignment denominator (org, level, open count) | AGOL `gisdb_gis_regrid_bundle_assignments_history`; current snapshot item `0b4733cb5d204da6ab936c9f6d49e401` | Published `all_months.geojson` / export JSON |
-| Finance, contract, invoice metrics | Published `finance_summary.json` | None |
+| Finance and contract expectations | LandCare budgeting workbook in published `finance_summary.json` | None |
+| Actual LandCare check requests | NetSuite saved search 1618, sanitized into published `finance_summary.json` | Workbook forecast remains visible if the NetSuite extract is unavailable |
 | Available survey months | AGOL `period_label` stats + published manifest | Published manifest only |
 
 Implementation files:
@@ -147,7 +148,7 @@ Generated daily by the VM refresh when Postgres or finance inputs change:
 | `monthly_metrics.json` | Completion rates by month | KPI timeline (latest month enriched live in browser) |
 | `contractor_monthly.json` | Contractor completion by month | KPI contractor charts |
 | `kpi_summary.json` | Summary metadata and latest metrics | KPI header cards |
-| `finance_summary.json` | Budget and contract totals | Finance tabs |
+| `finance_summary.json` | Workbook expectations plus aggregate NetSuite check-request actuals | Finance tabs |
 | `refresh_manifest.json` | Freshness, counts, survey metadata | QA validation; status JSON upstream block |
 
 Survey **complete** counts for the selected service period can change daily in the browser even when these files are unchanged, because the web app queries AGOL at load time. The current Map and KPI numerator is the raw number of survey records whose normalized parcel key matches an assignment; unique parcel counts are diagnostic only.
@@ -160,7 +161,8 @@ Survey **complete** counts for the selected service period can change daily in t
 | What does the web map show for complete surveys- | Live AGOL survey layer matched to the selected assignment keys (daily refresh from upstream) |
 | What parcels were assigned for a reporting month- | GISDB `gis.regrid_bundle_assignments` published to AGOL assignment current/history snapshots; checked-in export is fallback/cache |
 | What is the current LandCare parcel universe today- | Live AGOL `gisdb_gis_epp_parcels_full` |
-| What are finance and contract totals- | LandCare budgeting workbook → `finance_summary.json` |
+| What are finance and contract totals? | LandCare budgeting workbook → `finance_summary.json` |
+| What actual check requests were recorded? | NetSuite saved search 1618 → aggregate-only `finance_summary.json` |
 | What should Power BI consume- | Same published JSON contract; consider mirroring live survey layer for latest-month returned counts |
 
 ## Platform Responsibilities

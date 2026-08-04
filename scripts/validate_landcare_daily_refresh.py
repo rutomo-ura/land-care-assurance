@@ -192,8 +192,17 @@ def validate_finance_summary(finance: dict[str, Any]) -> None:
         if invoice_id in invoice_ids:
             raise ValidationError(f"finance_summary.json has duplicate invoice ID {invoice_id!r}")
         invoice_ids.add(invoice_id)
+        period_month = str(invoice.get("period_month") or "")
+        if len(period_month) != 7 or period_month[4] != "-" or not period_month[:4].isdigit() or period_month[5:] not in {f"{month:02d}" for month in range(1, 13)}:
+            raise ValidationError(f"finance_summary.json has invalid actual invoice period {period_month!r}")
+        if not invoice.get("organization") or not isinstance(invoice.get("actual_amount"), (int, float)):
+            raise ValidationError(f"finance_summary.json has an invalid aggregate actual invoice {invoice_id!r}")
     if actual_source.get("status") == "available" and not invoices:
         warnings.warn("NetSuite source is marked available but contains no invoice rows.", stacklevel=2)
+    if actual_source.get("status") == "available":
+        published_total = round(sum(float(invoice["actual_amount"]) for invoice in invoices), 2)
+        if published_total != actual_source.get("current_cycle_contractor_total"):
+            raise ValidationError("finance_summary.json NetSuite contractor aggregates do not reconcile to source metadata")
 
 
 def validate_quarterly_metrics(payload: Any) -> None:
