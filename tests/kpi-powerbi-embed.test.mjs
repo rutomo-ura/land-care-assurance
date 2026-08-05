@@ -21,6 +21,13 @@ test("secure embed targets the Land Care Budget report page", () => {
   assert.match(html, />Open in Power BI<\/a>/);
 });
 
+test("secure embed targets the Parcel Area Distribution report page", () => {
+  assert.match(html, /id="powerBiParcelAreaFrame"/);
+  assert.match(html, /pageName=4a5502453e9080b7a655/);
+  assert.match(html, /groups\/me\/reports\/2d592a10-7083-470a-96aa-41fbdc59218c\/4a5502453e9080b7a655/);
+  assert.doesNotMatch(html, /view\?r=/);
+});
+
 test("removes hidden context controls from layout", async () => {
   const css = await readFile(new URL("../docs/landcare/app.css", import.meta.url), "utf8");
   assert.match(css, /\.report-context \[hidden\] \{ display: none; \}/);
@@ -29,7 +36,9 @@ test("removes hidden context controls from layout", async () => {
 
 test("loads Power BI only when its tab is selected", () => {
   assert.match(html, /id="powerBiBudgetFrame"[\s\S]+data-src=/);
+  assert.match(html, /id="powerBiParcelAreaFrame"[\s\S]+data-src=/);
   assert.match(script, /tab === "powerBiBudget"/);
+  assert.match(script, /tab === "areaDistribution"/);
   assert.match(script, /!frame\.hasAttribute\("src"\)/);
   assert.match(script, /frame\.src = frame\.dataset\.src/);
 });

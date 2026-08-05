@@ -190,9 +190,27 @@
           <div><span class="section-kicker">Contract compliance</span><h2>Parcel area compliance</h2></div>
           <p>Track contractor assignment square footage against the approved beginning-of-contract ±10% threshold.</p>
         </header>
+        <article class="powerbi-embed-shell" aria-label="Power BI Parcel Area Distribution report frame">
+          <div class="powerbi-embed-toolbar">
+            <div>
+              <strong>Live Parcel Area Distribution</strong>
+              <span>URA sign-in is required. The report follows existing Power BI permissions.</span>
+            </div>
+            <a class="export-button" href="https://app.powerbi.com/groups/me/reports/2d592a10-7083-470a-96aa-41fbdc59218c/4a5502453e9080b7a655" target="_blank" rel="noopener noreferrer">Open in Power BI</a>
+          </div>
+          <div class="powerbi-frame-wrap">
+            <iframe
+              id="powerBiParcelAreaFrame"
+              title="Power BI Parcel Area Distribution report"
+              data-src="https://app.powerbi.com/reportEmbed?reportId=2d592a10-7083-470a-96aa-41fbdc59218c&amp;groupId=A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5&amp;autoAuth=true&amp;ctid=c77df146-c538-49e4-9577-c9ee1d243d16&amp;pageName=4a5502453e9080b7a655&amp;navContentPaneEnabled=false&amp;filterPaneEnabled=false"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen></iframe>
+          </div>
+        </article>
         <article class="panel analysis-workspace">
           <div class="panel-head compact-head">
-            <div><h1>Contractor square-foot compliance</h1><p class="panel-sub" id="areaDistributionSummary">Selected-month assignment square footage and contractual limits</p></div>
+            <div><h1>Inspectable contractor table</h1><p class="panel-sub" id="areaDistributionSummary">Selected-month assignment square footage and contractual limits</p></div>
           </div>
           <div class="grouped-chart" id="areaDistributionChart" aria-label="Contractor parcel-area compliance"></div>
           <div class="data-table-wrap"><table class="data-table" id="areaComplianceTable"></table></div>
@@ -230,6 +248,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260805-kpi-handover-v3"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260805-parcel-area-v1"></script>
   </body>
 </html>

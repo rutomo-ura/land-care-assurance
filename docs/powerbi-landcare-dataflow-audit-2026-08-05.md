@@ -1,7 +1,7 @@
 # Power BI LandCare data-flow audit
 
 **Audit date:** August 5, 2026  
-**Scope:** Land Care Budget only. Maintenance Expenses and Maintenance Check Requests are excluded.
+**Scope:** Land Care Budget and Parcel Area Distribution. Maintenance Expenses and Maintenance Check Requests are excluded.
 
 ## Handover conclusion
 
@@ -26,6 +26,8 @@ flowchart LR
 | Report freshness | Power BI header showed `Data updated 8/5/26` |
 | Report filter | `Item Type is Landcare`; Maintenance Expenses is a separate report page |
 | Report reconciliation | `$458,995.17 = $188,579.00 + $192,318.50 + $78,097.67`; `$458,995.17 / $775,000.00 = 59.23%` |
+| Parcel Area page | `4a5502453e9080b7a655`, titled **Parcel Area Distribution**; the visual exposes **Show as a table** and **Export data** to authorized viewers |
+| Parcel Area spot checks | July 15, 2026 showed Amani at `78,546` sq ft against a `78,546` baseline; Chatman showed `2,019,558` sq ft against a `2,019,758` baseline |
 | Public JSON state | August 4 file has no `semantic_summary` and identifies NetSuite/workbook as its source |
 | Workspace access | Shared report is viewable; configured workspace is not accessible to the audited user |
 | VM proof | Production task status, secret-name configuration, and `powerbi-finance-check.json` were not available on this workstation |
@@ -37,6 +39,12 @@ The KPI iframe used a valid report ID but the wrong page ID. Power BI therefore 
 ## Ownership table finding
 
 The quarterly page combined assignment ownership rows with finance fields that were not populated in the published contract. This produced repeated `Unavailable` cells. The handover version shows only source-backed fields: owner, parcels, and parcel share. Unsupported fields are also removed from the CSV export.
+
+## Parcel Area implementation
+
+The prior native Parcel Area table was empty because the published `area_compliance.json` contained null square-foot values. The runtime table now aggregates unique parcel square footage from the live ArcGIS assignment history and joins it to the Power BI-validated contract baselines. The secure Power BI Parcel Area Distribution page appears above the native table for governed trend review.
+
+This is intentionally not live browser scraping. A browser session is useful for a one-time comparison, but it cannot safely support the unattended 7 AM job. A future direct Power BI area extract should use the existing certificate-authenticated semantic-model path, publish only contractor/month aggregates, and reconcile them before replacing the current source split.
 
 ## Production sign-off
 

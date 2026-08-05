@@ -9,6 +9,7 @@ The Power BI **Land Care Budget** semantic model is the intended authoritative f
 | Workspace | `GIS Dashboards` (`A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5`) |
 | Semantic model | `924c6c0b-6e29-41cf-9775-562ca646953a` |
 | Land Care Budget page | `fe756b7016e6baa7351e` |
+| Parcel Area Distribution page | `4a5502453e9080b7a655` |
 | Required filter | `LandCare Check Requests[Item Type] = Landcare` |
 | Excluded page/scope | Maintenance Expenses |
 | Public grain | Year, quarter, and month by contractor |
@@ -16,6 +17,10 @@ The Power BI **Land Care Budget** semantic model is the intended authoritative f
 The native public KPI views never call the Power BI API. They read the sanitized GitHub Pages JSON contract, so Entra credentials and model permissions remain on the VM. The separate Land Care Budget tab is a secure Microsoft-authenticated iframe and follows each viewer's Power BI permissions.
 
 The KPI page embeds report page `fe756b7016e6baa7351e`, which is the **Land Care Budget** page. Page `8c93bab49c96aa8e3bd2` is the Maintenance Check Requests page and must not be used. The iframe is not Publish to web. Overview, Quarterly Reporting, and Parcel Area remain native operational views, while the former Budget, Check Requests, and Expenses tabs are consolidated into this embedded finance workspace.
+
+The Parcel Area tab also embeds the secure **Parcel Area Distribution** page, `4a5502453e9080b7a655`. Its inspectable table is populated independently: selected-month assigned square footage comes from the live ArcGIS assignment history `sq_footage` field, and the beginning-of-contract baseline comes from the Power BI-validated contract snapshot in `finance_summary.json`. This split is shown in the page source note because the live ArcGIS assignment total can differ from the governed Power BI historical series.
+
+Do not automate the authenticated report DOM or a browser CSV download. Power BI's **Show as a table** and **Export data** actions are useful for supervised reconciliation, but unattended extraction must use the semantic model Execute Queries API. Browser markup, visual identifiers, sessions, and download behavior are not a stable data contract.
 
 ## Deployment status audited August 5, 2026
 

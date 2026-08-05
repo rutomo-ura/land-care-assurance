@@ -31,6 +31,7 @@ import {
   semanticQuarterSummary,
   semanticYearSummary
 } from "./finance-semantic.js?v=20260804-powerbi-semantic-v1";
+import { buildLiveAreaCompliance } from "./area-compliance.js?v=20260805-parcel-area-v1";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -1245,11 +1246,11 @@ function renderAreaCompliance(areaCompliance, financeSummary, selectedMonth) {
     { label: "Variance", value: (row) => row.variance_pct === null ? "Unavailable" : formatPct(row.variance_pct) },
     { label: "Status", value: (row) => String(row.compliance_status || "baseline_unavailable").replaceAll("_", " ") }
   ], rows);
-  document.getElementById("areaComplianceSourceNote").textContent = areaCompliance?.metadata?.source_status === "available"
-    ? "Approved Power BI beginning-of-contract baselines applied."
-    : "Baseline unavailable: Power BI beginning-of-contract square-foot import is required before compliance can be evaluated.";
-  if (financeSummary.contract_area_baseline_source?.status === "partially_available") {
-    document.getElementById("areaComplianceSourceNote").textContent = `${financeSummary.contract_area_baseline_source.message} Current assignment square footage is still required for compliance.`;
+  const note = document.getElementById("areaComplianceSourceNote");
+  if (areaCompliance?.metadata?.source_status === "available") {
+    note.textContent = "Assigned area: live ArcGIS assignment history. Baseline and ±10% range: Power BI-validated contract snapshot. Use the embedded Power BI report above for the governed historical trend.";
+  } else {
+    note.textContent = "Parcel-area data is temporarily unavailable. Use the embedded Power BI report above while the live ArcGIS assignment source is checked.";
   }
 }
 
@@ -1702,13 +1703,14 @@ async function loadData() {
   const liveQuarterlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveQuarterlyMetrics(mergedGeojson, liveMonthlyMetrics)
     : null;
+  const liveAreaCompliance = buildLiveAreaCompliance(mergedGeojson, financeSummary);
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     quarterlyMetrics: liveQuarterlyMetrics || quarterlyMetrics,
-    areaCompliance,
+    areaCompliance: liveAreaCompliance.rows.length ? liveAreaCompliance : areaCompliance,
     summary: enrichedSummary,
     currentMetrics,
     assignmentGeojson: mergedGeojson,
@@ -1754,8 +1756,8 @@ async function main() {
     document.getElementById("quarterControl").hidden = !usesQuarter;
   };
 
-  const loadPowerBiBudgetEmbed = () => {
-    const frame = document.getElementById("powerBiBudgetFrame");
+  const loadPowerBiEmbed = (frameId) => {
+    const frame = document.getElementById(frameId);
     if (frame && !frame.hasAttribute("src")) frame.src = frame.dataset.src;
   };
 
@@ -1800,7 +1802,8 @@ async function main() {
   await renderSelectedMonth();
   setupTabs((tab) => {
     setContextControls(tab);
-    if (tab === "powerBiBudget") loadPowerBiBudgetEmbed();
+    if (tab === "areaDistribution") loadPowerBiEmbed("powerBiParcelAreaFrame");
+    if (tab === "powerBiBudget") loadPowerBiEmbed("powerBiBudgetFrame");
     renderQuarterScoped();
   });
   setContextControls("landing");
