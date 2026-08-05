@@ -18,7 +18,7 @@ The native public KPI views never call the Power BI API. They read the sanitized
 
 The KPI page embeds report page `fe756b7016e6baa7351e`, which is the **Land Care Budget** page. Page `8c93bab49c96aa8e3bd2` is the Maintenance Check Requests page and must not be used. The iframe is not Publish to web. Overview, Quarterly Reporting, and Parcel Area remain native operational views, while the former Budget, Check Requests, and Expenses tabs are consolidated into this embedded finance workspace.
 
-The Parcel Area tab also embeds the secure **Parcel Area Distribution** page, `4a5502453e9080b7a655`. Its inspectable table is populated independently: selected-month assigned square footage comes from the live ArcGIS assignment history `sq_footage` field, and the beginning-of-contract baseline comes from the Power BI-validated contract snapshot in `finance_summary.json`. This split is shown in the page source note because the live ArcGIS assignment total can differ from the governed Power BI historical series.
+The Parcel Area tab also embeds the secure **Parcel Area Distribution** page, `4a5502453e9080b7a655`. Its inspectable table accepts only `finance_summary.json.semantic_area_summary` rows whose `source_system` is `Power BI semantic model`. ArcGIS assignment square footage is not used as a substitute because it can differ from the governed report.
 
 Do not automate the authenticated report DOM or a browser CSV download. Power BI's **Show as a table** and **Export data** actions are useful for supervised reconciliation, but unattended extraction must use the semantic model Execute Queries API. Browser markup, visual identifiers, sessions, and download behavior are not a stable data contract.
 
@@ -65,13 +65,17 @@ August 4, 2026 acceptance values are `$458,995.17` spent, `$775,000.00` limit, `
    LANDCARE_POWERBI_CERTIFICATE_THUMBPRINT=
    LANDCARE_POWERBI_WORKSPACE_ID=A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5
    LANDCARE_POWERBI_DATASET_ID=924c6c0b-6e29-41cf-9775-562ca646953a
+   LANDCARE_POWERBI_AREA_QUERY_PATH=C:\srv\secrets\powerbi\landcare-parcel-area.dax
    ```
+
+   The area query is not secret, but the secured operations folder keeps VM configuration together. The reviewed DAX must return these aliases: `Period` or `PeriodMonth`, `Organization`, `AssignedSquareFeet`, and `BaselineArea`. It may also return `AssignedParcels`, `Lower`, and `Upper`. The extractor publishes only these aggregates at month-and-contractor grain.
 
 6. Run `python scripts/extract_landcare_powerbi_semantic.py --status-output C:\srv\logs\land-care-assurance\powerbi-finance-check.json`, then run the dashboard validator.
 
 ## Failure recovery and rollback
 
 - The extractor first confirms that the latest semantic-model refresh completed. A failed or in-progress model is not published.
+- If `LANDCARE_POWERBI_AREA_QUERY_PATH` is absent, finance extraction may continue but native Parcel Area metrics remain unavailable. The secure report is still usable. If a prior successful Power BI area extract exists, it is retained and marked stale.
 - Query or authentication failure retains the last successful finance values, marks `feed_status` as `stale`, and lets the GIS refresh continue.
 - Review the sanitized `power_bi_finance` block in `daily-refresh-status.json`. Tokens, certificates, assertions, raw responses, documents, and memos must never be logged or committed.
 - Rotate the certificate by uploading the replacement public certificate, updating the secured path/thumbprint, testing one manual extraction, then removing the old certificate.

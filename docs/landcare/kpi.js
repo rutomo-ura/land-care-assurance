@@ -31,7 +31,7 @@ import {
   semanticQuarterSummary,
   semanticYearSummary
 } from "./finance-semantic.js?v=20260804-powerbi-semantic-v1";
-import { buildLiveAreaCompliance } from "./area-compliance.js?v=20260805-parcel-area-v1";
+import { buildPowerBiAreaCompliance } from "./area-compliance.js?v=20260805-powerbi-area-v2";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -1002,12 +1002,18 @@ function renderContractorGroupedChart(rows, selected = "all", latestMonth = "") 
 }
 
 function renderAreaDistribution(rows, selectedMonth) {
+  if (!rows.length) {
+    document.getElementById("areaDistributionChart").innerHTML = '<p class="chart-empty-state">Power BI parcel-area values are not available for this month. Use the secure report above.</p>';
+    const summary = document.getElementById("areaDistributionSummary");
+    if (summary) summary.textContent = `${shortMonth(selectedMonth)} · awaiting Power BI aggregate export`;
+    return;
+  }
   const maxSquareFeet = Math.max(1, ...rows.map((row) => Number(row.assigned_sqft || 0)));
   document.getElementById("areaDistributionChart").innerHTML = rows.map((row) => `
     <div class="grouped-row single-bar-row">
       <div class="grouped-label">
         <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-        <span>${formatNumber(row.assigned_parcels)} parcels · ${escapeHtml(String(row.compliance_status || "baseline_unavailable").replaceAll("_", " "))}</span>
+        <span>${row.assigned_parcels === null ? "Power BI" : `${formatNumber(row.assigned_parcels)} parcels`} · ${escapeHtml(String(row.compliance_status || "baseline_unavailable").replaceAll("_", " "))}</span>
       </div>
       <div class="grouped-bars">
         <span class="grouped-bar assigned" style="width:${Math.max((100 * Number(row.assigned_sqft || 0)) / maxSquareFeet, 2)}%"></span>
@@ -1235,10 +1241,11 @@ function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuar
   document.getElementById("quarterOwnershipNote").textContent = `${quarterLabelFromKey(selectedQuarter)} ownership distribution from assignment parcels`;
 }
 
-function renderAreaCompliance(areaCompliance, financeSummary, selectedMonth) {
+function renderAreaCompliance(areaCompliance, selectedMonth) {
   const rows = (areaCompliance?.rows || []).filter((row) => row.period_month === selectedMonth);
   renderAreaDistribution(rows, selectedMonth);
-  renderTable(document.getElementById("areaComplianceTable"), [
+  const table = document.getElementById("areaComplianceTable");
+  renderTable(table, [
     { label: "Contractor", value: (row) => shortContractor(row.organization) },
     { label: "Assigned square feet", value: (row) => formatSquareFeet(row.assigned_sqft) },
     { label: "Baseline", value: (row) => formatSquareFeet(row.baseline_sqft) },
@@ -1246,11 +1253,16 @@ function renderAreaCompliance(areaCompliance, financeSummary, selectedMonth) {
     { label: "Variance", value: (row) => row.variance_pct === null ? "Unavailable" : formatPct(row.variance_pct) },
     { label: "Status", value: (row) => String(row.compliance_status || "baseline_unavailable").replaceAll("_", " ") }
   ], rows);
+  if (!rows.length) {
+    table.querySelector("tbody").innerHTML = '<tr><td colspan="6">Power BI parcel-area aggregates are not available for the selected month.</td></tr>';
+  }
   const note = document.getElementById("areaComplianceSourceNote");
   if (areaCompliance?.metadata?.source_status === "available") {
-    note.textContent = "Assigned area: live ArcGIS assignment history. Baseline and ±10% range: Power BI-validated contract snapshot. Use the embedded Power BI report above for the governed historical trend.";
+    const freshness = areaCompliance.metadata.dataset_refreshed_at ? ` Refreshed ${areaCompliance.metadata.dataset_refreshed_at}.` : "";
+    const stale = areaCompliance.metadata.feed_status === "stale" ? " Retained last successful extract." : "";
+    note.textContent = `Source: Power BI Parcel Area Distribution semantic model.${freshness}${stale}`;
   } else {
-    note.textContent = "Parcel-area data is temporarily unavailable. Use the embedded Power BI report above while the live ArcGIS assignment source is checked.";
+    note.textContent = "Native table withheld because a Power BI parcel-area aggregate has not been published. Use the secure Power BI report above.";
   }
 }
 
@@ -1626,14 +1638,13 @@ function setupTabs(onTabChange = null) {
 }
 
 async function loadData() {
-  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, quarterlyMetrics, areaCompliance, currentMetrics, allMonthsGeojson, surveyPeriodStats, assignmentCurrentMetadata, assignmentHistoryMetadata, assignmentPeriodStats, assignmentHistoryResult] =
+  const [monthlyMetrics, contractorMonthlyRaw, summary, financeSummary, quarterlyMetrics, currentMetrics, allMonthsGeojson, surveyPeriodStats, assignmentCurrentMetadata, assignmentHistoryMetadata, assignmentPeriodStats, assignmentHistoryResult] =
     await Promise.all([
       fetch(`${DATA_ROOT}/monthly_metrics.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/contractor_monthly.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/kpi_summary.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/finance_summary.json`).then((response) => response.json()),
       fetch(`${DATA_ROOT}/quarterly_metrics.json`).then((response) => response.json()),
-      fetch(`${DATA_ROOT}/area_compliance.json`).then((response) => response.json()),
       loadCurrentArcgisMetrics(),
       fetch(`${DATA_ROOT}/all_months.geojson`).then((response) => response.json()),
       fetchSurveyPeriodStats().catch(() => []),
@@ -1703,14 +1714,14 @@ async function loadData() {
   const liveQuarterlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveQuarterlyMetrics(mergedGeojson, liveMonthlyMetrics)
     : null;
-  const liveAreaCompliance = buildLiveAreaCompliance(mergedGeojson, financeSummary);
+  const powerBiAreaCompliance = buildPowerBiAreaCompliance(financeSummary);
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     quarterlyMetrics: liveQuarterlyMetrics || quarterlyMetrics,
-    areaCompliance: liveAreaCompliance.rows.length ? liveAreaCompliance : areaCompliance,
+    areaCompliance: powerBiAreaCompliance,
     summary: enrichedSummary,
     currentMetrics,
     assignmentGeojson: mergedGeojson,
@@ -1781,7 +1792,7 @@ async function main() {
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
-    renderAreaCompliance(areaCompliance, financeSummary, selectedMonth);
+    renderAreaCompliance(areaCompliance, selectedMonth);
     renderQuarterScoped();
 
     document.getElementById("contractorSelect").onchange = (event) => {

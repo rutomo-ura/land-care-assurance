@@ -23,8 +23,8 @@ This is the operating glossary for the monitoring map, KPI dashboard, daily refr
 | Finance annual run rate | Annualized current contract invoice run rate | `finance_summary.json.summary.annual_invoice_run_rate` | $775,000 |
 | LandCare amount spent | Check-request amount classified as `Item Type = Landcare` | Power BI `LandCare Check Requests[Cumulative Total Sum]`, published in `finance_summary.json.semantic_summary` | $458,995.17 on August 4, 2026 |
 | Percentage of yearly limit | `LandCare amount spent / Power BI yearly limit` | Power BI semantic measure, reconciled again during extraction | 59.23% on August 4, 2026 |
-| Assigned parcel area by contractor | Sum of unique assignment parcel `sq_footage` for the selected month and contractor | Live AGOL assignment history | Native Parcel Area table |
-| Parcel-area contract baseline | Beginning-of-contract square footage with an allowed ±10% range | Power BI Parcel Area Distribution-validated contract snapshot | Compliance reference, not a live assignment total |
+| Assigned parcel area by contractor | Governed selected-month contractor aggregate from the Parcel Area Distribution model | Power BI semantic model `semantic_area_summary` | Native Parcel Area table; withheld when the semantic extract is unavailable |
+| Parcel-area contract baseline | Beginning-of-contract square footage with an allowed ±10% range | Power BI Parcel Area Distribution semantic model | Native Parcel Area compliance reference |
 
 ## Source Ownership
 
@@ -35,7 +35,7 @@ This is the operating glossary for the monitoring map, KPI dashboard, daily refr
 | What survey records exist for a service period? | Live AGOL all-period survey layer | Raw record count is available for the selected filter. |
 | What should completion rate use? | Live assignment denominator plus raw assignment-matched survey records | Keep the same raw matched numerator in Map, KPI cards, trends, and line charts. |
 | What should finance use? | Power BI Land Care Budget semantic model with `Item Type = Landcare` | NetSuite is upstream; the workbook and saved search are reconciliation references. Finance scope is not the assignment denominator. |
-| What should parcel-area compliance use? | Live AGOL assignment square footage compared with the Power BI-validated contract baseline | The embedded Power BI Parcel Area page is the governed historical comparison; do not silently substitute one source for the other. |
+| What should parcel-area compliance use? | Power BI Parcel Area Distribution semantic aggregates only | Do not substitute ArcGIS assignment square footage when the Power BI area feed is unavailable. |
 
 ## Reconciliation Rules
 

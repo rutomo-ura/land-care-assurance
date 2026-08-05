@@ -1,51 +1,53 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildLiveAreaCompliance } from "../docs/landcare/area-compliance.js";
+import { buildPowerBiAreaCompliance } from "../docs/landcare/area-compliance.js";
 
 const finance = {
-  contract_area_baselines: [
-    { organization: "Amani Christian CDC", baseline_sqft: 1000 },
-    { organization: "Chatman Properties", baseline_sqft: 2000 }
-  ],
-  contract_area_baseline_source: { refreshed_at: "2026-07-29" }
+  semantic_area_summary: {
+    status: "available",
+    feed_status: "current",
+    source_system: "Power BI semantic model",
+    dataset_refreshed_at: "2026-08-05T07:00:00Z",
+    rows: [
+      { period_month: "2026-07", organization: "Amani Christian CDC", assigned_sqft: 1050, baseline_sqft: 1000 },
+      { period_month: "2026-07", organization: "Chatman Properties", assigned_sqft: 2500, baseline_sqft: 2000 }
+    ]
+  }
 };
 
-function feature(period, organization, parcel, squareFeet) {
-  return { properties: { period_month: period, organization, parcel_digits: parcel, parcel_sqft: squareFeet } };
-}
-
-test("aggregates unique live assignment parcels and applies Power BI baselines", () => {
-  const result = buildLiveAreaCompliance({ features: [
-    feature("2026-07", "Amani Christian CDC", "A", 550),
-    feature("2026-07", "Amani Christian CDC", "B", 500),
-    feature("2026-07", "Amani Christian CDC", "B", 500),
-    feature("2026-07", "Chatman Properties Primary Contact", "C", 2500),
-    feature("2026-07", "Unassigned", "D", 100)
-  ] }, finance);
-
+test("builds compliance only from Power BI semantic aggregates", () => {
+  const result = buildPowerBiAreaCompliance(finance);
   assert.equal(result.metadata.source_status, "available");
+  assert.equal(result.metadata.source_system, "Power BI semantic model");
   assert.equal(result.rows.length, 2);
   const amani = result.rows.find((row) => row.organization === "Amani Christian CDC");
-  assert.equal(amani.assigned_parcels, 2);
   assert.equal(amani.assigned_sqft, 1050);
   assert.equal(amani.lower_limit_sqft, 900);
   assert.equal(amani.upper_limit_sqft, 1100);
   assert.equal(amani.variance_pct, 5);
   assert.equal(amani.compliance_status, "within_tolerance");
-  const chatman = result.rows.find((row) => row.organization === "Chatman Properties");
-  assert.equal(chatman.compliance_status, "above_tolerance");
+  assert.equal(result.rows.find((row) => row.organization === "Chatman Properties").compliance_status, "above_tolerance");
 });
 
-test("retains rows when a contractor baseline is unavailable", () => {
-  const result = buildLiveAreaCompliance({ features: [feature("2026-07", "New Contractor", "X", 400)] }, finance);
-  assert.equal(result.rows[0].baseline_sqft, null);
-  assert.equal(result.rows[0].variance_pct, null);
-  assert.equal(result.rows[0].compliance_status, "baseline_unavailable");
+test("rejects a non-Power-BI source instead of substituting values", () => {
+  const result = buildPowerBiAreaCompliance({
+    semantic_area_summary: { status: "available", source_system: "ArcGIS", rows: finance.semantic_area_summary.rows }
+  });
+  assert.equal(result.metadata.source_status, "unavailable");
+  assert.deepEqual(result.rows, []);
 });
 
-test("returns unavailable metadata for an empty assignment feed", () => {
-  const result = buildLiveAreaCompliance({ features: [] }, finance);
+test("preserves stale Power BI aggregates with visible freshness metadata", () => {
+  const result = buildPowerBiAreaCompliance({
+    semantic_area_summary: { ...finance.semantic_area_summary, feed_status: "stale" }
+  });
+  assert.equal(result.metadata.feed_status, "stale");
+  assert.equal(result.rows.length, 2);
+});
+
+test("returns unavailable when no semantic parcel-area contract exists", () => {
+  const result = buildPowerBiAreaCompliance({});
   assert.equal(result.metadata.source_status, "unavailable");
   assert.deepEqual(result.rows, []);
 });

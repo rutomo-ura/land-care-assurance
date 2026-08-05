@@ -43,6 +43,23 @@ class FakeClient:
                 "[TwelveMonthContractAmount]": 775000.00,
                 "[ProjectedYearlyLimit]": 775000.00,
             }]
+        if dax == "AREA QUERY":
+            return [
+                {
+                    "[Period]": "2026-07-15",
+                    "[Organization]": "Amani Christian CDC",
+                    "[AssignedSquareFeet]": 78546,
+                    "[BaselineArea]": 78546,
+                    "[Lower]": 70691,
+                    "[Upper]": 86401,
+                },
+                {
+                    "[Period]": "2026-07-15",
+                    "[Organization]": "Chatman Properties",
+                    "[AssignedSquareFeet]": 2019558,
+                    "[BaselineArea]": 2019758,
+                },
+            ]
         raise AssertionError("unexpected DAX")
 
 
@@ -105,6 +122,42 @@ def test_semantic_extraction_matches_landcare_budget_baseline(tmp_path):
     assert "Maintenance" not in serialized
     assert "tenant" not in serialized
     assert "thumbprint" not in serialized
+
+
+def test_semantic_extraction_publishes_powerbi_parcel_area_rows(tmp_path):
+    finance_path = tmp_path / "finance_summary.json"
+    finance_path.write_text(json.dumps({
+        "metadata": {"generated_on": "2026-08-03"},
+        "summary": {"cycle_start_date": "2025-11-01"},
+        "current_contracts": [{"organization": "Amani Christian CDC", "parcels": 37}],
+    }), encoding="utf-8")
+    query_path = tmp_path / "area.dax"
+    query_path.write_text("AREA QUERY\n", encoding="utf-8")
+    cfg = config(tmp_path)
+    cfg = MODULE.PowerBIConfig(
+        tenant_id=cfg.tenant_id,
+        client_id=cfg.client_id,
+        certificate_path=cfg.certificate_path,
+        certificate_thumbprint=cfg.certificate_thumbprint,
+        area_query_path=query_path,
+    )
+
+    status = MODULE.run(
+        cfg,
+        finance_path,
+        client=FakeClient(),
+        now=datetime(2026, 8, 5, 11, 0, tzinfo=timezone.utc),
+    )
+    payload = json.loads(finance_path.read_text(encoding="utf-8"))
+    area = payload["semantic_area_summary"]
+
+    assert status["area_feed_status"] == "current"
+    assert area["source_system"] == "Power BI semantic model"
+    assert area["page_id"] == "4a5502453e9080b7a655"
+    assert area["rows"][0]["assigned_sqft"] == 78546.0
+    assert area["rows"][1]["assigned_sqft"] == 2019558.0
+    assert area["rows"][1]["lower_limit_sqft"] == pytest.approx(1817782.2)
+    assert area["rows"][1]["upper_limit_sqft"] == pytest.approx(2221733.8)
 
 
 def test_reconciliation_rejects_semantic_metric_drift(tmp_path):

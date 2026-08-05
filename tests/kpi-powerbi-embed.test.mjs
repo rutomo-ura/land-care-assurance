@@ -43,6 +43,12 @@ test("loads Power BI only when its tab is selected", () => {
   assert.match(script, /frame\.src = frame\.dataset\.src/);
 });
 
+test("native Parcel Area metrics do not substitute ArcGIS square footage", () => {
+  assert.match(script, /buildPowerBiAreaCompliance\(financeSummary\)/);
+  assert.doesNotMatch(script, /buildLiveAreaCompliance/);
+  assert.match(script, /Power BI parcel-area aggregates are not available for the selected month/);
+});
+
 test("quarterly ownership table only exposes populated parcel fields", () => {
   const start = script.indexOf("function renderQuarterlyReporting");
   const end = script.indexOf("function renderAreaCompliance");
