@@ -43,15 +43,16 @@ test("loads Power BI only when its tab is selected", () => {
   assert.match(script, /frame\.src = frame\.dataset\.src/);
 });
 
-test("native Parcel Area metrics do not substitute ArcGIS square footage", () => {
-  assert.match(script, /buildPowerBiAreaCompliance\(financeSummary\)/);
-  assert.doesNotMatch(script, /buildLiveAreaCompliance/);
-  assert.match(script, /Power BI parcel-area aggregates are not available for the selected month/);
+test("Parcel Area is Power BI-only without native filters or tables", () => {
+  assert.doesNotMatch(html, /(?:areaComplianceTable|areaDistributionChart|Inspectable contractor table)/);
+  assert.match(script, /const usesMonth = tab === "landing"/);
+  assert.match(script, /tab === "powerBiBudget" \|\| tab === "areaDistribution"/);
+  assert.doesNotMatch(script, /renderAreaCompliance|buildPowerBiAreaCompliance/);
 });
 
 test("quarterly ownership table only exposes populated parcel fields", () => {
   const start = script.indexOf("function renderQuarterlyReporting");
-  const end = script.indexOf("function renderAreaCompliance");
+  const end = script.indexOf("function renderTimeline");
   const quarterlySection = script.slice(start, end);
   assert.match(quarterlySection, /label: "Parcel share"/);
   assert.doesNotMatch(quarterlySection, /label: "(?:Square feet|Expected responsibility|Billed|Paid|Outstanding)"/);

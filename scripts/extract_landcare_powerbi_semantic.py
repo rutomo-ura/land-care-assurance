@@ -83,7 +83,6 @@ class PowerBIConfig:
     certificate_thumbprint: str
     workspace_id: str = DEFAULT_WORKSPACE_ID
     dataset_id: str = DEFAULT_DATASET_ID
-    area_query_path: Path | None = None
 
     @classmethod
     def from_env(cls) -> "PowerBIConfig":
@@ -103,8 +102,6 @@ class PowerBIConfig:
             certificate_thumbprint=os.environ[names["certificate_thumbprint"]],
             workspace_id=os.environ.get("LANDCARE_POWERBI_WORKSPACE_ID", DEFAULT_WORKSPACE_ID),
             dataset_id=os.environ.get("LANDCARE_POWERBI_DATASET_ID", DEFAULT_DATASET_ID),
-            area_query_path=Path(os.environ["LANDCARE_POWERBI_AREA_QUERY_PATH"])
-            if os.environ.get("LANDCARE_POWERBI_AREA_QUERY_PATH") else None,
         )
 
 
@@ -234,27 +231,14 @@ def slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
 
 
-def load_area_dax(config: PowerBIConfig) -> str | None:
-    if config.area_query_path is None:
-        return None
-    if not config.area_query_path.is_file():
-        raise PowerBIError("Power BI parcel-area query file was not found")
-    dax = config.area_query_path.read_text(encoding="utf-8").strip()
-    if not dax:
-        raise PowerBIError("Power BI parcel-area query file is empty")
-    return dax
-
-
-def fetch_semantic_rows(client: PowerBIClient, area_dax: str | None = None) -> dict[str, Any]:
-    rows = {
+def fetch_semantic_rows(client: PowerBIClient) -> dict[str, Any]:
+    return {
         "refresh": client.latest_refresh(),
         "headline": client.execute_dax(HEADLINE_DAX),
         "quarters": client.execute_dax(QUARTER_DAX),
         "monthly": client.execute_dax(MONTHLY_CONTRACTOR_DAX),
         "contracts": client.execute_dax(CONTRACT_DAX),
     }
-    rows["area"] = client.execute_dax(area_dax) if area_dax else None
-    return rows
 
 
 def aggregate_monthly(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -281,45 +265,6 @@ def aggregate_monthly(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         for (period_month, organization), values in sorted(grouped.items())
     ]
-
-
-def build_area_summary(
-    rows: Iterable[dict[str, Any]], refresh: dict[str, Any], extracted_at: datetime
-) -> dict[str, Any]:
-    output = []
-    for raw_row in rows:
-        row = normalized_row(raw_row)
-        period_value = row.get("periodmonth") or row.get("period")
-        period_date = iso_date(period_value)
-        organization = str(row.get("organization") or "").strip()
-        if not period_date or not organization:
-            continue
-        assigned_sqft = number(row.get("assignedsquarefeet") or row.get("sum of parcel square footage"))
-        baseline_sqft = number(row.get("baselinearea"))
-        lower = number(row.get("lower")) if row.get("lower") not in (None, "") else round(baseline_sqft * 0.9, 2)
-        upper = number(row.get("upper")) if row.get("upper") not in (None, "") else round(baseline_sqft * 1.1, 2)
-        output.append({
-            "period_month": period_date[:7],
-            "organization": organization,
-            "assigned_sqft": assigned_sqft,
-            "assigned_parcels": int(number(row.get("assignedparcels"))) if row.get("assignedparcels") not in (None, "") else None,
-            "baseline_sqft": baseline_sqft,
-            "lower_limit_sqft": lower,
-            "upper_limit_sqft": upper,
-        })
-    if not output:
-        raise PowerBIError("Power BI parcel-area query returned no usable aggregate rows")
-    return {
-        "status": "available",
-        "feed_status": "current",
-        "source_system": "Power BI semantic model",
-        "report_page": "Parcel Area Distribution",
-        "page_id": "4a5502453e9080b7a655",
-        "dataset_refreshed_at": refresh.get("endTime") or refresh.get("startTime"),
-        "extracted_at": extracted_at.astimezone(timezone.utc).isoformat(),
-        "publication_grain": "month and contractor",
-        "rows": sorted(output, key=lambda item: (item["period_month"], item["organization"])),
-    }
 
 
 def build_semantic_summary(rows: dict[str, Any], extracted_at: datetime) -> dict[str, Any]:
@@ -447,22 +392,6 @@ def apply_semantic_rows(finance: dict[str, Any], rows: dict[str, Any], config: P
             )
 
     finance["semantic_summary"] = semantic
-    if rows.get("area") is not None:
-        area_summary = build_area_summary(rows["area"], rows["refresh"], now)
-        area_summary["workspace_id"] = config.workspace_id
-        area_summary["dataset_id"] = config.dataset_id
-        finance["semantic_area_summary"] = area_summary
-    elif finance.get("semantic_area_summary", {}).get("source_system") == "Power BI semantic model":
-        finance["semantic_area_summary"]["feed_status"] = "stale"
-        finance["semantic_area_summary"]["warning"] = "Parcel-area query is not configured for this extraction."
-    else:
-        finance["semantic_area_summary"] = {
-            "status": "unavailable",
-            "feed_status": "unavailable",
-            "source_system": "Power BI semantic model",
-            "message": "Parcel-area semantic query is not configured.",
-            "rows": [],
-        }
     finance["semantic_contracts"] = contracts
     finance["current_contracts"] = merge_contracts(finance.get("current_contracts", []), contracts)
     finance["actual_invoices"] = actuals
@@ -503,8 +432,6 @@ def mark_stale(finance_path: Path, reason: str, now: datetime) -> dict[str, Any]
     finance["actual_invoice_source"] = source
     if isinstance(finance.get("semantic_summary"), dict):
         finance["semantic_summary"]["feed_status"] = "stale"
-    if isinstance(finance.get("semantic_area_summary"), dict):
-        finance["semantic_area_summary"]["feed_status"] = "stale"
     finance.setdefault("metadata", {})["generated_on"] = now.date().isoformat()
     finance["metadata"]["source_kind"] = "powerbi_landcare_semantic_model"
     finance["metadata"]["note"] = "Retained the last successful Power BI semantic finance aggregates after a refresh warning."
@@ -528,7 +455,7 @@ def sanitized_reason(exc: Exception) -> str:
 def run(config: PowerBIConfig, finance_path: Path, client: PowerBIClient | None = None, now: datetime | None = None) -> dict[str, Any]:
     now = now or datetime.now(timezone.utc)
     finance = json.loads(finance_path.read_text(encoding="utf-8"))
-    rows = fetch_semantic_rows(client or PowerBIClient(config), load_area_dax(config))
+    rows = fetch_semantic_rows(client or PowerBIClient(config))
     finance = apply_semantic_rows(finance, rows, config, now)
     atomic_write_json(finance_path, finance)
     source = finance["actual_invoice_source"]
@@ -540,7 +467,6 @@ def run(config: PowerBIConfig, finance_path: Path, client: PowerBIClient | None 
         "dataset_refreshed_at": source["refreshed_at"],
         "record_count": source["source_record_count"],
         "latest_transaction_date": source["latest_transaction_date"],
-        "area_feed_status": finance.get("semantic_area_summary", {}).get("feed_status", "unavailable"),
     }
 
 

@@ -42,9 +42,9 @@ The quarterly page combined assignment ownership rows with finance fields that w
 
 ## Parcel Area implementation
 
-The prior native Parcel Area table was empty because the published `area_compliance.json` contained null square-foot values. A temporary runtime implementation combined live ArcGIS assigned area with a Power BI-validated baseline, but the two sources can differ. The native table now accepts only sanitized Power BI semantic aggregates from `semantic_area_summary`. The secure Power BI Parcel Area Distribution page remains above it for governed trend review.
+The prior native Parcel Area table was empty because the published `area_compliance.json` contained null square-foot values. A temporary runtime implementation combined live ArcGIS assigned area with a Power BI-validated baseline, but the two sources can differ. The native table and external month filter were removed. Parcel Area now relies entirely on the secure Power BI report and its internal organization and period controls.
 
-This is intentionally not live browser scraping. A browser session is useful for a one-time comparison, but it cannot safely support the unattended 7 AM job. The certificate-authenticated extractor can execute an administrator-reviewed Parcel Area DAX query through `LANDCARE_POWERBI_AREA_QUERY_PATH` and publish only contractor/month aggregates. Until that query is configured and succeeds, the native table shows an unavailable message rather than ArcGIS values.
+This is intentionally not live browser scraping. A browser session is useful for a one-time comparison, but it cannot safely support the unattended 7 AM job. The authenticated Power BI embed remains the sole Parcel Area presentation surface.
 
 ## Production sign-off
 

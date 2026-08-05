@@ -31,7 +31,6 @@ import {
   semanticQuarterSummary,
   semanticYearSummary
 } from "./finance-semantic.js?v=20260804-powerbi-semantic-v1";
-import { buildPowerBiAreaCompliance } from "./area-compliance.js?v=20260805-powerbi-area-v2";
 
 const DATA_ROOT = "../landcare/data";
 const EPP_LAYER_URL =
@@ -1001,32 +1000,6 @@ function renderContractorGroupedChart(rows, selected = "all", latestMonth = "") 
   }).join("");
 }
 
-function renderAreaDistribution(rows, selectedMonth) {
-  if (!rows.length) {
-    document.getElementById("areaDistributionChart").innerHTML = '<p class="chart-empty-state">Power BI parcel-area values are not available for this month. Use the secure report above.</p>';
-    const summary = document.getElementById("areaDistributionSummary");
-    if (summary) summary.textContent = `${shortMonth(selectedMonth)} · awaiting Power BI aggregate export`;
-    return;
-  }
-  const maxSquareFeet = Math.max(1, ...rows.map((row) => Number(row.assigned_sqft || 0)));
-  document.getElementById("areaDistributionChart").innerHTML = rows.map((row) => `
-    <div class="grouped-row single-bar-row">
-      <div class="grouped-label">
-        <strong>${escapeHtml(shortContractor(row.organization))}</strong>
-        <span>${row.assigned_parcels === null ? "Power BI" : `${formatNumber(row.assigned_parcels)} parcels`} · ${escapeHtml(String(row.compliance_status || "baseline_unavailable").replaceAll("_", " "))}</span>
-      </div>
-      <div class="grouped-bars">
-        <span class="grouped-bar assigned" style="width:${Math.max((100 * Number(row.assigned_sqft || 0)) / maxSquareFeet, 2)}%"></span>
-      </div>
-      <div class="grouped-values">
-        <span>${formatSquareFeet(row.assigned_sqft)}</span>
-      </div>
-    </div>
-  `).join("");
-  const summary = document.getElementById("areaDistributionSummary");
-  if (summary) summary.textContent = `${shortMonth(selectedMonth)} assignment square footage, ranked by organization`;
-}
-
 function renderMoneyBarChart(containerId, rows, valueKey, valueFormatter = formatMoney) {
   const sortedRows = [...rows].sort((a, b) => Number(b[valueKey] || 0) - Number(a[valueKey] || 0));
   const maxValue = Math.max(1, ...sortedRows.map((row) => Number(row[valueKey] || 0)));
@@ -1239,31 +1212,6 @@ function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuar
     { label: "Parcel share", value: (row) => formatPct(row.share_pct) }
   ], ownershipRows);
   document.getElementById("quarterOwnershipNote").textContent = `${quarterLabelFromKey(selectedQuarter)} ownership distribution from assignment parcels`;
-}
-
-function renderAreaCompliance(areaCompliance, selectedMonth) {
-  const rows = (areaCompliance?.rows || []).filter((row) => row.period_month === selectedMonth);
-  renderAreaDistribution(rows, selectedMonth);
-  const table = document.getElementById("areaComplianceTable");
-  renderTable(table, [
-    { label: "Contractor", value: (row) => shortContractor(row.organization) },
-    { label: "Assigned square feet", value: (row) => formatSquareFeet(row.assigned_sqft) },
-    { label: "Baseline", value: (row) => formatSquareFeet(row.baseline_sqft) },
-    { label: "Allowed range", value: (row) => row.lower_limit_sqft === null ? "Unavailable" : `${formatSquareFeet(row.lower_limit_sqft)} – ${formatSquareFeet(row.upper_limit_sqft)}` },
-    { label: "Variance", value: (row) => row.variance_pct === null ? "Unavailable" : formatPct(row.variance_pct) },
-    { label: "Status", value: (row) => String(row.compliance_status || "baseline_unavailable").replaceAll("_", " ") }
-  ], rows);
-  if (!rows.length) {
-    table.querySelector("tbody").innerHTML = '<tr><td colspan="6">Power BI parcel-area aggregates are not available for the selected month.</td></tr>';
-  }
-  const note = document.getElementById("areaComplianceSourceNote");
-  if (areaCompliance?.metadata?.source_status === "available") {
-    const freshness = areaCompliance.metadata.dataset_refreshed_at ? ` Refreshed ${areaCompliance.metadata.dataset_refreshed_at}.` : "";
-    const stale = areaCompliance.metadata.feed_status === "stale" ? " Retained last successful extract." : "";
-    note.textContent = `Source: Power BI Parcel Area Distribution semantic model.${freshness}${stale}`;
-  } else {
-    note.textContent = "Native table withheld because a Power BI parcel-area aggregate has not been published. Use the secure Power BI report above.";
-  }
 }
 
 function renderTimeline(monthlyMetrics, selectedMonth = monthlyMetrics.at(-1)?.period_month) {
@@ -1714,14 +1662,12 @@ async function loadData() {
   const liveQuarterlyMetrics = assignmentHistoryResult.geojson
     ? aggregateLiveQuarterlyMetrics(mergedGeojson, liveMonthlyMetrics)
     : null;
-  const powerBiAreaCompliance = buildPowerBiAreaCompliance(financeSummary);
 
   return {
     monthlyMetrics: enrichedMonthlyMetrics,
     contractorMonthly: liveContractorMonthly || aggregateContractorMonthly(contractorMonthlyRaw),
     financeSummary,
     quarterlyMetrics: liveQuarterlyMetrics || quarterlyMetrics,
-    areaCompliance: powerBiAreaCompliance,
     summary: enrichedSummary,
     currentMetrics,
     assignmentGeojson: mergedGeojson,
@@ -1735,7 +1681,6 @@ async function main() {
     contractorMonthly,
     financeSummary,
     quarterlyMetrics,
-    areaCompliance,
     summary,
     currentMetrics,
     assignmentGeojson,
@@ -1759,9 +1704,9 @@ async function main() {
   };
 
   const setContextControls = (tab) => {
-    const usesMonth = tab === "landing" || tab === "areaDistribution";
+    const usesMonth = tab === "landing";
     const usesQuarter = tab === "quarterlyReporting";
-    const isPowerBi = tab === "powerBiBudget";
+    const isPowerBi = tab === "powerBiBudget" || tab === "areaDistribution";
     document.getElementById("reportContext").hidden = isPowerBi;
     document.getElementById("monthControl").hidden = !usesMonth;
     document.getElementById("quarterControl").hidden = !usesQuarter;
@@ -1792,7 +1737,6 @@ async function main() {
     renderContractorOptions(selectedContractorRows);
     renderContractorGroupedChart(selectedContractorRows, "all", selectedMonth);
     renderTimeline(monthlyMetrics, selectedMonth);
-    renderAreaCompliance(areaCompliance, selectedMonth);
     renderQuarterScoped();
 
     document.getElementById("contractorSelect").onchange = (event) => {
