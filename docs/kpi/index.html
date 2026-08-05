@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LandCare KPI Dashboard</title>
-    <link rel="stylesheet" href="../landcare/app.css?v=20260804-powerbi-embed-v1" />
+    <link rel="stylesheet" href="../landcare/app.css?v=20260805-kpi-handover-v3" />
   </head>
   <body data-page="kpi">
     <header class="app-header">
@@ -67,7 +67,7 @@
       <section class="tab-panel" data-panel="quarterlyReporting" aria-label="Quarterly Reporting">
         <header class="tab-intro">
           <div><span class="section-kicker">Quarterly operating report</span><h2>LandCare quarterly reporting</h2></div>
-          <p>Calendar-quarter assignment completion, ownership responsibility, and financial readiness.</p>
+          <p>Calendar-quarter assignment completion and ownership distribution.</p>
         </header>
         <article class="metric-band metric-group">
           <div class="reference-card-grid four-up executive-band">
@@ -82,7 +82,7 @@
           <div class="data-table-wrap"><table class="data-table" id="quarterMonthlyTable"></table></div>
         </article>
         <article class="panel data-ledger">
-          <div class="panel-head compact-head"><div><h1>Ownership and responsibility</h1><p class="panel-sub" id="quarterOwnershipNote">Loading ownership scope...</p></div></div>
+          <div class="panel-head compact-head"><div><h1>Ownership distribution</h1><p class="panel-sub" id="quarterOwnershipNote">Loading ownership scope...</p></div></div>
           <div class="data-table-wrap"><table class="data-table" id="quarterOwnershipTable"></table></div>
         </article>
         <div class="report-actions"><button class="export-button" type="button" id="exportQuarterCsvButton">Export CSV</button><button class="export-button" type="button" id="printQuarterButton">Print / PDF</button></div>
@@ -211,13 +211,13 @@
               <strong>URA sign-in required</strong>
               <span>The report follows existing Power BI permissions.</span>
             </div>
-            <a class="export-button" href="https://app.powerbi.com/groups/me/reports/2d592a10-7083-470a-96aa-41fbdc59218c/8c93bab49c96aa8e3bd2" target="_blank" rel="noopener noreferrer">Open in Power BI</a>
+            <a class="export-button" href="https://app.powerbi.com/groups/me/reports/2d592a10-7083-470a-96aa-41fbdc59218c/fe756b7016e6baa7351e" target="_blank" rel="noopener noreferrer">Open in Power BI</a>
           </div>
           <div class="powerbi-frame-wrap">
             <iframe
               id="powerBiBudgetFrame"
               title="Power BI Land Care Budget report"
-              data-src="https://app.powerbi.com/reportEmbed?reportId=2d592a10-7083-470a-96aa-41fbdc59218c&amp;groupId=A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5&amp;autoAuth=true&amp;ctid=c77df146-c538-49e4-9577-c9ee1d243d16&amp;pageName=8c93bab49c96aa8e3bd2&amp;navContentPaneEnabled=false&amp;filterPaneEnabled=false"
+              data-src="https://app.powerbi.com/reportEmbed?reportId=2d592a10-7083-470a-96aa-41fbdc59218c&amp;groupId=A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5&amp;autoAuth=true&amp;ctid=c77df146-c538-49e4-9577-c9ee1d243d16&amp;pageName=fe756b7016e6baa7351e&amp;navContentPaneEnabled=false&amp;filterPaneEnabled=false"
               loading="lazy"
               referrerpolicy="strict-origin-when-cross-origin"
               allowfullscreen></iframe>
@@ -230,6 +230,6 @@
       <p id="liveUniverseNote">Loading sources...</p>
     </footer>
 
-    <script type="module" src="../landcare/kpi.js?v=20260804-powerbi-embed-v1"></script>
+    <script type="module" src="../landcare/kpi.js?v=20260805-kpi-handover-v3"></script>
   </body>
 </html>

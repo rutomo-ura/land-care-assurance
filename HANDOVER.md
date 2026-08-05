@@ -113,3 +113,4 @@ and tests.
 - [`docs/vm-smoke-test-regrid-daily-sync.md`](docs/vm-smoke-test-regrid-daily-sync.md) - post-refresh proof
 - [`docs/design-system/README.md`](docs/design-system/README.md) - reusable BI design system
 - [`docs/powerbi-landcare-finance-source.md`](docs/powerbi-landcare-finance-source.md) - KPI finance semantic model, VM setup, and recovery
+- [`docs/powerbi-landcare-dataflow-audit-2026-08-05.md`](docs/powerbi-landcare-dataflow-audit-2026-08-05.md) - current live-versus-pending Power BI handover status

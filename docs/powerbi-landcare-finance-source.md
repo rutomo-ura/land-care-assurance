@@ -1,20 +1,34 @@
 # Power BI LandCare finance source
 
-## Production role
+## Intended production role
 
-The Power BI **Land Care Budget** semantic model is the authoritative finance source for the KPI dashboard. NetSuite remains the upstream accounting system. The 7 AM VM job queries Power BI after its overnight refresh and publishes only aggregate values to `docs/landcare/data/finance_summary.json`.
+The Power BI **Land Care Budget** semantic model is the intended authoritative finance source for the KPI dashboard. NetSuite remains the upstream accounting system. After deployment is certified, the 7 AM VM job queries Power BI after its overnight refresh and publishes only aggregate values to `docs/landcare/data/finance_summary.json`.
 
 | Setting | Value |
 |---|---|
 | Workspace | `GIS Dashboards` (`A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5`) |
 | Semantic model | `924c6c0b-6e29-41cf-9775-562ca646953a` |
+| Land Care Budget page | `fe756b7016e6baa7351e` |
 | Required filter | `LandCare Check Requests[Item Type] = Landcare` |
 | Excluded page/scope | Maintenance Expenses |
 | Public grain | Year, quarter, and month by contractor |
 
-The public browser never calls Power BI. It reads the sanitized GitHub Pages JSON contract, so Entra credentials and model permissions remain on the VM.
+The native public KPI views never call the Power BI API. They read the sanitized GitHub Pages JSON contract, so Entra credentials and model permissions remain on the VM. The separate Land Care Budget tab is a secure Microsoft-authenticated iframe and follows each viewer's Power BI permissions.
 
-The KPI page also provides a secure iframe of the **Land Care Budget** report page for authorized URA users. The iframe uses Microsoft authentication and existing report permissions; it is not Publish to web. Overview, Quarterly Reporting, and Parcel Area remain native operational views, while the former Budget, Check Requests, and Expenses tabs are consolidated into this embedded finance workspace.
+The KPI page embeds report page `fe756b7016e6baa7351e`, which is the **Land Care Budget** page. Page `8c93bab49c96aa8e3bd2` is the Maintenance Check Requests page and must not be used. The iframe is not Publish to web. Overview, Quarterly Reporting, and Parcel Area remain native operational views, while the former Budget, Check Requests, and Expenses tabs are consolidated into this embedded finance workspace.
+
+## Deployment status audited August 5, 2026
+
+| Path | Status | Evidence |
+|---|---|---|
+| Secure Land Care Budget iframe | Live | The authenticated report showed `Data updated 8/5/26`, `$458,995.17` spent, `59.23%`, Q1 `$188,579.00`, Q2 `$192,318.50`, and Q3 `$78,097.67`. |
+| Power BI to `finance_summary.json` | Not certified live | The checked-in August 4 contract has no `semantic_summary`; `actual_invoice_source.source_system` is `NetSuite` and `metadata.source_kind` is `landcare_budget_workbook_plus_netsuite_check_requests`. |
+| 7 AM semantic extraction | Code ready, deployment pending | `refresh_landcare_dashboard.ps1` conditionally runs `extract_landcare_powerbi_semantic.py`, but no production status artifact was available during this audit. |
+| Workspace administration | Access pending | The audited user can view the shared report but cannot open workspace `A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5`. Refresh history, gateway/source connections, and service-principal Build permission require a workspace administrator. |
+
+Do not describe the native KPI finance feed as Power BI-backed until the published JSON contains `semantic_summary`, `actual_invoice_source.source_system` is `Power BI semantic model`, and the VM status reports `power_bi_finance.feed_status = current`.
+
+See [`powerbi-landcare-dataflow-audit-2026-08-05.md`](powerbi-landcare-dataflow-audit-2026-08-05.md) for the evidence and handover checks.
 
 ## Semantic mapping
 

@@ -14,10 +14,17 @@ test("consolidates repetitive finance tabs into Land Care Budget", () => {
 test("secure embed targets the Land Care Budget report page", () => {
   assert.match(html, /app\.powerbi\.com\/reportEmbed\?/);
   assert.match(html, /reportId=2d592a10-7083-470a-96aa-41fbdc59218c/);
-  assert.match(html, /pageName=8c93bab49c96aa8e3bd2/);
+  assert.match(html, /pageName=fe756b7016e6baa7351e/);
+  assert.doesNotMatch(html, /pageName=8c93bab49c96aa8e3bd2/);
   assert.match(html, /autoAuth=true/);
   assert.doesNotMatch(html, /view\?r=/);
   assert.match(html, />Open in Power BI<\/a>/);
+});
+
+test("removes hidden context controls from layout", async () => {
+  const css = await readFile(new URL("../docs/landcare/app.css", import.meta.url), "utf8");
+  assert.match(css, /\.report-context \[hidden\] \{ display: none; \}/);
+  assert.match(css, /grid-template-columns: repeat\(4, minmax\(160px, 1fr\)\)/);
 });
 
 test("loads Power BI only when its tab is selected", () => {
@@ -25,4 +32,20 @@ test("loads Power BI only when its tab is selected", () => {
   assert.match(script, /tab === "powerBiBudget"/);
   assert.match(script, /!frame\.hasAttribute\("src"\)/);
   assert.match(script, /frame\.src = frame\.dataset\.src/);
+});
+
+test("quarterly ownership table only exposes populated parcel fields", () => {
+  const start = script.indexOf("function renderQuarterlyReporting");
+  const end = script.indexOf("function renderAreaCompliance");
+  const quarterlySection = script.slice(start, end);
+  assert.match(quarterlySection, /label: "Parcel share"/);
+  assert.doesNotMatch(quarterlySection, /label: "(?:Square feet|Expected responsibility|Billed|Paid|Outstanding)"/);
+  assert.doesNotMatch(quarterlySection, /Unavailable/);
+});
+
+test("quarterly CSV omits unsupported ownership finance fields", () => {
+  const start = script.indexOf('document.getElementById("exportQuarterCsvButton")');
+  const exportSection = script.slice(start);
+  assert.match(exportSection, /"Parcel share"/);
+  assert.doesNotMatch(exportSection, /"(?:Square feet|Expected responsibility|Billed|Paid|Outstanding|Unavailable)"/);
 });

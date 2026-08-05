@@ -1221,35 +1221,17 @@ function renderQuarterlyReporting(quarterlyMetrics, financeSummary, selectedQuar
     { label: "Request only", value: (row) => formatNumber(row.request_only_assignments) },
     { label: "Completion", value: (row) => formatPct(row.completion_rate_pct) }
   ], quarter.months || []);
-  const totalSquareFeet = (quarter.owner_breakdown || []).reduce((sum, row) => sum + Number(row.sq_footage || 0), 0);
-  const responsibility = financeSummary.owner_quarter_responsibility || [];
-  const ownershipRows = (quarter.owner_breakdown || []).map((row) => {
-    const finance = responsibility.find((item) => item.quarter === selectedQuarter && item.ownership_group === row.ownership_group);
-    return {
-      ...row,
-      share_pct: totalSquareFeet ? (100 * Number(row.sq_footage || 0)) / totalSquareFeet : null,
-      expected_responsibility: finance?.expected_responsibility ?? null,
-      billed_amount: finance?.billed_amount ?? null,
-      paid_amount: finance?.paid_amount ?? null,
-      outstanding_balance: finance?.outstanding_balance ?? null,
-    };
-  });
+  const totalOwnerParcels = (quarter.owner_breakdown || []).reduce((sum, row) => sum + Number(row.parcels || 0), 0);
+  const ownershipRows = (quarter.owner_breakdown || []).map((row) => ({
+    ...row,
+    share_pct: totalOwnerParcels ? (100 * Number(row.parcels || 0)) / totalOwnerParcels : 0
+  }));
   renderTable(document.getElementById("quarterOwnershipTable"), [
     { label: "Owner", value: (row) => row.ownership_group },
     { label: "Parcels", value: (row) => formatNumber(row.parcels) },
-    { label: "Square feet", value: (row) => formatSquareFeet(row.sq_footage) },
-    { label: "Portfolio share", value: (row) => row.share_pct === null ? "Unavailable" : formatPct(row.share_pct) },
-    { label: "Expected responsibility", value: (row) => formatOptionalMoney(row.expected_responsibility) },
-    { label: "Billed", value: (row) => formatOptionalMoney(row.billed_amount) },
-    { label: "Paid", value: (row) => formatOptionalMoney(row.paid_amount) },
-    { label: "Outstanding", value: (row) => formatOptionalMoney(row.outstanding_balance) }
+    { label: "Parcel share", value: (row) => formatPct(row.share_pct) }
   ], ownershipRows);
-  document.getElementById("quarterOwnershipNote").textContent = financeSummary.owner_responsibility_source?.status === "available"
-    ? `Approved Power BI formula output · ${financeSummary.owner_responsibility_source?.formula_version || "version not supplied"}`
-    : "Square footage is awaiting the refreshed assignment export; Power BI responsibility formula output has not been imported.";
-  if (financeSummary.owner_responsibility_source?.status === "partially_available") {
-    document.getElementById("quarterOwnershipNote").textContent = `${financeSummary.owner_responsibility_source.message} · ${financeSummary.owner_responsibility_source.formula_version || "source version not supplied"}`;
-  }
+  document.getElementById("quarterOwnershipNote").textContent = `${quarterLabelFromKey(selectedQuarter)} ownership distribution from assignment parcels`;
 }
 
 function renderAreaCompliance(areaCompliance, financeSummary, selectedMonth) {
@@ -1837,13 +1819,21 @@ async function main() {
   document.getElementById("exportQuarterCsvButton").addEventListener("click", () => {
     const quarter = (quarterlyMetrics?.quarters || []).find((row) => row.quarter === selectedQuarter);
     if (!quarter) return;
-    const responsibility = financeSummary.owner_quarter_responsibility || [];
-    const rows = [["Section", "Quarter", "Period / owner", "Active assignments", "Returned assignments", "Open assignments", "Request only", "Completion rate", "Parcels", "Square feet", "Expected responsibility", "Billed", "Paid", "Outstanding"]]
-      .concat((quarter.months || []).map((row) => ["Monthly assignment summary", selectedQuarter, row.period_month, row.active_assignments, row.returned_assignments, row.open_assignments, row.request_only_assignments, row.completion_rate_pct, row.assigned_parcels, "", "", "", "", ""]))
-      .concat((quarter.owner_breakdown || []).map((row) => {
-        const finance = responsibility.find((item) => item.quarter === selectedQuarter && item.ownership_group === row.ownership_group) || {};
-        return ["Ownership responsibility", selectedQuarter, row.ownership_group, "", "", "", "", "", row.parcels, row.sq_footage ?? "Unavailable", finance.expected_responsibility ?? "Unavailable", finance.billed_amount ?? "Unavailable", finance.paid_amount ?? "Unavailable", finance.outstanding_balance ?? "Unavailable"];
-      }));
+    const totalOwnerParcels = (quarter.owner_breakdown || []).reduce((sum, row) => sum + Number(row.parcels || 0), 0);
+    const rows = [["Section", "Quarter", "Period / owner", "Active assignments", "Returned assignments", "Open assignments", "Request only", "Completion rate", "Parcels", "Parcel share"]]
+      .concat((quarter.months || []).map((row) => ["Monthly assignment summary", selectedQuarter, row.period_month, row.active_assignments, row.returned_assignments, row.open_assignments, row.request_only_assignments, row.completion_rate_pct, row.assigned_parcels, ""]))
+      .concat((quarter.owner_breakdown || []).map((row) => [
+        "Ownership distribution",
+        selectedQuarter,
+        row.ownership_group,
+        "",
+        "",
+        "",
+        "",
+        "",
+        row.parcels,
+        totalOwnerParcels ? (100 * Number(row.parcels || 0)) / totalOwnerParcels : 0
+      ]));
     const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));

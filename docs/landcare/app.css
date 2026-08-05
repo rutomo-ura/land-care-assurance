@@ -759,8 +759,13 @@ body[data-page="kpi"] .report-tabs button.is-active {
   box-shadow: none;
 }
 
-body[data-page="kpi"] .report-context { gap: 0; max-width: 1040px; align-items: center; }
+body[data-page="kpi"] .report-context { gap: 0; max-width: none; width: 100%; align-items: center; }
 body[data-page="kpi"] .report-context[hidden] { display: none; }
+body[data-page="kpi"] .report-context [hidden] { display: none; }
+body[data-page="kpi"] .report-context.compact {
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  max-width: none;
+}
 body[data-page="kpi"] .report-context div,
 body[data-page="kpi"] .report-context label,
 body[data-page="kpi"] .report-context p {
@@ -876,6 +881,7 @@ body[data-page="kpi"] .powerbi-grid.landing-charts .contractor-pace-panel {
   body[data-page="kpi"] .insight-card { border-left: 0; border-top: 1px solid #e0e7ea; }
   body[data-page="kpi"] .report-context div,
   body[data-page="kpi"] .report-context label { border-left: 0; border-top: 1px solid #d5dee2; padding-left: 2px; }
+  body[data-page="kpi"] .report-context.compact { grid-template-columns: 1fr; }
 }
 
 body[data-page="kpi"] .tab-panel:not([data-panel="landing"]) {
