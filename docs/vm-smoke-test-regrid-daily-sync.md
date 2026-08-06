@@ -1,11 +1,15 @@
 ﻿# VM Smoke Test: Regrid Daily to Dashboard Daily Sync
 
+> Legacy reference, August 6, 2026: the 7 AM dashboard task is deprecated. Use
+> [`task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) to archive and disable it.
+> Run the remaining checks only when investigating or deliberately reactivating the old process.
+
 Run this checklist on the GIS VM after deploying the Regrid daily flow updates to `land-care-assurance`.
 
 ## Prerequisites
 
 - Upstream task `\GIS Automations\REGRID` runs daily at 4:00 AM
-- Dashboard task `\GIS Automations\LandCare Daily Dashboard Refresh` runs daily at 7:00 AM
+- Deprecated dashboard task is present only for archive, investigation, or controlled reactivation
 - Repo path: `C:\srv\GISWebApp\land-care-assurance`
 - DB migration applied: `regrid_survey_submissions_period_parcel_created_image_key` constraint exists
 

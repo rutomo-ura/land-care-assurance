@@ -2,10 +2,13 @@
 
 LandCare Assurance is a map-first operational product for URA LandCare: a contractor selects an assigned parcel, submits field evidence, URA reviews it, and supervisors monitor trusted Regrid, assignment, and approved-evidence context.
 
+Current handover status: start with the [`handover readiness checklist`](handover/04-readiness-checklist.md). Live operational data comes from ArcGIS Online at page load. The former 7 AM dashboard refresh is deprecated.
+
 Public application:
 
 - [Map Monitor](https://ura-gis.github.io/land-care-assurance/monitoring/)
 - [KPI Dashboard](https://ura-gis.github.io/land-care-assurance/kpi/)
+- [Contractor Portal](https://ura-gis.github.io/land-care-assurance/contractor/)
 - [Survey Submission](https://ura-gis.github.io/land-care-assurance/survey-submission/)
 - [Public Survey123 form](https://survey123.arcgis.com/share/02a003254ba546c28b4997b42e0f220b)
 
@@ -13,12 +16,12 @@ Public application:
 
 | Need | Read this |
 |---|---|
-| **Take over this project** | [`handover/`](handover/) - owner guide, agent playbook, and briefing deck |
-| Run the repository and Pages cutover | [`HANDOVER.md`](HANDOVER.md) and [`AGENTS.md`](AGENTS.md) |
+| **Take over this project** | [`handover/04-readiness-checklist.md`](handover/04-readiness-checklist.md), then [`handover/`](handover/) |
+| Administer the repository and Pages | [`HANDOVER.md`](HANDOVER.md), [`AGENTS.md`](AGENTS.md), and [`docs/github-handover-runbook.md`](docs/github-handover-runbook.md) |
 | Understand the full data and submission lifecycle | [`docs/landcare-submission-and-evidence-flow.md`](docs/landcare-submission-and-evidence-flow.md) |
 | Understand sources, metric rules, runtime layers, and daily refresh | [`docs/landcare-architecture.md`](docs/landcare-architecture.md) |
 | Operate the KPI finance feed | [`docs/powerbi-landcare-finance-source.md`](docs/powerbi-landcare-finance-source.md); use the [NetSuite guide](docs/netsuite-landcare-finance-source.md) for reconciliation |
-| Operate the VM daily refresh | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |
+| Retire or inspect the deprecated 7 AM VM task | [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) |
 | Configure Survey123 review, webhook, PostgreSQL, and public evidence | [`docs/survey123-landcare-network-setup.md`](docs/survey123-landcare-network-setup.md) |
 | Present or hand over the product | [`docs/v1.0-operational-handover.md`](docs/v1.0-operational-handover.md) and [`docs/v1.0-presentation-script.md`](docs/v1.0-presentation-script.md) |
 
@@ -31,99 +34,12 @@ Public application:
 
 ---
 
-# LandCare Daily Refresh VM Bundle
+# Current operating model
 
-Architecture: [`docs/landcare-architecture.md`](docs/landcare-architecture.md)
+- Oscar's 4 AM Regrid/GIS pipeline loads PostgreSQL and publishes the live ArcGIS survey and assignment layers.
+- Map Monitor, KPI, contractor, and submission pages query ArcGIS directly at page load.
+- GitHub Pages serves the application, and Power BI supplies the secure Land Care Budget and Parcel Area report pages.
+- `docs/landcare/data/` remains a checked-in compatibility fallback and finance contract. It is not the freshness source.
+- The former `LandCare-Daily-Dashboard-Refresh.task` at 7 AM is deprecated. Its scripts remain only for recovery or a documented future reactivation.
 
-This bundle bootstraps or updates the LandCare dashboard repo on the VM, then installs the daily refresh scripts.
-
-## What It Includes
-
-- `scripts\refresh_landcare_dashboard.ps1`
-- `scripts\validate_landcare_daily_refresh.py`
-- `scripts\register_landcare_daily_refresh_task.ps1`
-- `data engineering\current-data-qaqc-source-inventory.md`
-- `install_landcare_daily_refresh.ps1`
-
-## Install
-
-Copy this extracted folder to the VM, then run PowerShell from the bundle folder. `C:\srv\GISWebApp` is treated as the umbrella folder; this installer clones or updates the LandCare repo one level below it.
-
-```powershell
-.\install_landcare_daily_refresh.ps1 -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance
-```
-
-## Install With Database Settings
-
-Database credentials are VM-local and should not be committed. Let the installer prompt for the PostgreSQL password when writing `.env`:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 `
-  -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
-  -PgHost 10.0.101.57 `
-  -PgPort 5432 `
-  -PgDb gisdb `
-  -PgUser rutomo `
-  -PromptForPgPassword
-```
-
-When a password is supplied, the installer writes VM-local credentials to:
-
-```powershell
-C:\srv\GISWebApp\land-care-assurance\.env
-```
-
-Existing `.env` files are backed up before replacement. The `.env` file is not part of the bundle and should not be committed.
-
-To update the existing daily 7:00 AM `LandCare-Daily-Dashboard-Refresh.task` job under `Task Scheduler Library\GIS Automations`:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 `
-  -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
-  -RegisterTask `
-  -TaskUser "DOMAIN\landcare-refresh" `
-  -PromptForTaskPassword
-```
-
-Use the approved VM service account, not an interactive personal account. The password is stored only by Windows Task Scheduler so the job can run whether or not anyone is logged on. Registration configures highest privilege, three 15-minute retries, a two-hour execution limit, and catch-up for a missed start.
-
-To install, create `.env`, register the task, and immediately run one checked refresh:
-
-```powershell
-.\install_landcare_daily_refresh.ps1 `
-  -TargetRepoRoot C:\srv\GISWebApp\land-care-assurance `
-  -RegisterTask `
-  -TaskUser "DOMAIN\landcare-refresh" `
-  -PromptForTaskPassword `
-  -RunOnce
-```
-
-## Safety Behavior
-
-- Existing target files are backed up beside the originals with a `.bak-YYYYMMDD-HHMMSS` suffix before replacement.
-- If the target folder is empty, the installer clones `https://github.com/ura-gis/land-care-assurance.git`.
-- If the target folder is already a git repo, the installer fetches, checks out `master`, and runs `git pull --ff-only`.
-- If the target folder is non-empty and not a git repo, the installer stops without changing it.
-- The installer only creates or modifies `.env` when a PostgreSQL password is supplied or prompted.
-- The installer only runs the refresh job when `-RunOnce` is supplied.
-- The scheduled task registration only happens when `-RegisterTask` is supplied.
-
-## After Install
-
-Manual checked refresh command:
-
-```powershell
-.\scripts\refresh_landcare_dashboard.ps1 -RepoRoot C:\srv\GISWebApp\land-care-assurance
-```
-
-Validate existing generated outputs only:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\validate_landcare_daily_refresh.py
-```
-
-Daily logs are written to:
-
-```powershell
-C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log
-```
+See [`docs/task-scheduler-vm-operations.md`](docs/task-scheduler-vm-operations.md) for the controlled VM retirement procedure.

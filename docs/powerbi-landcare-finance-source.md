@@ -2,7 +2,7 @@
 
 ## Intended production role
 
-The Power BI **Land Care Budget** semantic model is the intended authoritative finance source for the KPI dashboard. NetSuite remains the upstream accounting system. After deployment is certified, the 7 AM VM job queries Power BI after its overnight refresh and publishes only aggregate values to `docs/landcare/data/finance_summary.json`.
+The Power BI **Land Care Budget** semantic model is the authoritative secure report source for the KPI dashboard. NetSuite remains the upstream accounting system. The former 7 AM semantic extraction path is deprecated and is not required for the embedded Land Care Budget or Parcel Area pages.
 
 | Setting | Value |
 |---|---|
@@ -28,7 +28,7 @@ Do not automate the authenticated report DOM or a browser CSV download. Power BI
 |---|---|---|
 | Secure Land Care Budget iframe | Live | The authenticated report showed `Data updated 8/5/26`, `$458,995.17` spent, `59.23%`, Q1 `$188,579.00`, Q2 `$192,318.50`, and Q3 `$78,097.67`. |
 | Power BI to `finance_summary.json` | Not certified live | The checked-in August 4 contract has no `semantic_summary`; `actual_invoice_source.source_system` is `NetSuite` and `metadata.source_kind` is `landcare_budget_workbook_plus_netsuite_check_requests`. |
-| 7 AM semantic extraction | Code ready, deployment pending | `refresh_landcare_dashboard.ps1` conditionally runs `extract_landcare_powerbi_semantic.py`, but no production status artifact was available during this audit. |
+| 7 AM semantic extraction | Deprecated | The code remains as an optional future aggregate-export path, but it is not part of current production. |
 | Workspace administration | Access pending | The audited user can view the shared report but cannot open workspace `A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5`. Refresh history, gateway/source connections, and service-principal Build permission require a workspace administrator. |
 
 Do not describe the native KPI finance feed as Power BI-backed until the published JSON contains `semantic_summary`, `actual_invoice_source.source_system` is `Power BI semantic model`, and the VM status reports `power_bi_finance.feed_status = current`.

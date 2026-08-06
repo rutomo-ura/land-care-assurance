@@ -1,222 +1,114 @@
 # LandCare Platform Architecture
 
-Last updated: 2026-07-15
+Last updated: 2026-08-06
 
-This is the canonical architecture reference for the LandCare monitoring platform in this repository. Related docs:
+This is the canonical source and runtime architecture. For metric rules, see [`landcare-metrics-context.md`](landcare-metrics-context.md). For current delivery status, see [`../handover/04-readiness-checklist.md`](../handover/04-readiness-checklist.md).
 
-- [`docs/upstream-regrid-survey-pipeline.md`](upstream-regrid-survey-pipeline.md) — upstream Regrid ingestion in `URA-Data-Repository`
-- [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - Task Scheduler VM operations and bundle install flow
-- [`data engineering/platform-architecture-esri-codex-power-platform.md`](../data%20engineering/platform-architecture-esri-codex-power-platform.md) - archived ESRI + Codex + Power Platform option; not the current ops path
-- [`docs/landcare-data-engineering-flow.md`](landcare-data-engineering-flow.md) - pipeline diagrams and data contract
-- [`docs/landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) - contractor intake, approval, and evidence publication contract
-- [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) - metric definitions and denominator rules
-- [`data engineering/current-data-qaqc-source-inventory.md`](../data%20engineering/current-data-qaqc-source-inventory.md) - source inventory and QA checklist
+![LandCare current data flow](landcare-data-flow-architecture.png)
 
-## System Overview
-
-LandCare assurance data moves through three layers:
-
-| Layer | Location | Role |
-|---|---|---|
-| Ingestion | `URA-GIS-User/URA-Data-Repository` on GIS VM | Daily Regrid download, GISDB load, AGOL publish; monthly bundle assignments |
-| Store | PostgreSQL `gisdb` + ArcGIS Online hosted layers | Survey submissions, bundle assignments, parcel geometry, ownership |
-| Publish + app | This repo (`land-care-assurance`) | GitHub Pages app, finance/static fallback JSON, monitoring map, KPI dashboard |
-
-The public contractor intake is a governed sidecar to this pipeline: it reads assignment references from AGOL, writes pending evidence to Survey123, and only publishes approved evidence through the VM receiver. It does **not** change the official Regrid completion denominator in v1.
+## Current production model
 
 ```mermaid
-flowchart TB
-    subgraph upstream ["URA-Data-Repository — VM Task Scheduler"]
-        Regrid["Regrid web export"]
-        DailyPipe["regrid_survey_daily_pipeline.py — 4:00 AM daily"]
-        BundlePipe["bundle_assignment_creation.py — monthly 15th"]
-        Regrid --> DailyPipe
-        BundlePipe --> PGAssign["gis.regrid_bundle_assignments"]
-        DailyPipe --> PGSurvey["gis.regrid_survey_submissions"]
-        DailyPipe --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
-    end
-
-    subgraph store ["Authoritative stores"]
-        PGSurvey
-        PGAssign
-        AGOLSurvey
-        AGOLEpp["AGOL gisdb_gis_epp_parcels_full"]
-    end
-
-    subgraph downstream ["land-care-assurance — 7:00 AM daily"]
-        Export["Postgres read-only export"]
-        Build["Build docs/landcare/data"]
-        GitPages["GitHub Pages"]
-        Export --> Build --> GitPages
-    end
-
-    subgraph runtime ["Web app at page load"]
-        Monitor["docs/monitoring — map monitor"]
-        KPI["docs/kpi — KPI dashboard"]
-        SurveyJS["docs/landcare/survey-layer.js"]
-        GitPages --> Monitor
-        GitPages --> KPI
-        AGOLSurvey --> SurveyJS
-        SurveyJS --> Monitor
-        SurveyJS --> KPI
-        AGOLEpp --> Monitor
-        AGOLEpp --> KPI
-    end
-
-    PGSurvey --> Export
-    PGAssign --> Export
+flowchart LR
+    Regrid["Regrid"] --> Upstream["Oscar / GIS VM<br/>4 AM ingestion"]
+    Upstream --> PG["PostgreSQL GISDB"]
+    PG --> AGOL["ArcGIS Online live layers"]
+    AGOL --> Browser["Map Monitor · KPI · Contractor"]
+    Repo["ura-gis repository"] --> Pages["GitHub Pages"]
+    Pages --> Browser
+    PowerBI["Power BI secure report"] --> Browser
 ```
 
-## Daily Schedule (Eastern)
-
-| Time | Task | Output |
+| Layer | Owner | Current role |
 |---|---|---|
-| 4:00 AM | `\GIS Automations\REGRID` → `regrid_survey_daily_pipeline.py` | Regrid CSV → `gis.regrid_survey_submissions` → AGOL survey layer |
-| 4:15 AM on 15th | `regrid_survey_monthly_export.py` | G-drive CSV archive only |
-| 7:00 AM | `\GIS Automations` → `refresh_landcare_dashboard.ps1` | `docs/landcare/data/*` committed/pushed when changed |
-| After 7:00 AM | Human/Task Scheduler review when needed | Read `daily-refresh-status.json` and transcript log |
+| Ingestion | Oscar/GIS operations in `URA-Data-Repository` | 4 AM Regrid download, GISDB load, and ArcGIS publication; assignment publication follows the upstream bundle process |
+| Operational store | PostgreSQL `gisdb` and ArcGIS Online | Survey records, assignment snapshots, parcels, geometry, and comments |
+| Application delivery | `ura-gis/land-care-assurance` and GitHub Pages | Static application code and compatibility fallback files |
+| Finance and parcel area | Power BI semantic model | Authenticated Land Care Budget and Parcel Area report pages embedded in KPI |
 
-The 7:00 AM job runs after upstream survey load so Postgres export and manifest metadata reflect the latest GISDB state.
+The browser queries ArcGIS at page load. A current map or completion count does not require a repository data commit.
 
-Current July 9 snapshot: `docs/landcare/data` was generated on 2026-07-07 as the checked-in fallback/cache; live AGOL is now the primary runtime source for surveys and assignment snapshots. Latest period is 2026-06; live AGOL surveys expose 13,577 records, including 219 records in 2026-06. Live AGOL assignment snapshots expose 1,127 current-period records and 10,380 history records. See [`docs/landcare-metrics-context.md`](landcare-metrics-context.md) for count definitions.
+## Active schedule
 
-## ArcGIS Online Layers
+| Time, Eastern | Process | Output |
+|---|---|---|
+| 4 AM daily | `regrid_survey_daily_pipeline.py` in the upstream GIS repository | Regrid survey data loaded to GISDB and published to the ArcGIS survey layer |
+| Bundle cadence | Upstream assignment publication | Current and historical ArcGIS assignment layers |
+| On code change | GitHub Pages workflow | Validated application deployment from `master` |
 
-| Layer | Item / service | Cadence | Web app use |
-|---|---|---|---|
-| All-period survey submissions | [gisdb_gis_regrid_surveys](https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51) | Daily all-period Regrid layer with additional comments | **Primary live source** for all-period returned survey evidence, comments, and survey polygons |
-| Current-period bundle assignments | [gisdb_gis_regrid_bundle_assignments_current_period](https://urap.maps.arcgis.com/home/item.html?id=0b4733cb5d204da6ab936c9f6d49e401) | Daily/current snapshot publish from `publish_regrid_bundle_assignments_current_period_snapshot.py` | Live current assignment denominator and source QA context |
-| Historical bundle assignments | [gisdb_gis_regrid_bundle_assignments_history](https://urap.maps.arcgis.com/home/item.html?id=df7d77eb57f14c68b717c2cf3cdaada4) | Daily/history snapshot publish from `publish_regrid_bundle_assignments_history_snapshot.py` | **Primary live source** for monthly assignment denominator in monitoring |
-| EPP parcels | `gisdb_gis_epp_parcels_full` | Live | Current URA-owned LandCare universe, geometry alignment, council district filters |
-| Council districts | `CouncilDistricts2022` | Reference | District highlight and filter |
+The former `LandCare-Daily-Dashboard-Refresh.task` at 7 AM is deprecated. It is not part of the current production architecture. Its last identifiable automatic repository commit was July 28, 2026; the checked-in static GIS contract was generated July 29. Retirement instructions are in [`task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md).
 
-Survey layer REST endpoint:
+## ArcGIS Online sources
+
+| Data | Item | Runtime use |
+|---|---|---|
+| Survey submissions | [`7a2e1d9bacba461296c54a63f104cf51`](https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51) | Survey evidence, photos, `additional_comments`, periods, and completion matching |
+| Current assignments | [`0b4733cb5d204da6ab936c9f6d49e401`](https://urap.maps.arcgis.com/home/item.html?id=0b4733cb5d204da6ab936c9f6d49e401) | Current assignment context |
+| Assignment history | [`df7d77eb57f14c68b717c2cf3cdaada4`](https://urap.maps.arcgis.com/home/item.html?id=df7d77eb57f14c68b717c2cf3cdaada4) | Selected-period denominator, contractor, and maintenance level |
+| EPP parcels | `gisdb_gis_epp_parcels_full` | Current parcel universe and geometry |
+| Council districts | `CouncilDistricts2022` | Reference filter and highlight |
+
+Survey service endpoint:
 
 ```text
 https://services1.arcgis.com/0DMNBNaacQNEfN4H/arcgis/rest/services/regrid_surveys/FeatureServer/0
 ```
 
-## Web App Runtime Model
+Shared browser adapters:
 
-The GitHub Pages app uses a **live ArcGIS-first contract**: live ArcGIS for surveys, assignment snapshots, and current inventory; checked-in static files remain fallback/cache and finance contract data.
+- [`landcare/survey-layer.js`](landcare/survey-layer.js) normalizes ArcGIS survey data, including `additional_comments` to `additional_notes`.
+- [`landcare/assignment-layer.js`](landcare/assignment-layer.js) normalizes current and historical assignment layers.
+- [`landcare/monitoring.js`](landcare/monitoring.js), [`landcare/kpi.js`](landcare/kpi.js), and [`landcare/contractor-overview.js`](landcare/contractor-overview.js) consume those adapters.
 
-```mermaid
-flowchart TD
-    User["User opens dashboard"] --> View{"View mode"}
-
-    View --> Current["Current portfolio"]
-    View --> History["Monthly survey history"]
-
-    Current --> EppLive["Live query gisdb_gis_epp_parcels_full"]
-    History --> AssignLive["Live query assignment history snapshot by period_label"]
-    History --> AssignStatic["Fallback assignment GeoJSON from docs/landcare/data"]
-    History --> SurveyLive["Live query gisdb_gis_regrid_surveys by period_label"]
-
-    AssignLive --> Merge["Browser merges assignment keys with survey evidence"]
-    AssignStatic --> Merge
-    SurveyLive --> Merge
-    Merge --> Sidebar["KPI cards, contractor table, action focus"]
-    SurveyLive --> MapReturned["History map default: all survey polygons"]
-
-    EppLive --> MapCurrent["Current map: live parcel layer"]
-```
-
-| Data need | Runtime source | Static fallback |
-|---|---|---|
-| Current URA-owned LandCare parcels | AGOL `gisdb_gis_epp_parcels_full` | Latest month from published GeoJSON |
-| Returned survey evidence | AGOL `gisdb_gis_regrid_surveys` via [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) for all-period evidence | Postgres export in published GeoJSON |
-| Assignment denominator (org, level, open count) | AGOL `gisdb_gis_regrid_bundle_assignments_history`; current snapshot item `0b4733cb5d204da6ab936c9f6d49e401` | Published `all_months.geojson` / export JSON |
-| Finance expectations and actuals | Power BI Land Care Budget semantic model, filtered to `Item Type = Landcare`, sanitized into `finance_summary.json` by the 7 AM VM job | Last successful semantic output; workbook context remains available |
-| Available survey months | AGOL `period_label` stats + published manifest | Published manifest only |
-
-Implementation files:
-
-- [`docs/landcare/monitoring.js`](../docs/landcare/monitoring.js) — map monitor; history mode defaults to live all-survey coverage and uses live assignment history for KPI/reconciliation counts
-- [`docs/landcare/kpi.js`](../docs/landcare/kpi.js) — KPI dashboard; latest-month completion recomputed from live survey layer
-- [`docs/landcare/survey-layer.js`](../docs/landcare/survey-layer.js) — shared ArcGIS survey queries and merge helpers
-- [`docs/landcare/assignment-layer.js`](../docs/landcare/assignment-layer.js) - shared ArcGIS assignment snapshot queries and normalization helpers
-
-## Published Data Contract (`docs/landcare/data`)
-
-Generated daily by the VM refresh when Postgres or finance inputs change:
-
-| File | Contents | Primary consumer |
-|---|---|---|
-| `all_months.geojson` | URA-owned assignment rows with geometry | History sidebar metrics; open-assignment map overlay |
-| `latest_month*.json` / `.geojson` | Latest comparable month slice | Fallback current view; manifest freshness |
-| `monthly_metrics.json` | Completion rates by month | KPI timeline (latest month enriched live in browser) |
-| `contractor_monthly.json` | Contractor completion by month | KPI contractor charts |
-| `kpi_summary.json` | Summary metadata and latest metrics | KPI header cards |
-| `finance_summary.json` | Power BI semantic headline, quarter, contract, and month/contractor aggregates | Finance tabs |
-| `refresh_manifest.json` | Freshness, counts, survey metadata | QA validation; status JSON upstream block |
-
-Survey **complete** counts for the selected service period can change daily in the browser even when these files are unchanged, because the web app queries AGOL at load time. The current Map and KPI numerator is the raw number of survey records whose normalized parcel key matches an assignment; unique parcel counts are diagnostic only.
-
-## Source-of-Truth Rules
+## Runtime and metric rules
 
 | Question | Authoritative source |
 |---|---|
-| What surveys were submitted for a service period- | GISDB `gis.regrid_survey_submissions`, published daily to AGOL `gisdb_gis_regrid_surveys` |
-| What does the web map show for complete surveys- | Live AGOL survey layer matched to the selected assignment keys (daily refresh from upstream) |
-| What parcels were assigned for a reporting month- | GISDB `gis.regrid_bundle_assignments` published to AGOL assignment current/history snapshots; checked-in export is fallback/cache |
-| What is the current LandCare parcel universe today- | Live AGOL `gisdb_gis_epp_parcels_full` |
-| What are finance and contract totals? | Power BI Land Care Budget semantic model → aggregate-only `finance_summary.json` |
-| What actual check requests were recorded? | Power BI `LandCare Check Requests`, filtered to `Item Type = Landcare`; NetSuite saved search 1618 is the upstream reconciliation reference |
-| What should the web KPI consume? | The same semantic measures published in `finance_summary.json`; never query authenticated Power BI from the public browser |
+| What was submitted? | Live ArcGIS survey layer, backed by the upstream Regrid/GISDB process |
+| What was assigned? | Live ArcGIS assignment current/history layers |
+| What is complete? | Raw survey records whose normalized parcel key matches an assignment |
+| What is the denominator? | Active assigned records; Request Only is excluded |
+| What comments and photos appear? | Live ArcGIS survey fields through the shared survey adapter |
+| What provides Land Care Budget and Parcel Area? | Authenticated Power BI report pages |
 
-## Platform Responsibilities
+Unique completed parcels remain diagnostic only. Completion is intentionally not deduplicated.
 
-| Platform | Owns | Does not own |
-|---|---|---|
-| **URA-Data-Repository** | Regrid download, GISDB survey load, AGOL survey publish, bundle CSV generation | GitHub Pages app, dashboard JSON build, Power BI model |
-| **PostgreSQL gisdb** | Raw survey rows, bundle assignments, ownership joins | Direct public web access |
-| **ArcGIS Online** | Hosted survey, assignment snapshot, and EPP feature layers; map geometry | Finance metrics |
-| **Power BI semantic model** | Governed LandCare finance classification, measures, annual limit, and contract values | Public browser delivery |
-| **This repo + VM** | Daily export, Power BI aggregate extraction, QA, git publish, web app, operational logs | Regrid login, upstream Selenium download |
-| **Task Scheduler + VM logs** | Refresh orchestration, run status, failure triage | Core source-of-truth data |
+## GitHub Pages and fallback contract
 
-## Contractor submission and evidence boundary
+GitHub Pages serves the four application routes and the design-system example. `docs/landcare/data/` remains checked in for compatibility, historical charts, and finance-contract fallback behavior.
 
-| Stage | Owner | Source / destination | Public visibility |
-|---|---|---|---|
-| Parcel selection | Contractor | AGOL assignment history/current snapshot | Assignment outlines and address are public to the submission experience |
-| Service evidence capture | Contractor | Public Survey123 form | Submission is pending; not shown on Map Monitor |
-| Approval / rejection | URA reviewer | Restricted Survey123 Inbox | Internal only |
-| Canonical evidence sync | URA-Data-Repository webhook + reconciliation | `gis.landcare_survey123_evidence_raw` → `gis.landcare_survey_evidence_parcels` | Raw/QA restricted; valid parcel polygons are public |
-| Evidence presentation | Map Monitor | Stable **LandCare Survey123 Evidence Parcels** hosted feature layer | Valid parcel polygons and approved photo links only |
+| File group | Purpose now |
+|---|---|
+| `all_months.geojson`, `latest_month*` | Static compatibility fallback if a live ArcGIS request fails |
+| `monthly_metrics.json`, `quarterly_metrics.json`, `contractor_monthly.json` | Historical/fallback chart contract |
+| `finance_summary.json` | Checked-in finance compatibility contract; not a live Power BI scrape |
+| `refresh_manifest.json` | Date and contents of the static contract; not live ArcGIS freshness |
 
-See [`landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md) for field mappings, geometry normalization, and the VM completion checklist.
+Do not present the static manifest date as the current survey or assignment date when the live query succeeds.
 
-## Monitoring and QA
+## Power BI boundary
 
-| Artifact | Path | Purpose |
-|---|---|---|
-| Daily refresh log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` | Human troubleshooting |
-| Status JSON | `C:\srv\logs\land-care-assurance\daily-refresh-status.json` | Local VM success/failure artifact; optional `upstream` survey metadata |
-| QA validator | `scripts/validate_landcare_daily_refresh.py` | Blocks publish on regression or stale manifest |
-| VM smoke test | [`docs/vm-smoke-test-regrid-daily-sync.md`](vm-smoke-test-regrid-daily-sync.md) | Post-deploy handoff checklist |
-| Task Scheduler runbook | [`docs/task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) | Install/update, daily flow, and failure triage diagrams |
+KPI embeds the authenticated report for Land Care Budget and Parcel Area. The public browser does not receive Power BI credentials or scrape visual values. The optional service-principal extractor in [`scripts/extract_landcare_powerbi_semantic.py`](../scripts/extract_landcare_powerbi_semantic.py) is not an active production dependency. Use it only if a future owner needs governed Power BI aggregates outside the secure report and completes the administrative prerequisites in [`powerbi-landcare-finance-source.md`](powerbi-landcare-finance-source.md).
 
-## Repository Map
+## Survey123 boundary
 
-```text
-land-care-assurance/
-docs/
-|-- landcare-architecture.md          <- this document
-|-- landcare-submission-and-evidence-flow.md <- contractor intake and approved evidence handoff
-|-- upstream-regrid-survey-pipeline.md
-|-- landcare-data-engineering-flow.md
-|-- monitoring/                       <- map monitor app
-|-- kpi/                              <- KPI dashboard app
-`-- landcare/
-    |-- survey-layer.js               <- live AGOL survey client
-    |-- assignment-layer.js           <- live AGOL assignment snapshot client
-    |-- monitoring.js
-    |-- kpi.js
-    `-- data/                         <- published dashboard contract
-scripts/                              <- VM daily refresh
-prototype/sql/                        <- Postgres export SQL
-power-platform/                       <- archived optional build kit, not active ops path
-data engineering/                     <- QA inventory, platform roles
-```
+Survey123 is a governed optional intake path. It does not replace the current Regrid completion source until its review, canonical parcel reconciliation, public evidence layer, and parallel validation are deployed. See [`landcare-submission-and-evidence-flow.md`](landcare-submission-and-evidence-flow.md).
 
+## Operational ownership
+
+| Platform | Owns |
+|---|---|
+| Upstream GIS VM and `URA-Data-Repository` | Regrid download, GISDB load, and ArcGIS layer publication |
+| PostgreSQL GISDB | Canonical operational survey and assignment records |
+| ArcGIS Online | Live public query layers and geometry |
+| Power BI | Governed LandCare finance and parcel-area report pages |
+| This repository | Browser application, shared adapters, tests, documentation, and static compatibility files |
+| GitHub Pages | Public application delivery |
+
+## Current operations references
+
+- [`../handover/04-readiness-checklist.md`](../handover/04-readiness-checklist.md) - delivered and pending work
+- [`upstream-regrid-survey-pipeline.md`](upstream-regrid-survey-pipeline.md) - upstream ingestion details
+- [`task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md) - deprecated 7 AM task retirement and recovery
+- [`vm-smoke-test-regrid-daily-sync.md`](vm-smoke-test-regrid-daily-sync.md) - read-only data verification
+- [`design-system/README.md`](design-system/README.md) - reusable application design system

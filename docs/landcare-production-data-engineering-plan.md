@@ -1,5 +1,9 @@
 # LandCare Monitoring Production Data Engineering Plan
 
+> Superseded for current operations on August 6, 2026. The 7 AM dashboard refresh
+> described below is deprecated. Use [`landcare-architecture.md`](landcare-architecture.md)
+> and [`task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md).
+
 See [`docs/landcare-architecture.md`](landcare-architecture.md) for the canonical platform architecture.
 
 ## Current State

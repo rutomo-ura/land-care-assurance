@@ -13,9 +13,9 @@ This document summarizes how Regrid survey data reaches the LandCare dashboard. 
 |---|---|---|---|
 | 4:00 AM daily | `\GIS Automations\REGRID` | `regrid_survey_daily_pipeline.py` | Regrid CSV → `gis.regrid_survey_submissions`; AGOL all-period layer should be checked separately until upstream publisher is aligned |
 | 4:15 AM on the 15th | `\GIS Automations\REGRID` | `regrid_survey_monthly_export.py` | G-drive CSV archive snapshot (not the daily source) |
-| 7:00 AM daily | `\GIS Automations` | `refresh_landcare_dashboard.ps1` in this repo | `docs/landcare/data/*` → GitHub Pages |
+| 7:00 AM daily | `\GIS Automations` | `refresh_landcare_dashboard.ps1` in this repo | **Deprecated**; static fallback publisher retained only as recovery reference |
 
-The dashboard refresh runs three hours after the daily Regrid pipeline so incremental survey submissions are available in GISDB before export. The web app also queries AGOL directly at page load, so returned survey evidence can update even between 7:00 AM publishes.
+The web app queries ArcGIS directly at page load, so current survey evidence does not depend on a 7:00 AM repository publish. The former dashboard refresh is deprecated; see [`task-scheduler-vm-operations.md`](task-scheduler-vm-operations.md).
 
 ## What This Repo Consumes
 
@@ -31,7 +31,7 @@ The read-only export in `prototype/sql/export_prototype_data_readonly.sql` joins
 ## Source of Truth
 
 - **Surveys:** GISDB (`gis.regrid_survey_submissions`) is the source of truth. G-drive CSV files are monthly archives only.
-- **Assignments:** Still loaded monthly from bundle exports; assignment denominator updates on the 15th.
+- **Assignments:** Loaded from bundle exports and published to the ArcGIS current/history layers used by the browser.
 - **AGOL all-period survey layer:** `gisdb_gis_regrid_surveys` ([ArcGIS item](https://urap.maps.arcgis.com/home/item.html?id=7a2e1d9bacba461296c54a63f104cf51)) is the live all-period Regrid survey layer. The monitoring map and KPI dashboard query this layer directly for returned survey evidence, additional comments, and freshness metadata. Historical assignment denominators still come from the published Postgres export in this repo.
 
 ## Current Upstream Assessment
@@ -52,7 +52,7 @@ The important architecture change is that Regrid survey data is now handled as a
 | `publish_regrid_snapshot.py` | Publishes `gis.regrid_surveys` to the existing AGOL item | Runtime returned-survey map evidence comes from this layer |
 | `regrid_survey_monthly_export.py` | Writes prior service-period CSV archives to the G drive | Archive only; not the daily dashboard source |
 
-The dashboard should not read the monthly G-drive survey CSV as a freshness source. Daily freshness should be checked from GISDB, AGOL metadata, Task Scheduler history, and this repo's `daily-refresh-status.json`.
+The dashboard should not read the monthly G-drive survey CSV or the deprecated dashboard status JSON as a freshness source. Daily freshness is checked from the upstream task, GISDB, and ArcGIS metadata.
 
 ## Service Period Convention
 
@@ -60,13 +60,13 @@ LandCare service periods run from the **15th of one month through the 14th of th
 
 ## Daily Incremental Updates
 
-With daily survey ingestion, `returned_assigned` counts for the current service period can increase every day even when `latest_survey_period` stays the same. The 7:00 AM refresh should publish those updates when survey evidence grows.
+With daily survey ingestion, `returned_assigned` counts for the current service period can increase every day even when `latest_survey_period` stays the same. The browser sees those changes through its live ArcGIS query.
 
 QA checks in `scripts/validate_landcare_daily_refresh.py` guard against survey count regression within the same period and warn when `latest_survey_period` is stale.
 
 ## Monitoring
 
-After each refresh, `C:\srv\logs\land-care-assurance\daily-refresh-status.json` may include an optional `upstream` object:
+The following deprecated status artifact may still exist on the VM and is useful only when archiving the old 7 AM task:
 
 ```json
 {

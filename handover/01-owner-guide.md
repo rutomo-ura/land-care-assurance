@@ -4,6 +4,10 @@ subtitle: "Owner Guide"
 author: "Prepared for the incoming owner, ura-gis/land-care-assurance"
 ---
 
+> Status note, August 6, 2026: use [`04-readiness-checklist.md`](04-readiness-checklist.md)
+> for current operations. The 7 AM dashboard refresh and finance instructions in this
+> longer guide are retained as historical implementation detail and are deprecated.
+
 # What you own
 
 LandCare Assurance answers one question for URA supervisors: for this service period, which
@@ -60,12 +64,11 @@ treat the committed files as truth.
 |---|---|---|
 | 4:00 AM | `regrid_survey_daily_pipeline.py` upstream | Regrid CSV into `gis.regrid_survey_submissions`, then the ArcGIS survey layer |
 | 4:15 AM on the 15th | `regrid_survey_monthly_export.py` | G-drive CSV archive only, not a dashboard source |
-| 7:00 AM | `refresh_landcare_dashboard.ps1` in this repo | `docs/landcare/data/*` committed and pushed when changed |
-| On demand | `ingest_landcare_netsuite_checks.py` | NetSuite check-request actuals folded into `finance_summary.json` |
+| 7:00 AM | `refresh_landcare_dashboard.ps1` in this repo | **Deprecated** static fallback and finance publisher |
+| On demand | `ingest_landcare_netsuite_checks.py` | Legacy NetSuite reconciliation for `finance_summary.json` |
 
-The 7:00 AM job runs three hours after ingestion so the Postgres export reflects the latest
-state. Because the browser also queries ArcGIS at page load, completion counts can rise
-between publishes.
+The 7:00 AM job is no longer part of current production. The browser queries ArcGIS at page
+load, so completion counts can rise without a repository data publish.
 
 The NetSuite step is not automatic. The refresh script runs it only when the environment
 variable `LANDCARE_NETSUITE_CHECKS_CSV` points at an exported CSV. With that variable unset,
@@ -175,12 +178,11 @@ they are not attributable to a contractor.
 ## The three-minute morning check
 
 1. Confirm the 4:00 AM upstream pipeline ran and ArcGIS layer freshness moved.
-2. Confirm the 7:00 AM task and read
-   `C:\srv\logs\land-care-assurance\daily-refresh-status.json`.
-3. Confirm the Pages workflow is green.
+2. Reconcile Map Monitor and KPI for the selected period.
+3. Confirm Power BI loads and the Pages workflow is green after application changes.
 
-If the status JSON is not `success`, read `failed_stage` and fix only that stage. The full
-triage tree is in `docs/task-scheduler-vm-operations.md`.
+Use `docs/task-scheduler-vm-operations.md` only to archive, disable, or deliberately
+reactivate the deprecated 7 AM process.
 
 ## Logs and gates
 
@@ -267,9 +269,8 @@ GitHub Pages serves this file to anyone, so transaction detail must never enter 
    total, and latest date against NetSuite.
 6. Run the tests and Pages validation before publishing.
 
-Setting `LANDCARE_NETSUITE_CHECKS_CSV` on the VM makes the 7:00 AM refresh run step 4
-automatically. The export in step 2 is still manual, so a stale CSV produces stale actuals
-without any error.
+The deprecated refresh script can still run step 4 when `LANDCARE_NETSUITE_CHECKS_CSV` is
+configured. This is a recovery reference, not the current Power BI reporting path.
 
 ## Vendor aliases
 

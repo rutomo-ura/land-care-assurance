@@ -16,11 +16,11 @@ LandCare has three working layers:
 flowchart LR
     Regrid["Regrid export"] --> VM["GIS VM"]
     VM --> PG["PostgreSQL gisdb"]
-    VM --> AGOL["ArcGIS Online layers"]
-    PG --> Refresh["7 AM refresh"]
-    Refresh --> Pages["GitHub Pages"]
+    PG --> AGOL["ArcGIS Online layers"]
+    Repo["ura-gis repository"] --> Pages["GitHub Pages"]
     AGOL --> App["Map, KPI, contractor"]
     Pages --> App
+    PowerBI["Power BI secure report"] --> App
     Submit["LandCare submission page"] --> Survey123["Survey123"]
     Survey123 --> Review["URA review"]
     Review --> Approved["Approved evidence layer"]
@@ -101,7 +101,7 @@ Before release:
 - Confirm ArcGIS layers are query-only where public and restricted where they contain review data.
 - Run the repository tests and open Map Monitor, KPI, contractor, and survey-submission pages.
 - Verify counts, comments, photos, field notes, filters, and the selected reporting period.
-- Check the VM status JSON after scheduled workflow changes.
+- Use the deprecated-task runbook only if the legacy 7 AM process is being retired or deliberately reactivated.
 - Use a focused branch and pull request. Record source, denominator, affected page, test command, and rollback.
 
 Canonical references: `HANDOVER.md`, `AGENTS.md`, `docs/landcare-architecture.md`, `docs/landcare-submission-and-evidence-flow.md`, `docs/survey123-landcare-network-setup.md`, `docs/landcare-metrics-context.md`, and `docs/design-system/README.md`.

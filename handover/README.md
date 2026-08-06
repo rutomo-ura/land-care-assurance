@@ -11,7 +11,8 @@ repository.
 
 | File | What it is | Read it when |
 |---|---|---|
-| [`01-owner-guide.md`](01-owner-guide.md) | The complete reference: architecture, metrics, daily operations, the Regrid replacement, design system, risks | First. This is the document |
+| [`04-readiness-checklist.md`](04-readiness-checklist.md) | Current delivered, ready, pending, and sign-off status | First. This is the current document |
+| [`01-owner-guide.md`](01-owner-guide.md) | Detailed background: architecture, metrics, Regrid replacement, and design system; dated 7 AM sections are deprecated | When deeper history is useful |
 | [`01-owner-guide.pdf`](01-owner-guide.pdf) | The same guide typeset as a report, 13 pages | You want to print it or send it to someone outside the repo |
 | [`02-agent-playbook.md`](02-agent-playbook.md) | Prompts and recipes for changing the app with an AI agent | You are about to make a change |
 | [`03-presentation.pdf`](03-presentation.pdf) | 7-slide walkthrough of the product and the handover. Predates the NetSuite deployment | You are briefing someone in a meeting |
@@ -37,19 +38,20 @@ Live at `https://ura-gis.github.io/land-care-assurance/`:
    published number.
 3. **All ArcGIS access lives in two files**, `docs/landcare/survey-layer.js` and
    `docs/landcare/assignment-layer.js`. An endpoint anywhere else is a defect.
-4. **Finance actuals come from NetSuite and refresh by hand.** They are check requests, not
-   cleared payments. A stale CSV publishes stale money figures with no error.
+4. **Land Care Budget and Parcel Area use secure Power BI pages.** The checked-in finance
+   JSON is a compatibility contract and must not be treated as live Power BI output.
+5. **The former 7 AM dashboard refresh is deprecated.** Live pages depend on ArcGIS at page
+   load, not that scheduled task.
 
 ## First week
 
 1. Clone, push, and run the tests.
-2. Watch two unattended refresh cycles complete with `status: success`.
+2. Watch two upstream 4 AM ArcGIS publication cycles and confirm live layer timestamps.
 3. Run the morning brief manually in `dry-run` mode and read the artifact.
 4. Open all three routes and reconcile one contractor's numbers by hand against the map.
-5. Refresh the NetSuite actuals once end to end, so you have done it before it is urgent.
+5. Open Land Care Budget and Parcel Area and confirm the authenticated Power BI report loads.
 6. Make one harmless documentation change through an agent, end to end, including tests.
-7. Decide whether to deploy the Survey123 evidence path this quarter. It is the single
-   blocker on retiring the Regrid subscription.
+7. Archive and disable the deprecated 7 AM task on the VM using `04-readiness-checklist.md`.
 
 ## Rebuilding the PDF
 

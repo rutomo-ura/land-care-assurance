@@ -1,245 +1,111 @@
-# LandCare Task Scheduler VM Operations
+# LandCare VM Scheduler Operations
 
-Last updated: 2026-08-03
+Last updated: 2026-08-06
 
-This is the operational runbook now that Power Automate is not available. Windows Task Scheduler, local logs, and local status JSON are the control plane.
+The current production data path is the upstream 4 AM Regrid/Oscar process that publishes PostgreSQL-backed ArcGIS layers. The former 7 AM LandCare dashboard task is deprecated and should not be treated as an application dependency.
 
-## Operating Model
+## Current and legacy tasks
 
-```mermaid
-flowchart TB
-    subgraph vm ["GIS VM"]
-        TS["Windows Task Scheduler"]
-        UpstreamTask["4:00 AM Regrid daily task"]
-        MonthlyTask["4:15 AM monthly archive task"]
-        DownstreamTask["7:00 AM LandCare dashboard task"]
-        Logs["C:\\srv\\logs\\land-care-assurance"]
-    end
-
-    subgraph githubAutomation ["GitHub Actions"]
-        MorningBrief["9:00 AM Eastern morning executive brief"]
-        BriefIssue["Assigned GitHub Issue"]
-    end
-
-    subgraph upstream ["C:\\srv\\URA-Data-Repository"]
-        RegridDaily["regrid_survey_daily_pipeline.py"]
-        RegridMonthly["regrid_survey_monthly_export.py"]
-        SurveyTable["gis.regrid_survey_submissions"]
-        SurveyView["gis.regrid_surveys"]
-        SurveyAgol["AGOL gisdb_gis_regrid_surveys"]
-    end
-
-    subgraph dashboard ["C:\\srv\\GISWebApp\\land-care-assurance"]
-        Refresh["scripts\\refresh_landcare_dashboard.ps1"]
-        DataFiles["docs\\landcare\\data"]
-        GitHub["GitHub master"]
-        Pages["GitHub Pages dashboard"]
-    end
-
-    TS --> UpstreamTask --> RegridDaily
-    TS --> MonthlyTask --> RegridMonthly
-    TS --> DownstreamTask --> Refresh
-    RegridDaily --> SurveyTable --> SurveyView --> SurveyAgol
-    Refresh --> DataFiles --> GitHub --> Pages
-    Refresh --> Logs
-    GitHub --> MorningBrief --> BriefIssue
-```
-
-## Daily Scheduled Flow
-
-```mermaid
-flowchart TD
-    A["4:00 AM Task Scheduler starts Regrid daily pipeline"] --> B["Download latest Regrid LandCare survey CSV"]
-    B --> C["Load/upsert raw survey rows to gis.regrid_survey_submissions"]
-    C --> D["Refresh gis.regrid_surveys PostGIS view"]
-    D --> E["Overwrite existing AGOL survey item"]
-    E --> F["7:00 AM Task Scheduler starts LandCare dashboard refresh"]
-    F --> G["git pull --ff-only origin master"]
-    G --> H["Export PostgreSQL app-ready GeoJSON"]
-    H --> I["Build docs/landcare/data JSON and GeoJSON"]
-    I --> J["Build finance_summary.json from workbook"]
-    J --> NS["Aggregate optional NetSuite CSV"]
-    NS --> K["Run QA/QC validation"]
-    K --> L{"Generated data changed-"}
-    L -->|No| M["Write success log/status: checked and unchanged"]
-    L -->|Yes| N["Commit docs/landcare/data"]
-    N --> O["Push to GitHub"]
-    O --> P["GitHub Pages serves updated dashboard"]
-    P --> Q["9:00 AM GitHub Action creates assigned executive brief"]
-```
-
-## Task Registration Standard
-
-Update `\GIS Automations\LandCare-Daily-Dashboard-Refresh.task` using the approved `DOMAIN\landcare-refresh` service account (or the locally approved equivalent), not an interactive personal account. The registration script requires a password-backed principal, verifies that the stored principal uses `Password` logon, runs at highest privilege, retries three times at 15-minute intervals, starts missed runs when available, and stops a run after two hours.
-
-```powershell
-cd C:\srv\GISWebApp\land-care-assurance
-.\scripts\register_landcare_daily_refresh_task.ps1 `
-  -RepoRoot C:\srv\GISWebApp\land-care-assurance `
-  -TaskUser "DOMAIN\landcare-refresh" `
-  -PromptForTaskPassword
-
-Get-ScheduledTask -TaskPath "\GIS Automations\" -TaskName "LandCare-Daily-Dashboard-Refresh.task" |
-  Select-Object TaskName, TaskPath, State, @{Name="RunAs";Expression={$_.Principal.UserId}}, @{Name="LogonType";Expression={$_.Principal.LogonType}}, @{Name="RunLevel";Expression={$_.Principal.RunLevel}}
-Get-ScheduledTaskInfo -TaskPath "\GIS Automations\" -TaskName "LandCare-Daily-Dashboard-Refresh.task" |
-  Select-Object LastRunTime, LastTaskResult, NextRunTime
-```
-
-Release evidence requires a successful manual run, followed by a successful scheduled invocation (`Start-ScheduledTask`), a `LastTaskResult` of `0`, and a same-day `daily-refresh-status.json` with `status: success`.
-
-## GitHub authentication after handover
-
-The VM must not use an intern's GitHub password or personal token. Create an
-Ed25519 key under the approved `landcare-refresh` service identity, add only the
-public key to the `ura-gis/land-care-assurance` repository as a deploy key with
-write access, and keep the private key in a VM-local secrets directory with an
-ACL limited to that service identity.
-
-Run the following as the same Windows identity that owns the scheduled task,
-after the repository transfer:
-
-```powershell
-ssh-keygen -t ed25519 -C "landcare-refresh@ura-gis" -f C:\srv\secrets\github_landcare_ed25519
-Get-Content C:\srv\secrets\github_landcare_ed25519.pub
-cd C:\srv\GISWebApp\land-care-assurance
-git remote set-url origin git@github.com:ura-gis/land-care-assurance.git
-git ls-remote origin
-```
-
-Verify the GitHub host key through the approved URA workstation procedure; do
-not disable host-key checking. Confirm one checked refresh can commit and push,
-then remove any old personal HTTPS credential from Windows Credential Manager.
-
-Run the proof command after registration. It starts the task, waits for it to finish, checks the exit result and same-day status JSON, and saves a durable verification JSON beside the daily logs:
-
-```powershell
-.\scripts\test_landcare_scheduled_refresh.ps1
-```
-
-## Monthly Archive Flow
-
-```mermaid
-flowchart TD
-    A["15th of month, 4:15 AM"] --> B["Run regrid_survey_monthly_export.py"]
-    B --> C["Read prior closed service period from gis.regrid_survey_submissions"]
-    C --> D["Write landcare-network_YYYYMM-YYYYMM_snapshot.csv"]
-    D --> E["G-drive monthly archive"]
-    E --> F["Archive only; not daily dashboard source"]
-```
-
-## Bundle Install / Update Flow
-
-```mermaid
-flowchart TD
-    A["Copy bundle ZIP to VM staging folder"] --> B["Extract ZIP"]
-    B --> C["Open PowerShell in extracted bundle folder"]
-    C --> D["Run install_landcare_daily_refresh.ps1"]
-    D --> E{"Target repo exists-"}
-    E -->|No or empty| F["Clone ura-gis/land-care-assurance into C:\\srv\\GISWebApp\\land-care-assurance"]
-    E -->|Git repo| G["Fetch, checkout master, pull --ff-only"]
-    E -->|Non-empty non-git| H["Stop without changing folder"]
-    F --> I["Copy refresh scripts and docs with backups"]
-    G --> I
-    I --> J["Write VM-local .env if credentials supplied"]
-    J --> K{"-RegisterTask supplied-"}
-    K -->|Yes| L["Register 7:00 AM Task Scheduler job"]
-    K -->|No| M["Skip task registration"]
-    L --> N{"-RunOnce supplied-"}
-    M --> N
-    N -->|Yes| O["Run one checked refresh immediately"]
-    N -->|No| P["Install/update complete"]
-```
-
-## Manual VM Update Flow
-
-```mermaid
-flowchart TD
-    A["Open PowerShell as VM user"] --> B["cd C:\\srv\\URA-Data-Repository"]
-    B --> C["git pull --ff-only origin main"]
-    C --> D["Apply regrid_survey_pipeline_migration.sql once if not applied"]
-    D --> E["Run/test regrid_survey_daily_pipeline.py"]
-    E --> F["Confirm AGOL survey layer updates"]
-    F --> G["cd C:\\srv\\GISWebApp\\land-care-assurance"]
-    G --> H["git pull --ff-only origin master"]
-    H --> I["Run refresh_landcare_dashboard.ps1"]
-    I --> J["Review daily log and status JSON"]
-```
-
-Commands:
-
-```powershell
-cd C:\srv\URA-Data-Repository
-git pull --ff-only origin main
-psql -h localhost -U postgres -d gisdb -f sql\regrid_survey_pipeline_migration.sql
-C:\ProgramData\ESRI\conda\envs\arcgispro-py3-clone\python.exe .\regrid_survey_daily_pipeline.py
-
-cd C:\srv\GISWebApp\land-care-assurance
-git pull --ff-only origin master
-.\scripts\refresh_landcare_dashboard.ps1 -RepoRoot C:\srv\GISWebApp\land-care-assurance
-```
-
-## Failure Triage Flow
-
-```mermaid
-flowchart TD
-    A["Dashboard stale or Task Scheduler reports failure"] --> B["Open latest C:\\srv\\logs\\land-care-assurance\\daily-refresh-YYYY-MM-DD.log"]
-    B --> C{"Failed stage-"}
-    C -->|Pull latest repository changes| D["Check git auth, dirty worktree, network, branch"]
-    C -->|PostgreSQL export| E["Check .env PG_HOST/PG_DB/PG_USER/PG_PASSWORD and GISDB availability"]
-    C -->|Web data rebuild| F["Check exported GeoJSON and build script errors"]
-    C -->|Finance rebuild| G["Check workbook path and sheet schema"]
-    C -->|QA validation| H["Check manifest dates, counts, regressions, malformed JSON"]
-    C -->|Commit/push| I["Check git auth and remote permissions"]
-    D --> J["Fix root cause"]
-    E --> J
-    F --> J
-    G --> J
-    H --> J
-    I --> J
-    J --> K["Run refresh script manually"]
-    K --> L["Confirm status JSON says success"]
-```
-
-## Local Monitoring Artifacts
-
-```mermaid
-flowchart LR
-    Refresh["refresh_landcare_dashboard.ps1"] --> Log["daily-refresh-YYYY-MM-DD.log"]
-    Refresh --> CurrentStatus["daily-refresh-status.json"]
-    Refresh --> DatedStatus["daily-refresh-status-YYYY-MM-DD.json"]
-    CurrentStatus --> Human["Human review / Task Scheduler history"]
-    DatedStatus --> History["Run history archive"]
-    Log --> Triage["Failure triage"]
-```
-
-| Artifact | Path | Use |
+| Process | Status | Purpose |
 |---|---|---|
-| Current run status | `C:\srv\logs\land-care-assurance\daily-refresh-status.json` | Quick success/failure check |
-| Dated status | `C:\srv\logs\land-care-assurance\daily-refresh-status-YYYY-MM-DD.json` | Historical run record |
-| Transcript log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` | Full troubleshooting log |
-| Task history | Windows Task Scheduler UI | Confirms scheduled trigger and exit code |
-| Morning brief Issue | GitHub Actions and repository Issues | Confirms 9 AM summary delivery and metric movement |
+| Upstream Regrid task, 4 AM | Active | Download Regrid survey output, load GISDB, publish live ArcGIS survey data |
+| Upstream assignment publication | Active | Publish current and historical ArcGIS assignment layers |
+| `LandCare-Daily-Dashboard-Refresh.task`, 7 AM | Deprecated | Former static export, finance, optional Survey123, QA, commit, and push process |
 
-## Source Rules
+Repository history shows the last identifiable automatic 7 AM data commit on July 28, 2026. The checked-in static GIS contract was generated July 29. Live ArcGIS now contains newer data and is queried directly by the browser.
 
-```mermaid
-flowchart TD
-    Regrid["Regrid survey submissions"] --> GISDBSurvey["gis.regrid_survey_submissions"]
-    GISDBSurvey --> AGOLSurvey["AGOL gisdb_gis_regrid_surveys"]
-    Bundle["Bundle assignments"] --> GISDBAssign["gis.regrid_bundle_assignments"]
-    PowerBI["Power BI Land Care Budget semantic model"] --> FinanceJson["finance_summary.json"]
-    GISDBSurvey --> Export["LandCare Postgres export"]
-    GISDBAssign --> Export
-    Export --> DataJson["docs/landcare/data"]
-    AGOLSurvey --> Runtime["Web app runtime returned evidence"]
-    DataJson --> Runtime
-    FinanceJson --> Runtime
+## Controlled retirement on the GIS VM
+
+Run these checks on the actual GIS VM with the approved administrator. They are not available from a normal workstation clone.
+
+### 1. Capture the task state
+
+```powershell
+$taskPath = "\GIS Automations\"
+$taskName = "LandCare-Daily-Dashboard-Refresh.task"
+
+Get-ScheduledTask -TaskPath $taskPath -TaskName $taskName |
+  Select-Object TaskName, TaskPath, State,
+    @{Name="RunAs";Expression={$_.Principal.UserId}},
+    @{Name="LogonType";Expression={$_.Principal.LogonType}},
+    Actions, Triggers
+
+Get-ScheduledTaskInfo -TaskPath $taskPath -TaskName $taskName |
+  Select-Object LastRunTime, LastTaskResult, NextRunTime, NumberOfMissedRuns
+
+Export-ScheduledTask -TaskPath $taskPath -TaskName $taskName |
+  Set-Content "C:\srv\logs\land-care-assurance\LandCare-Daily-Dashboard-Refresh.retired.xml"
 ```
 
-- Daily survey source of truth: `gis.regrid_survey_submissions`.
-- Runtime returned survey map layer: AGOL `gisdb_gis_regrid_surveys`.
-- Assignment denominator source: `gis.regrid_bundle_assignments`.
-- Finance production source: Power BI Land Care Budget semantic model, queried after its completed overnight refresh. See [`powerbi-landcare-finance-source.md`](powerbi-landcare-finance-source.md).
-- NetSuite saved search 1618 remains an upstream reconciliation reference. Raw exports stay off GitHub.
-- G-drive survey CSV: archive only.
-- Metric definitions and denominator rules: [`docs/landcare-metrics-context.md`](landcare-metrics-context.md).
+Retain, when present:
+
+- `C:\srv\logs\land-care-assurance\daily-refresh-status.json`
+- recent `daily-refresh-YYYY-MM-DD.log` transcripts
+- the exported scheduled-task XML
+
+Do not copy secrets, `.env` values, tokens, or private keys into Git.
+
+### 2. Confirm the live replacement path
+
+Before disabling the legacy task:
+
+1. Confirm the upstream 4 AM task completed successfully.
+2. Confirm current edit timestamps on the survey, current-assignment, and history-assignment ArcGIS layers.
+3. Open Map Monitor, KPI, contractor, and survey-submission routes.
+4. Reconcile one selected period and one parcel with a comment and image.
+5. Confirm Land Care Budget and Parcel Area load from Power BI.
+
+### 3. Disable, observe, then remove
+
+```powershell
+Disable-ScheduledTask -TaskPath $taskPath -TaskName $taskName
+```
+
+Observe two business days and two upstream ArcGIS cycles. If the public application remains current, remove the deprecated task or retain it disabled according to the organization’s retention policy.
+
+```powershell
+Unregister-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Confirm
+```
+
+The final removal command is intentionally interactive. Review the exported definition before confirming.
+
+## What the deprecated script did
+
+[`scripts/refresh_landcare_dashboard.ps1`](../scripts/refresh_landcare_dashboard.ps1) performed these stages:
+
+1. Pull `master`.
+2. Install the refresh environment.
+3. Optionally reconcile and publish Survey123 evidence.
+4. Export PostgreSQL app-ready data.
+5. Rebuild static web and finance contracts.
+6. Optionally extract Power BI semantic aggregates.
+7. Validate generated data.
+8. Commit and push `docs/landcare/data/` if changed.
+9. Write local status JSON and transcripts.
+
+These scripts remain tracked as recovery and audit references. They are not instructions to register a new scheduled task.
+
+## Reactivation gate
+
+Do not reactivate the 7 AM process unless a current product requirement cannot be met by live ArcGIS, secure Power BI, or the existing compatibility files. Reactivation requires all of the following:
+
+- A named data consumer and owner.
+- An organization-managed Windows automation account.
+- Read-only PostgreSQL credentials with an explicit database host.
+- A repository-scoped deploy key, not a personal credential.
+- Documented Power BI or Survey123 configuration if those stages are enabled.
+- Python, survey-layer, Pages, and live ArcGIS validation.
+- One checked manual run and two unattended successful cycles.
+- Updated architecture and handover status.
+
+## Failure ownership
+
+| Failure | Owner |
+|---|---|
+| 4 AM Regrid download, GISDB load, or ArcGIS publication | GIS/data operations |
+| ArcGIS layer schema, periods, or counts | GIS/data operations and application owner |
+| GitHub Pages deployment | Repository maintainer |
+| Power BI report access or values | Finance/BI owner |
+| Deprecated task still enabled under a departing account | GIS VM administrator |
+
+See [`../handover/04-readiness-checklist.md`](../handover/04-readiness-checklist.md) for final sign-off.
