@@ -16,7 +16,7 @@ See `github.md` for the screen map from each artifact back to its repo source.
 |---|---|
 | Tokens, spacing, radii, shadows, type scale | Current. `tokens/colors.css` matches `app.css` `:root` exactly |
 | Components, guidelines, icons, brand mark | Current |
-| KPI dashboard template and finance copy examples | **Stale.** Predates the NetSuite deployment |
+| KPI dashboard template and finance copy examples | **Stale.** Predates both the NetSuite and Power BI finance work |
 
 NetSuite check-request actuals shipped on 4 August 2026, shortly after this export. The KPI
 finance surface changed with it:
@@ -26,10 +26,14 @@ finance surface changed with it:
   `Check requests to date` / `NetSuite contractor actuals`.
 - `Actuals remain explicitly unavailable until NetSuite is connected` is no longer true.
 
-So `templates/kpi-dashboard/KpiDashboard.dc.html` and two copy examples in `readme.md` show
-wording the product no longer uses. The visual language they demonstrate is unaffected: use
-them for layout, tokens, and component structure, and take finance wording from the live
-`docs/kpi/index.html` instead.
+Finance then moved again on 5 to 6 August 2026: Land Care Budget and Parcel Area became
+secure Power BI embeds, so the KPI finance area is now an authenticated iframe rather than
+native cards at all.
+
+So `templates/kpi-dashboard/KpiDashboard.dc.html` and two copy examples in `readme.md` show a
+finance surface the product no longer has. The visual language they demonstrate is
+unaffected: use them for layout, tokens, and component structure, and take finance wording
+and structure from the live `docs/kpi/index.html` instead.
 
 ## Re-exporting
 

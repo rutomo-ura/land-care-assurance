@@ -135,28 +135,31 @@ $endif$
 % max width keeps the figure inside the margin no matter how it grows.
 \begin{adjustbox}{max width=\textwidth}
 \begin{tikzpicture}[node distance=7mm]
+  % Straight chain left to right, with the three page-load sources meeting the app
+  % on separate axes so no edge crosses another and no label sits on a box.
   \node[dsbox] (src)  {Regrid export\\Monthly bundle};
-  \node[dsbox,right=8mm of src]  (vm)   {GIS VM\\4:00 AM pipeline};
-  \node[dsbox,right=8mm of vm]   (pg)   {PostgreSQL\\gisdb};
-  \node[dsbox,above=7mm of pg]    (agol) {ArcGIS Online\\live layers};
-  \node[dsbox,right=8mm of pg]   (ref)  {7:00 AM refresh\\GitHub Pages};
-  \node[dsapp,right=8mm of ref]  (app)  {Map Monitor\\KPI, Contractor};
-  \node[dsbox,below=8mm of ref]   (s123) {Survey123\\URA review};
+  \node[dsbox,right=8mm of src]   (vm)   {GIS VM\\4:00 AM pipeline};
+  \node[dsbox,right=8mm of vm]    (pg)   {PostgreSQL\\gisdb};
+  \node[dsbox,right=8mm of pg]    (agol) {ArcGIS Online\\live layers};
+  \node[dsapp,right=17mm of agol] (app)  {Map Monitor\\KPI, Contractor};
+  \node[dsbox,above=10mm of app]  (pages){GitHub Pages\\application code};
+  \node[dsbox,below=10mm of app]  (pbi)  {Power BI\\secure report};
+  \node[dsbox,below=10mm of agol] (s123) {Survey123\\URA review};
 
   \draw[dsflow] (src) -- (vm);
   \draw[dsflow] (vm)  -- (pg);
-  \draw[dsflow] (vm.north) |- (agol.west);
-  \draw[dsflow] (pg)  -- (ref);
-  \draw[dsflow] (ref) -- (app);
-  \draw[dsflow] (agol.east) -| node[dslabel,pos=0.25,above]{live query at page load} (app.north);
-  \draw[dsflow] (app.south) |- (s123.east);
-  \draw[dsflow] (s123.west) -| node[dslabel,pos=0.25,below]{approved only} (pg.south);
+  \draw[dsflow] (pg)  -- (agol);
+  \draw[dsflow] (agol) -- node[dslabel,above]{live query} (app);
+  \draw[dsflow] (pages) -- (app);
+  \draw[dsflow] (pbi) -- (app);
+  \draw[dsflow] (s123) -- node[dslabel,right,pos=0.45]{approved} (agol);
 \end{tikzpicture}
 \end{adjustbox}
 \caption*{\footnotesize\sffamily\color{uraMuted}%
-Nightly ingestion publishes to PostgreSQL and ArcGIS Online. The 7:00 AM refresh commits the
-published data contract and deploys Pages. The browser queries ArcGIS directly at page load,
-which is why counts move between publishes.}
+The 4:00 AM pipeline is the only scheduled job the product depends on. Everything else is
+read at page load: ArcGIS supplies assignments, evidence, and completion, GitHub Pages serves
+the application, and Power BI supplies finance through a secure embed. The former 7:00 AM
+refresh is deprecated and is not shown.}
 \end{figure}}
 
 % ------------------------------------------------------------- document ----

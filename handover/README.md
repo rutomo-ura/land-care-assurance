@@ -3,8 +3,8 @@
 Everything the next owner needs, in one folder. Start here rather than anywhere else in the
 repository.
 
-**If you are an AI agent:** read `../AGENTS.md`, then `01-owner-guide.md`, then
-`02-agent-playbook.md`. The URA design system is installed as a skill at
+**If you are an AI agent:** read `../AGENTS.md`, then `04-readiness-checklist.md`, then
+`01-owner-guide.md`, then `02-agent-playbook.md`. The URA design system is installed as a skill at
 `../.claude/skills/ura-landcare-design/` and is discovered automatically.
 
 ## What is in here
@@ -12,10 +12,10 @@ repository.
 | File | What it is | Read it when |
 |---|---|---|
 | [`04-readiness-checklist.md`](04-readiness-checklist.md) | Current delivered, ready, pending, and sign-off status | First. This is the current document |
-| [`01-owner-guide.md`](01-owner-guide.md) | Detailed background: architecture, metrics, Regrid replacement, and design system; dated 7 AM sections are deprecated | When deeper history is useful |
-| [`01-owner-guide.pdf`](01-owner-guide.pdf) | The same guide typeset as a report, 13 pages | You want to print it or send it to someone outside the repo |
+| [`01-owner-guide.md`](01-owner-guide.md) | How the system works and why: architecture, metrics, finance, Regrid replacement, design system | Second, and whenever you need depth |
+| [`01-owner-guide.pdf`](01-owner-guide.pdf) | The same guide typeset as a report, 17 pages | You want to print it or send it to someone outside the repo |
 | [`02-agent-playbook.md`](02-agent-playbook.md) | Prompts and recipes for changing the app with an AI agent | You are about to make a change |
-| [`03-presentation.pdf`](03-presentation.pdf) | 7-slide walkthrough of the product and the handover. Predates the NetSuite deployment | You are briefing someone in a meeting |
+| [`03-presentation.pdf`](03-presentation.pdf) | 7-slide walkthrough. Built 4 August, so it predates the Power BI move and the 7 AM retirement | You are briefing someone in a meeting |
 | [`03-presentation.pptx`](03-presentation.pptx) | The editable deck | You need to present it yourself |
 | [`build/`](build) | The LaTeX toolchain that produces the PDF | You edited the guide and need to rebuild |
 
@@ -38,10 +38,11 @@ Live at `https://ura-gis.github.io/land-care-assurance/`:
    published number.
 3. **All ArcGIS access lives in two files**, `docs/landcare/survey-layer.js` and
    `docs/landcare/assignment-layer.js`. An endpoint anywhere else is a defect.
-4. **Land Care Budget and Parcel Area use secure Power BI pages.** The checked-in finance
-   JSON is a compatibility contract and must not be treated as live Power BI output.
+4. **Land Care Budget and Parcel Area are secure Power BI embeds.** The checked-in finance
+   JSON is a compatibility contract, not live Power BI output. The native finance cards are
+   still a dated NetSuite snapshot; do not call them Power BI-backed.
 5. **The former 7 AM dashboard refresh is deprecated.** Live pages depend on ArcGIS at page
-   load, not that scheduled task.
+   load, not that scheduled task. Archive and disable it, do not delete it on day one.
 
 ## First week
 

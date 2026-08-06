@@ -28,8 +28,8 @@ most wrong answers.
 ## A. Context calling: what to read first
 
 ```text
-Read AGENTS.md, handover/01-owner-guide.md, docs/landcare-architecture.md,
-and docs/landcare-metrics-context.md before editing.
+Read AGENTS.md, handover/04-readiness-checklist.md, handover/01-owner-guide.md,
+docs/landcare-architecture.md, and docs/landcare-metrics-context.md before editing.
 ```
 
 This makes the agent inherit the source-of-truth and change rules before it plans.
@@ -68,8 +68,9 @@ Paste this above any task, then add one recipe from the next section.
 
 ```text
 Work in the land-care-assurance repository. Read AGENTS.md,
-handover/01-owner-guide.md, docs/landcare-architecture.md, and
-docs/landcare-metrics-context.md before editing.
+handover/04-readiness-checklist.md, handover/01-owner-guide.md,
+docs/landcare-architecture.md, and docs/landcare-metrics-context.md before
+editing.
 
 Goal: [business outcome and which page it affects].
 Source: [ArcGIS item, service, PostgreSQL table, or published JSON].
@@ -208,23 +209,42 @@ docs/landcare-metrics-context.md and the tests in the same pull request. Do not
 retire the Regrid scheduled task in the same change.
 ```
 
-## Refresh the NetSuite finance actuals
+## Change a Power BI embed
 
 ```text
-Task: refresh the NetSuite check-request actuals in the KPI dashboard.
+Task: change the Power BI embed on [Land Care Budget / Parcel Area].
 
-Read docs/netsuite-landcare-finance-source.md first. The CSV export from saved
-search 1618 is a manual step I do in NetSuite; you start from the exported file.
+Read docs/powerbi-landcare-finance-source.md first. Work in docs/kpi/index.html.
 
-Run scripts/ingest_landcare_netsuite_checks.py --source [path]. Then report the
+The report is 2d592a10-7083-470a-96aa-41fbdc59218c in workspace
+A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5. Land Care Budget is page
+fe756b7016e6baa7351e and Parcel Area Distribution is page 4a5502453e9080b7a655.
+Page 8c93bab49c96aa8e3bd2 is Maintenance Check Requests and must never be
+embedded; it is a different scope and would publish the wrong number.
+
+Keep the embed authenticated. Do not convert it to Publish to web and do not add
+a token or an embed secret to anything under docs/, which is served publicly.
+Run tests/kpi-powerbi-embed.test.mjs.
+```
+
+## Reconcile a finance figure against NetSuite
+
+```text
+Task: a Power BI finance figure looks wrong; reconcile it against NetSuite.
+
+Read docs/netsuite-landcare-finance-source.md. The CSV export from saved search
+1618 is a manual step I do; you start from the exported file.
+
+Run scripts/ingest_landcare_netsuite_checks.py --source [path], then report the
 source record count, source total, current-cycle total, contractor total,
-other-program total, and latest transaction date, so I can check them against
-NetSuite before anything is published.
+other-program total, and latest transaction date so I can compare them with the
+Power BI report.
 
-Do not add a vendor alias. If a vendor does not match, leave it in
-other_program_actuals and tell me which name it was. Do not put document
-numbers, memos, or transaction-level vendor records into finance_summary.json;
-that file is served publicly by GitHub Pages.
+This is reconciliation, not a production feed. Do not describe the native KPI
+finance cards as Power BI-backed unless finance_summary.json contains
+semantic_summary and actual_invoice_source.source_system reads
+"Power BI semantic model". Do not add a vendor alias. Do not put document
+numbers, memos, or transaction-level records into finance_summary.json.
 ```
 
 ## Add a NetSuite vendor alias
@@ -243,17 +263,21 @@ Show me the before and after for both the contractor total and the
 other-program total, since money is moving between those two buckets.
 ```
 
-## Debug a failed 7:00 AM refresh
+## Retire the deprecated 7:00 AM task
 
 ```text
-Task: the daily refresh failed.
+Task: help me archive and disable the deprecated 7:00 AM dashboard refresh.
 
-Read C:\srv\logs\land-care-assurance\daily-refresh-status.json and tell me the
-failed_stage before proposing anything. Read the matching
-daily-refresh-YYYY-MM-DD.log for that stage only. Fix that stage and nothing
-else. Follow docs/task-scheduler-vm-operations.md. Do not hand-edit anything
-under docs/landcare/data/; those files are regenerated and your edit will be
-reverted by the next run.
+Read handover/04-readiness-checklist.md and docs/task-scheduler-vm-operations.md
+first. The task is deprecated, not broken: nothing on the live pages depends on
+it, because the browser queries ArcGIS at page load.
+
+Work through the checklist in order and stop after disabling. Export the task
+definition, keep the last status JSON and transcript logs, record its last run,
+result code, principal, trigger, and command. Do not delete it on the first day.
+
+Do not reactivate it or hand-edit anything under docs/landcare/data/. If you
+believe a consumer still depends on it, stop and tell me which one.
 ```
 
 ## Update a handover document
@@ -269,7 +293,7 @@ warnings; keep them near zero.
 
 ---
 
-# Five failure modes specific to this repository
+# Six failure modes specific to this repository
 
 An agent will get these wrong unless the prompt says otherwise.
 
@@ -286,6 +310,10 @@ An agent will get these wrong unless the prompt says otherwise.
 5. **Guessing a NetSuite vendor alias.** An unmatched vendor is supposed to sit in
    `other_program_actuals`. Mapping it on a name that merely looks similar moves money onto
    the wrong contractor's variance line. Only Finance can confirm the relationship.
+6. **Calling the native finance cards Power BI-backed.** The embedded tabs are governed and
+   live; the native cards still read a dated NetSuite snapshot. The claim only becomes true
+   when `finance_summary.json` contains `semantic_summary` and
+   `actual_invoice_source.source_system` reads `Power BI semantic model`.
 
 # What never goes in a prompt or a commit
 
@@ -299,10 +327,13 @@ secrets.
 ```bash
 python -m unittest discover -s tests
 node --test tests/survey-layer.test.mjs
+node --test tests/kpi-finance.test.mjs
+node --test tests/kpi-powerbi-embed.test.mjs
 ```
 
-`tests/test_handover_contract.py` guards the handover file set and the portability of the
-design system CSS. `.github/workflows/pages.yml` runs the harder check on merge to `master`:
+`tests/test_handover_contract.py` guards the handover file set, asserts the current handover
+declares the deprecated 7 AM job and the live ArcGIS sources, and checks the portability of
+the design system CSS. `.github/workflows/pages.yml` runs the harder check on merge to `master`:
 all routes exist, the summary JSON, GeoJSON, and refresh manifest agree on counts, and
 ownership values stay within URA and Pittsburgh Land Bank. A red Pages workflow is a data
 contract failure, not a deployment failure.

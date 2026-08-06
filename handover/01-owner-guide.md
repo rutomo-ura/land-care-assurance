@@ -4,16 +4,16 @@ subtitle: "Owner Guide"
 author: "Prepared for the incoming owner, ura-gis/land-care-assurance"
 ---
 
-> Status note, August 6, 2026: use [`04-readiness-checklist.md`](04-readiness-checklist.md)
-> for current operations. The 7 AM dashboard refresh and finance instructions in this
-> longer guide are retained as historical implementation detail and are deprecated.
+> Current as of August 6, 2026. For status, sign-off, and outstanding successor work, use
+> [`04-readiness-checklist.md`](04-readiness-checklist.md). This guide explains how the
+> system works and why; the checklist tracks what is done.
 
 # What you own
 
 LandCare Assurance answers one question for URA supervisors: for this service period, which
 assigned parcels were actually serviced, by whom, and with what evidence. It is a map-first
-web application published from this repository, reading live ArcGIS layers, backed by a
-nightly job on the GIS VM.
+web application published from this repository. It queries live ArcGIS layers at page load
+and embeds a secure Power BI report for finance.
 
 Before it existed, contractor compliance was judged from a reported completion figure that
 blended Active and Request Only parcels against a parcel universe with no ownership check.
@@ -27,7 +27,7 @@ All under `https://ura-gis.github.io/land-care-assurance/`.
 | Route | Audience | Purpose |
 |---|---|---|
 | `/monitoring/` | Supervisors | Parcel map, evidence, field notes, filters |
-| `/kpi/` | Leadership | Completion trend, budget, contractor exposure |
+| `/kpi/` | Leadership | Completion trend, contractor exposure, Power BI finance |
 | `/contractor/` | Contractors | Progress view and prefilled service submission |
 | `/survey-submission/` | Legacy links | Redirect to `/contractor/` |
 | `/design-system/example.html` | Developers | Portable BI kit reference page |
@@ -44,19 +44,22 @@ Three layers with three different owners.
 
 | Layer | Where it runs | Owner |
 |---|---|---|
-| Ingestion | GIS VM Task Scheduler, repo `URA-GIS-User/URA-Data-Repository` | GIS and data operations |
+| Ingestion | GIS VM Task Scheduler at 4:00 AM, repo `URA-GIS-User/URA-Data-Repository` | GIS and data operations |
 | Store | PostgreSQL `gisdb` and ArcGIS Online (`urap.maps.arcgis.com`) | GIS and data operations |
 | Publish and application | This repository, GitHub Pages | Web and dashboard owner |
-| Finance actuals | NetSuite saved search, exported by hand into the VM refresh | Finance, with GIS operations running the import |
+| Finance | Power BI semantic model, embedded as a secure report | Finance and BI |
 
 \archdiagram
 
 ## The rule that explains most confusion
 
 Live ArcGIS is authoritative at page load. The JSON and GeoJSON committed under
-`docs/landcare/data/` is a fallback cache plus the finance contract. A number on the map can
-change during the day with no commit, because the browser queried ArcGIS directly. Do not
-treat the committed files as truth.
+`docs/landcare/data/` is a compatibility fallback, not the current data source. A number on
+the map changes during the day with no commit, because the browser queried ArcGIS directly.
+Do not treat the committed files as truth, and do not report them as freshness.
+
+This became the whole story on 6 August 2026, when the 7:00 AM refresh was deprecated.
+Nothing on the live pages depends on it now.
 
 ## Daily schedule, Eastern time
 
@@ -64,15 +67,17 @@ treat the committed files as truth.
 |---|---|---|
 | 4:00 AM | `regrid_survey_daily_pipeline.py` upstream | Regrid CSV into `gis.regrid_survey_submissions`, then the ArcGIS survey layer |
 | 4:15 AM on the 15th | `regrid_survey_monthly_export.py` | G-drive CSV archive only, not a dashboard source |
-| 7:00 AM | `refresh_landcare_dashboard.ps1` in this repo | **Deprecated** static fallback and finance publisher |
-| On demand | `ingest_landcare_netsuite_checks.py` | Legacy NetSuite reconciliation for `finance_summary.json` |
+| 7:00 AM | `refresh_landcare_dashboard.ps1` | **Deprecated.** Retained only as a recovery reference |
+| On demand | `ingest_landcare_netsuite_checks.py` | **Supervised reconciliation only.** Not a production feed |
 
-The 7:00 AM job is no longer part of current production. The browser queries ArcGIS at page
-load, so completion counts can rise without a repository data publish.
+The 4:00 AM pipeline is the only scheduled job the product depends on. Everything the
+supervisor sees is queried live from ArcGIS afterwards, so completion counts rise through the
+day without any repository publish.
 
-The NetSuite step is not automatic. The refresh script runs it only when the environment
-variable `LANDCARE_NETSUITE_CHECKS_CSV` points at an exported CSV. With that variable unset,
-the daily job skips it and the last published actuals stay in place. See section 4.
+The 7:00 AM job used to publish the static contract under `docs/landcare/data/`. Its last
+automatic commit was 28 July 2026 and the checked-in files were last generated on 29 July.
+The successor's retirement steps are in
+[`04-readiness-checklist.md`](04-readiness-checklist.md); do not simply delete the task.
 
 ## Live ArcGIS sources
 
@@ -108,9 +113,11 @@ Keep it that way. An ArcGIS URL appearing in `monitoring.js` or `kpi.js` is a de
 | Contractor progress and submission | `docs/landcare/contractor-overview.js` |
 | Survey123 URL, prefill names, evidence layer URL | `docs/landcare/survey-submission-config.js` |
 | Product styling | `docs/landcare/app.css` |
-| Nightly VM job and its QA gate | `scripts/refresh_landcare_dashboard.ps1`, `scripts/validate_landcare_daily_refresh.py` |
-| Published data build | `scripts/build_landcare_web_data.py`, `scripts/build_landcare_finance_data.py` |
-| NetSuite actuals import and vendor aliases | `scripts/ingest_landcare_netsuite_checks.py` |
+| Power BI embed URLs and report pages | `docs/kpi/index.html` |
+| Native finance card behaviour | `docs/landcare/finance-semantic.js` |
+| Optional Power BI aggregate extraction | `scripts/extract_landcare_powerbi_semantic.py` |
+| NetSuite reconciliation import and vendor aliases | `scripts/ingest_landcare_netsuite_checks.py` |
+| Deprecated 7:00 AM job and its QA gate | `scripts/refresh_landcare_dashboard.ps1`, `scripts/validate_landcare_daily_refresh.py` |
 
 # Metrics and the denominator rule
 
@@ -154,44 +161,47 @@ universe or a monthly assignment slice. Do not mix them in one ratio.
 
 ## Finance actuals
 
-Since 4 August 2026 the KPI dashboard shows actual spend alongside the workbook forecast.
-The two are different things and the dashboard labels them separately.
+Finance is governed separately from the operational metrics, and it moved twice in three
+days. Section 5 covers it in full; the rule that matters here is the vocabulary.
 
 | Term | What it is |
 |---|---|
 | Expected | Workbook contract forecast: term, parcels, monthly and annual amounts |
-| Check requests | Actual check requests posted to the LandCare lawn-maintenance account in NetSuite |
-| Other program actuals | Amounts on the same account that do not map to a current contractor |
+| Check requests | Requests posted to the LandCare lawn-maintenance account, governed in Power BI |
+| Other program actuals | Amounts on the same account with no current contractor |
 
 **A check request is not a cleared payment.** It records that payment was requested, not that
 money moved. Do not describe it as paid, and do not treat a contractor showing zero in a
 period as proof that no work happened or that no liability exists; it means no matching check
 request was found in that period.
 
-Quarterly comparisons use only records posted in the selected quarter. Annual actuals include
-current-cycle contractor check requests for the selected year. Other program actuals are
-published in the data contract but excluded from contractor-to-contract variance, because
-they are not attributable to a contractor.
+Quarterly comparisons use only records posted in the selected quarter. Other program actuals
+are excluded from contractor-to-contract variance, because they are not attributable to a
+contractor.
 
 # Daily operations
 
 ## The three-minute morning check
 
-1. Confirm the 4:00 AM upstream pipeline ran and ArcGIS layer freshness moved.
-2. Reconcile Map Monitor and KPI for the selected period.
-3. Confirm Power BI loads and the Pages workflow is green after application changes.
+1. Open Map Monitor and confirm the latest ArcGIS assignment and survey periods.
+2. Compare the selected-period completion count between Map Monitor and KPI. They use the
+   same numerator, so a difference is a defect.
+3. Open one Field Note and confirm its parcel, contractor pill, comment, date, and image.
+4. Open Land Care Budget and Parcel Area and confirm the secure Power BI report loads.
+5. Check the Pages deployment if application code changed.
 
-Use `docs/task-scheduler-vm-operations.md` only to archive, disable, or deliberately
-reactivate the deprecated 7 AM process.
+There is no status JSON to read any more. Freshness lives in the ArcGIS layers themselves and
+in the Power BI report header. Use `docs/task-scheduler-vm-operations.md` only to archive,
+disable, or deliberately reactivate the deprecated 7:00 AM process.
 
 ## Logs and gates
 
 | Artifact | Path | Purpose |
 |---|---|---|
-| Daily log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` | Human troubleshooting |
-| Status JSON | `C:\srv\logs\land-care-assurance\daily-refresh-status.json` | Success or failure artifact |
-| QA validator | `scripts/validate_landcare_daily_refresh.py` | Blocks publish on regression or stale manifest |
-| Pages validation | `.github/workflows/pages.yml` | Data contract check on merge |
+| Pages validation | `.github/workflows/pages.yml` | Data contract check on merge; the live gate |
+| QA validator | `scripts/validate_landcare_daily_refresh.py` | Used by the deprecated job and by manual reconciliation |
+| Daily log | `C:\srv\logs\land-care-assurance\daily-refresh-YYYY-MM-DD.log` | Historical, from the deprecated job |
+| Status JSON | `C:\srv\logs\land-care-assurance\daily-refresh-status.json` | Historical; archive it before disabling the task |
 
 The Pages workflow does more than deploy. It checks that all routes exist, that the summary
 JSON, GeoJSON, and refresh manifest agree on counts, and that ownership values stay within
@@ -208,69 +218,95 @@ creates an assigned GitHub Issue labelled `landcare-brief`.
 After the transfer, set the repository variables `LANDCARE_EMAIL_RECIPIENTS` and
 `LANDCARE_ISSUE_ASSIGNEE`, then test with the `dry-run` delivery mode before going live.
 
-# NetSuite finance actuals
+# Finance: Power BI and NetSuite
 
-Deployed 4 August 2026. This is the newest part of the system and the part most likely to go
-stale, because refreshing it is a manual task rather than a scheduled one.
+Finance moved twice in three days, so read this before touching any money figure.
 
-## What it is
+| Date | Change |
+|---|---|
+| 4 August 2026 | NetSuite check-request actuals published into `finance_summary.json` |
+| 5 to 6 August 2026 | Land Care Budget and Parcel Area became secure Power BI embeds |
 
-NetSuite supplies actual LandCare check-request amounts to the KPI dashboard. It complements
-the budgeting workbook rather than replacing it: the workbook still defines contract
-expectations, term, parcels, and forecast; ArcGIS still owns assignments, evidence, and
-completion.
+## Who owns which number
+
+**Power BI is the authoritative reporting source.** The Land Care Budget and Parcel Area tabs
+on the KPI dashboard are authenticated Microsoft embeds, not copied values. Each viewer sees
+the report through their own Power BI permissions, so the numbers cannot drift from what
+Finance sees.
+
+**NetSuite is the upstream accounting system.** It is where check requests originate. The
+importer in this repository is now a supervised reconciliation tool, not a production feed.
+
+**The budgeting workbook still defines contract expectations**: term, parcels, and forecast.
+
+## Power BI configuration
+
+| Setting | Value |
+|---|---|
+| Workspace | `GIS Dashboards`, `A4C26AF1-2334-4FF6-BCCC-FCC7BB0862F5` |
+| Semantic model | `924c6c0b-6e29-41cf-9775-562ca646953a` |
+| Report | `2d592a10-7083-470a-96aa-41fbdc59218c` |
+| Land Care Budget page | `fe756b7016e6baa7351e` |
+| Parcel Area Distribution page | `4a5502453e9080b7a655` |
+| Required filter | `LandCare Check Requests[Item Type] = Landcare` |
+
+**Page `8c93bab49c96aa8e3bd2` is Maintenance Check Requests and must never be embedded.** It
+is a different scope and would publish the wrong number. The embed is authenticated, not
+Publish to web; do not convert it.
+
+Audited on 5 August 2026 the report showed $458,995.17 spent against a $775,000 limit,
+59.23 per cent, with Q1 $188,579.00, Q2 $192,318.50, and Q3 $78,097.67.
+
+## The honest status of the native finance cards
+
+This is the part most likely to be misdescribed, so state it carefully.
+
+The embedded Power BI tabs are live. The **native** KPI finance cards still read the
+checked-in `finance_summary.json`, which was generated on 4 August from NetSuite. That file
+has no `semantic_summary` key, and its `actual_invoice_source.source_system` still reads
+`NetSuite`.
+
+Do not describe the native finance feed as Power BI-backed until all three are true:
+
+1. the published JSON contains `semantic_summary`,
+2. `actual_invoice_source.source_system` is `Power BI semantic model`, and
+3. the VM status reports `power_bi_finance.feed_status = current`.
+
+Until then the embeds are governed and current, and the native cards are a dated snapshot.
+`scripts/extract_landcare_powerbi_semantic.py` exists to close that gap and is optional; it
+is only needed if public KPI finance cards must survive without a Microsoft sign-in.
+
+## Access still outstanding
+
+The audited user can view the shared report but cannot open the workspace. Refresh history,
+gateway and source connections, and service-principal Build permission all require a
+workspace administrator. Getting that access is successor work.
+
+## NetSuite reconciliation
+
+Still useful when a Power BI figure looks wrong and you need the underlying requests.
 
 | Item | Value |
 |---|---|
 | Saved search | `All URA LandCare Check Requests`, ID `1618` |
-| Transaction type | Check Request |
 | Account | `66220 Property Management : Lawn Maintenance` |
-| Supporting report | `All URA LandCare Check Requests`, report ID `697` |
-| Funding reference | `All URA LandCare Funding Requests`, report ID `704`, reconciliation only |
+| Supporting report | ID `697`; funding reference ID `704` |
 
-## Reading as published on 4 August 2026
+Export the saved search to CSV on the secured VM, never into this repository, then run:
 
-| Figure | Value |
-|---|---:|
-| Saved-search records | 628 |
-| Saved-search total | $4,538,233.89 |
-| Current cycle records, from 1 November 2025 | 85 |
-| Current cycle total | $618,513.87 |
-| Mapped to current contractors | $592,179.76 |
-| Retained as other LandCare program expense | $26,334.11 |
-| Latest transaction date | 4 August 2026 |
+```powershell
+python scripts\ingest_landcare_netsuite_checks.py `
+  --source C:\secure\exports\landcare-checks.csv
+```
 
-These live in `finance_summary.json` under `actual_invoice_source`, which is where you check
-freshness. If `refreshed_at` is old, the dashboard is showing stale actuals.
+The 4 August read found 628 records totalling $4,538,233.89; for the cycle from 1 November
+2025, 85 records totalling $618,513.87, of which $592,179.76 mapped to current contractors
+and $26,334.11 stayed as other LandCare program expense.
 
-## What is published and what is not
-
-`actual_invoices` holds one aggregate row per posting month and current-cycle contractor.
-`other_program_actuals` holds monthly amounts on the LandCare account with no current
-contractor. `actual_invoice_source` records report identity, freshness, row counts, and
-reconciliation totals.
-
-Document numbers, memos, and transaction-level vendor records are deliberately not published.
-GitHub Pages serves this file to anyone, so transaction detail must never enter it.
-
-## Refreshing it
-
-1. Open saved search `1618` in NetSuite. Do not edit or resave the search.
-2. Export CSV to the secured GIS VM or approved finance share. Never into this repository.
-3. Rebuild the workbook portion of `finance_summary.json` if contract terms changed.
-4. Run the importer:
-
-   ```powershell
-   python scripts\ingest_landcare_netsuite_checks.py `
-     --source C:\secure\exports\landcare-checks.csv
-   ```
-
-5. Check source count, source total, current-cycle total, contractor total, other-program
-   total, and latest date against NetSuite.
-6. Run the tests and Pages validation before publishing.
-
-The deprecated refresh script can still run step 4 when `LANDCARE_NETSUITE_CHECKS_CSV` is
-configured. This is a recovery reference, not the current Power BI reporting path.
+Do not automate the authenticated Power BI DOM or a browser CSV download to get these
+numbers. Show as a table and Export data are fine for supervised reconciliation; unattended
+extraction must use the semantic model Execute Queries API. Browser markup, visual
+identifiers, and download behaviour are not a stable contract.
 
 ## Vendor aliases
 
@@ -279,25 +315,30 @@ NetSuite vendor names do not match contractor names in the assignment layer, so
 under several NetSuite names, for example `K.R.J. Enterprises Inc` and
 `K.R.J. Enterprises Inc. - Eltridra` both map to KRJ Enterprises.
 
-An unrecognised vendor is not dropped. It stays in `other_program_actuals`, which is why that
-bucket exists. **Add an alias only after Finance or the LandCare program owner confirms the
-relationship.** Guessing moves money onto the wrong contractor's variance line.
+An unrecognised vendor is not dropped. It stays in `other_program_actuals`. **Add an alias
+only after Finance or the LandCare program owner confirms the relationship.** Guessing moves
+money onto the wrong contractor's variance line.
 
-## The reconciliation gate
+## What is published and what is not
+
+`finance_summary.json` carries aggregates only: one row per posting month and current-cycle
+contractor, monthly other-program amounts, and source metadata. Document numbers, memos, and
+transaction-level vendor records are deliberately excluded, because GitHub Pages serves this
+file to anyone.
 
 `scripts/validate_landcare_daily_refresh.py` fails the publish if the published contractor
-aggregates do not sum to `current_cycle_contractor_total` in the source metadata. It also
-rejects malformed periods and aggregate rows missing an organisation or amount. If that check
-fails, the import and the metadata disagree; re-run the import rather than editing the JSON.
+aggregates do not sum to `current_cycle_contractor_total`. If that fails, re-run the import
+rather than editing the JSON.
 
-## Access
+## Access and security
 
-Use a named NetSuite account with read-only report access. Never store passwords, session
-cookies, browser profiles, raw exports, document numbers, or memos in GitHub. Inspection and
-export must not submit forms, edit records, customise searches, schedule reports, or change
-NetSuite settings.
+Use named accounts with read-only report access for both systems. Never store passwords,
+session cookies, browser profiles, certificates, raw exports, document numbers, or memos in
+GitHub. The Power BI certificate lives only under `C:\srv\secrets\powerbi\`.
 
-Full detail in `docs/netsuite-landcare-finance-source.md`.
+Full detail in `docs/powerbi-landcare-finance-source.md`,
+`docs/powerbi-landcare-dataflow-audit-2026-08-05.md`, and
+`docs/netsuite-landcare-finance-source.md`.
 
 # Replacing Regrid with a URA front end
 
@@ -456,30 +497,35 @@ import-free and is asserted so by `tests/test_handover_contract.py`.
 
 # Ownership, risks, and open decisions
 
-Five areas have distinct owners: source freshness, VM refresh, application code, contractor
-follow-up, and finance. The escalation table lives in `HANDOVER.md`.
+Five areas have distinct owners: ArcGIS source freshness, GitHub Pages and application code,
+the Power BI report, contractor follow-up, and retiring the deprecated 7:00 AM task. The
+escalation table lives in `HANDOVER.md`.
 
 ## Open items to decide, not defects
 
 | Item | What it means for you |
 |---|---|
 | Survey123 evidence path is code-complete but not deployed | Approved photos cannot appear and Regrid stays the only evidence source. The single blocker on the replacement |
-| NetSuite actuals refresh by hand, not on a schedule | A stale CSV publishes stale money figures with no error. Decide who owns the export and how often |
+| Native KPI finance cards are not yet Power BI-backed | The embeds are governed and live, but the native cards read a 4 August NetSuite snapshot. Decide whether public cards need to survive without a Microsoft sign-in |
+| Power BI workspace administration is not granted | Refresh history, gateway connections, and service-principal Build permission all need a workspace administrator |
+| The deprecated 7:00 AM task is still on the VM | Archive its definition and logs, disable it, then remove after two clean business days |
 | One check request, $26,334.11, sits in other program actuals | It is on the LandCare account with no current contractor. Ask Finance whether it should be aliased to a contractor or stay separate |
 | Survey123 submissions do not change official completion in v1 | Whether they should is a governance decision, not a code change |
-| Committed snapshot is dated 2026-07-07 while live ArcGIS moves daily | Static and live numbers differ. Decide whether the fallback stays once the live path is trusted |
+| Checked-in data was last generated 29 July 2026 while ArcGIS moves daily | Static and live numbers differ. Decide whether the compatibility fallback stays at all |
 | Morning brief falls back to a GitHub Issue without Microsoft 365 secrets | Set the two repository variables and test with `dry-run` first |
 | GitHub redirects the old repository path, Pages URLs do not | Every ArcGIS embed, bookmark, and operational link moves to the `ura-gis` Pages URL by hand |
 
 ## First week
 
 1. Confirm you can clone, push, and run the tests.
-2. Watch two unattended refresh cycles complete with `status: success`.
+2. Watch two 4:00 AM ArcGIS publication cycles and confirm the layer timestamps move.
 3. Run the morning brief manually in `dry-run` mode and read the artifact.
 4. Open all four routes and reconcile one contractor's numbers by hand against the map.
-5. Refresh the NetSuite actuals once end to end, so you have done it before it is urgent.
-6. Make one harmless documentation change through an agent, end to end, including tests.
-7. Decide whether to deploy the Survey123 evidence path this quarter.
+5. Open Land Care Budget and Parcel Area and confirm the authenticated report loads for you.
+6. Request Power BI workspace administration access; several open items depend on it.
+7. Archive and disable the deprecated 7:00 AM task, following the readiness checklist.
+8. Make one harmless documentation change through an agent, end to end, including tests.
+9. Decide whether to deploy the Survey123 evidence path this quarter.
 
 # Appendix
 
@@ -487,7 +533,7 @@ follow-up, and finance. The escalation table lives in `HANDOVER.md`.
 
 ```text
 land-care-assurance/
-  handover/              <- this folder: start here
+  handover/              <- start here; 04-readiness-checklist.md is the status page
   AGENTS.md              <- agent start rules, read automatically
   HANDOVER.md            <- cutover checklist
   .claude/skills/ura-landcare-design/   <- design system skill
@@ -504,7 +550,8 @@ land-care-assurance/
 
 ## Published data contract
 
-Generated daily by the VM refresh into `docs/landcare/data/`.
+Checked-in under `docs/landcare/data/`. Last generated 29 July 2026 by the now-deprecated
+7:00 AM job, and kept only for compatibility.
 
 | File | Contents |
 |---|---|
@@ -513,7 +560,7 @@ Generated daily by the VM refresh into `docs/landcare/data/`.
 | `monthly_metrics.json` | Completion rates by month |
 | `contractor_monthly.json` | Contractor completion by month |
 | `kpi_summary.json` | Summary metadata and latest metrics |
-| `finance_summary.json` | Workbook expectations plus NetSuite aggregates |
+| `finance_summary.json` | Workbook and NetSuite aggregates; compatibility only |
 | `refresh_manifest.json` | Freshness, counts, survey metadata |
 
 ## Environment variable names
@@ -528,8 +575,14 @@ Survey123 evidence path: `LANDCARE_PG_DSN`, `LANDCARE_SURVEY_WEBHOOK_TOKEN`,
 `LANDCARE_SURVEY_EVIDENCE_ENABLED`, `LANDCARE_SURVEY_EVIDENCE_AGOL_ITEM_ID`,
 `LANDCARE_SURVEY_EVIDENCE_LAYER_URL`, `LANDCARE_SURVEY_EVIDENCE_ARCGIS_TOKEN`.
 
-NetSuite actuals: `LANDCARE_NETSUITE_CHECKS_CSV`, the path to the exported CSV on the VM.
-Unset means the daily refresh skips the import and keeps the last published actuals.
+Power BI extraction, only if the optional aggregate path is enabled:
+`LANDCARE_POWERBI_TENANT_ID`, `LANDCARE_POWERBI_CLIENT_ID`,
+`LANDCARE_POWERBI_CERTIFICATE_PATH`, `LANDCARE_POWERBI_CERTIFICATE_THUMBPRINT`,
+`LANDCARE_POWERBI_WORKSPACE_ID`, `LANDCARE_POWERBI_DATASET_ID`. The certificate lives only
+under `C:\srv\secrets\powerbi\`. Removing these four authentication variables rolls the
+extraction back without losing the published contract.
+
+NetSuite reconciliation: `LANDCARE_NETSUITE_CHECKS_CSV`, the path to the exported CSV.
 
 GitHub Actions secrets: `M365_TENANT_ID`, `M365_CLIENT_ID`, `M365_CLIENT_SECRET`,
 `M365_SENDER_UPN`. Repository variables: `LANDCARE_EMAIL_RECIPIENTS`,
@@ -555,7 +608,9 @@ On the VM:
 
 - `docs/landcare-architecture.md` for source and runtime architecture
 - `docs/landcare-metrics-context.md` for the full metric glossary
-- `docs/netsuite-landcare-finance-source.md` for the NetSuite saved search and refresh procedure
+- `docs/powerbi-landcare-finance-source.md` for the Power BI model, embed pages, and rollback
+- `docs/powerbi-landcare-dataflow-audit-2026-08-05.md` for the audit evidence
+- `docs/netsuite-landcare-finance-source.md` for the NetSuite saved search and reconciliation
 - `docs/landcare-submission-and-evidence-flow.md` for the contractor intake contract
 - `docs/survey123-landcare-network-setup.md` for Survey123 and webhook configuration
 - `docs/task-scheduler-vm-operations.md` for the VM runbook and failure triage
