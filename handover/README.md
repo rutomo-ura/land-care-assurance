@@ -15,7 +15,7 @@ repository.
 | [`01-owner-guide.md`](01-owner-guide.md) | How the system works and why: architecture, metrics, finance, Regrid replacement, design system | Second, and whenever you need depth |
 | [`01-owner-guide.pdf`](01-owner-guide.pdf) | The same guide typeset as a report, 17 pages | You want to print it or send it to someone outside the repo |
 | [`02-agent-playbook.md`](02-agent-playbook.md) | Prompts and recipes for changing the app with an AI agent | You are about to make a change |
-| [`03-presentation.pdf`](03-presentation.pdf) | 7-slide walkthrough. Built 4 August, so it predates the Power BI move and the 7 AM retirement | You are briefing someone in a meeting |
+| [`03-presentation.pdf`](03-presentation.pdf) | 8-slide walkthrough, current to 6 August: live ArcGIS, Power BI finance, and the retired 7 AM job | You are briefing someone in a meeting |
 | [`03-presentation.pptx`](03-presentation.pptx) | The editable deck | You need to present it yourself |
 | [`build/`](build) | The LaTeX toolchain that produces the PDF | You edited the guide and need to rebuild |
 
