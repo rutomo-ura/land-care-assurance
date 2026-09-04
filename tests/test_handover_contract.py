@@ -54,6 +54,12 @@ class HandoverContractTests(unittest.TestCase):
         self.assertIn('DEFAULT_RECIPIENTS = ""', script)
         self.assertNotIn("rutomo@ura.org", script)
 
+    def test_monitoring_uses_arcgis_gray_basemap_without_legacy_carto_tiles(self):
+        script = (ROOT / "docs/landcare/monitoring.js").read_text(encoding="utf-8")
+        self.assertIn('basemap: "gray-vector"', script)
+        self.assertNotIn("basemaps.cartocdn.com", script)
+        self.assertNotIn("API KEY", script)
+
 
 if __name__ == "__main__":
     unittest.main()

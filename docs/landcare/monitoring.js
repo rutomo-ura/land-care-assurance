@@ -1,9 +1,7 @@
 import Map from "https://js.arcgis.com/4.30/@arcgis/core/Map.js";
 import MapView from "https://js.arcgis.com/4.30/@arcgis/core/views/MapView.js";
-import Basemap from "https://js.arcgis.com/4.30/@arcgis/core/Basemap.js";
 import GeoJSONLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/GeoJSONLayer.js";
 import FeatureLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/FeatureLayer.js";
-import WebTileLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/WebTileLayer.js";
 import Home from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Home.js";
 import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
@@ -46,7 +44,6 @@ const EPP_LAYER_URL =
 const COUNCIL_DISTRICT_LAYER_URL =
   "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/CouncilDistricts2022/FeatureServer/0";
 const CURRENT_WHERE = "tags LIKE '%LandCare%' AND inventory_type IN ('URA Owned', 'PLB Owned')";
-const CARTO_LIGHT_ATTRIBUTION = "© OpenStreetMap contributors © CARTO";
 const CURRENT_OUT_FIELDS = [
   "OBJECTID",
   "parcel_number",
@@ -2133,20 +2130,6 @@ function buildCurrentLayer({ visible }) {
   });
 }
 
-function buildCartoLightBasemap() {
-  const baseLayer = new WebTileLayer({
-    urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}.png",
-    subDomains: ["a", "b", "c", "d"],
-    copyright: CARTO_LIGHT_ATTRIBUTION,
-    title: "Carto Light"
-  });
-  return new Basemap({
-    baseLayers: [baseLayer],
-    title: "Carto Light",
-    id: "carto-light"
-  });
-}
-
 async function initMap() {
   const historyUrl = URL.createObjectURL(new Blob(
     [JSON.stringify(state.datasets.history.geojson)],
@@ -2226,7 +2209,7 @@ async function initMap() {
   state.boundaryLayers.councilHighlight = councilHighlightLayer;
 
   const map = new Map({
-    basemap: buildCartoLightBasemap(),
+    basemap: "gray-vector",
     layers: [neighborhoodLayer, councilLayer, councilHighlightLayer, historyAssignmentLayer, currentLayer]
   });
 
