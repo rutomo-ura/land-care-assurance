@@ -2,8 +2,6 @@ import Map from "https://js.arcgis.com/4.30/@arcgis/core/Map.js";
 import MapView from "https://js.arcgis.com/4.30/@arcgis/core/views/MapView.js";
 import GeoJSONLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/GeoJSONLayer.js";
 import FeatureLayer from "https://js.arcgis.com/4.30/@arcgis/core/layers/FeatureLayer.js";
-import Home from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Home.js";
-import Search from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Search.js";
 import BasemapToggle from "https://js.arcgis.com/4.30/@arcgis/core/widgets/BasemapToggle.js";
 import Zoom from "https://js.arcgis.com/4.30/@arcgis/core/widgets/Zoom.js";
 import {
@@ -2226,8 +2224,6 @@ async function initMap() {
   });
 
   state.view = view;
-  view.ui.add(new Home({ view }), "top-left");
-  view.ui.add(new Search({ view, includeDefaultSources: true }), "top-right");
   view.ui.add(new Zoom({ view }), "bottom-right");
   view.ui.add(new BasemapToggle({ view, nextBasemap: "satellite" }), "bottom-right");
 

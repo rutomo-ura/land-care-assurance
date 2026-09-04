@@ -60,6 +60,13 @@ class HandoverContractTests(unittest.TestCase):
         self.assertNotIn("basemaps.cartocdn.com", script)
         self.assertNotIn("API KEY", script)
 
+    def test_monitoring_omits_overlapping_arcgis_search_and_home_widgets(self):
+        script = (ROOT / "docs/landcare/monitoring.js").read_text(encoding="utf-8")
+        self.assertNotIn("widgets/Search.js", script)
+        self.assertNotIn("widgets/Home.js", script)
+        self.assertNotIn("new Search(", script)
+        self.assertNotIn("new Home(", script)
+
 
 if __name__ == "__main__":
     unittest.main()
